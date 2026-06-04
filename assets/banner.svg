@@ -1,0 +1,53 @@
+<svg width="1280" height="420" viewBox="0 0 1280 420" xmlns="http://www.w3.org/2000/svg">
+  <!-- Background -->
+  <rect width="1280" height="420" fill="#000000"/>
+
+  <!-- Right side — nested rectangles, isolation metaphor (sandbox layers) -->
+  <rect x="860" y="55"  width="360" height="310" fill="none" stroke="#FBFF00" stroke-width="1"   opacity="0.06"/>
+  <rect x="896" y="89"  width="288" height="242" fill="none" stroke="#FBFF00" stroke-width="1"   opacity="0.07"/>
+  <rect x="932" y="123" width="216" height="174" fill="none" stroke="#FBFF00" stroke-width="1"   opacity="0.09"/>
+  <rect x="968" y="157" width="144" height="106" fill="none" stroke="#FBFF00" stroke-width="1.5" opacity="0.13"/>
+  <rect x="1004" y="182" width="72"  height="56"  fill="#FBFF00"                                  opacity="0.10"/>
+
+  <!-- Volt accent bar — ETS signature treatment -->
+  <rect x="64" y="78" width="64" height="10" fill="#FBFF00"/>
+
+  <!-- Headline: SANCTUM -->
+  <!-- textLength fixes width so the terminal square position is deterministic -->
+  <text x="64" y="212"
+        font-family="'Helvetica Neue','Arial Black',Arial,sans-serif"
+        font-weight="900"
+        font-size="124"
+        fill="#FFFFFF"
+        textLength="600"
+        lengthAdjust="spacing">SANCTUM</text>
+
+  <!-- Volt terminal square (ETS .dot treatment) — sits at cap height after the text -->
+  <rect x="672" y="100" width="22" height="22" fill="#FBFF00"/>
+
+  <!-- Thin volt rule below headline -->
+  <rect x="64" y="229" width="630" height="2" fill="#FBFF00" opacity="0.18"/>
+
+  <!-- Tagline -->
+  <text x="64" y="272"
+        font-family="'Courier New',Courier,monospace"
+        font-size="15"
+        letter-spacing="2"
+        fill="#8A8A8A">RUN AI-GENERATED TOOLS · SEE WHAT THEY CAN TOUCH · BLOCK EVERYTHING ELSE</text>
+
+  <!-- Stack / license line -->
+  <text x="64" y="303"
+        font-family="'Courier New',Courier,monospace"
+        font-size="12"
+        letter-spacing="1.5"
+        fill="#5E5E5E">TAURI V2 · RUST · REACT  //  MACOS · WINDOWS · LINUX  //  AGPL-3.0</text>
+
+  <!-- ETS badge — landscape rectangle ≈3:2, white on black (on-dark form) -->
+  <rect x="1162" y="336" width="88" height="58" fill="#FFFFFF"/>
+  <text x="1206" y="374"
+        font-family="'Arial Black','Helvetica Neue',Arial,sans-serif"
+        font-weight="800"
+        font-size="21"
+        text-anchor="middle"
+        fill="#000000">ETS</text>
+</svg>
