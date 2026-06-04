@@ -1,0 +1,21 @@
+# Build output
+dist/
+dist-isolation/
+
+# Tauri build
+src-tauri/target/
+
+# Node
+node_modules/
+
+# Env
+.env
+.env.*
+
+# macOS
+.DS_Store
+
+# Editor
+.vscode/
+.idea/
+*.swp

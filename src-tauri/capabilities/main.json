@@ -1,0 +1,11 @@
+{
+  "identifier": "main",
+  "description": "Sanctum host UI — trusted origin. Grants app-management commands and approved plugins only.",
+  "windows": ["main"],
+  "permissions": [
+    "core:default",
+    "clipboard-manager:allow-read-text",
+    "clipboard-manager:allow-write-text",
+    "dialog:allow-open"
+  ]
+}

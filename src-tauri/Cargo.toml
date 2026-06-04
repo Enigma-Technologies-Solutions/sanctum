@@ -1,0 +1,50 @@
+[package]
+name = "sanctum"
+version = "0.1.0"
+description = "Sanctum — local-first secure tool runner"
+authors = ["Sanctum"]
+edition = "2021"
+
+[lib]
+name = "sanctum_lib"
+crate-type = ["staticlib", "cdylib", "rlib"]
+
+[build-dependencies]
+tauri-build = { version = "2", features = ["isolation"] }
+
+[dependencies]
+tauri = { version = "2", features = ["isolation"] }
+tauri-plugin-clipboard-manager = "2"
+tauri-plugin-dialog = "2"
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+sha2 = "0.10"
+hex = "0.4"
+uuid = { version = "1", features = ["v4"] }
+# Static capability scan — regex-based pattern scan.
+# NOTE: a proper JS/AST parser (e.g. oxc) would be more accurate; dynamic eval
+# and obfuscation can hide intent from any static scan. The runtime sandbox
+# (CSP + empty capabilities) is the real security guarantee; the scan is advisory.
+regex = "1"
+url = "2"
+# SQLite — direct sqlx, not tauri-plugin-sql, because all DB operations
+# in v0 flow through Tauri commands (Rust side). tauri-plugin-sql can be
+# added later if the frontend ever needs direct DB access from JS.
+sqlx = { version = "0.8", features = ["sqlite", "runtime-tokio"] }
+mime_guess = "2"
+chrono = { version = "0.4", features = ["serde"] }
+# Clipboard access from Rust side (for ingest_from_clipboard command).
+# arboard is cross-platform (macOS/Windows/Linux) and avoids exposing
+# the clipboard plugin's JS-only API to Rust.
+arboard = "3"
+
+[profile.release]
+panic = "abort"
+codegen-units = 1
+lto = true
+opt-level = "s"
+strip = true
+
+[profile.dev]
+# Faster incremental builds
+incremental = true

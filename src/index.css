@@ -1,0 +1,153 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ── ETS Product Light — design tokens ───────────────────────────────────────
+   Rule: ink leads · neutrals carry · volt highlights (sparingly)
+   Space Mono is for data/code only — not UI chrome.
+   ──────────────────────────────────────────────────────────────────────────── */
+:root {
+  /* surfaces */
+  --app-bg:        #FFFFFF;
+  --app-surface:   #F7F8FA;
+  --app-raised:    #EEF1F4;
+  --app-border:    #E3E7EC;
+  /* text */
+  --app-ink:       #0A0A0A;
+  --app-ink-2:     #565B62;
+  --app-ink-3:     #8A9099;
+  /* accent */
+  --volt:          #FBFF00;
+  /* status */
+  --ok:            #1E9E62;
+  --warn:          #C77D11;
+  --danger:        #D2402E;
+  --info:          #2F6FE0;
+  /* form */
+  --app-radius:    8px;
+  --app-shadow:    0 1px 2px rgba(16,24,40,.06), 0 1px 3px rgba(16,24,40,.04);
+
+  /* shadcn CSS-variable compat */
+  --background: 0 0% 100%;
+  --foreground: 0 0% 4%;
+  --card: 0 0% 100%;
+  --card-foreground: 0 0% 4%;
+  --popover: 0 0% 100%;
+  --popover-foreground: 0 0% 4%;
+  --primary: 0 0% 4%;
+  --primary-foreground: 0 0% 100%;
+  --secondary: 220 14% 97%;
+  --secondary-foreground: 0 0% 4%;
+  --muted: 220 14% 97%;
+  --muted-foreground: 220 6% 37%;
+  --accent: 220 13% 94%;
+  --accent-foreground: 0 0% 4%;
+  --destructive: 5 65% 52%;
+  --destructive-foreground: 0 0% 100%;
+  --border: 220 13% 91%;
+  --input: 220 13% 91%;
+  --ring: 0 0% 4%;
+  --radius: 8px;
+}
+
+/* ── Reset ─────────────────────────────────────────────────────────────────── */
+*, *::before, *::after {
+  box-sizing: border-box;
+}
+
+html, body, #root {
+  height: 100%;
+  margin: 0;
+  padding: 0;
+}
+
+/* ── Base ───────────────────────────────────────────────────────────────────── */
+body {
+  background-color: var(--app-bg);
+  color: var(--app-ink);
+  /* Inter for all UI text — NOT Space Mono. Space Mono reserved for data/code. */
+  font-family: 'Inter', system-ui, sans-serif;
+  font-size: 14px;
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  -webkit-user-select: none;
+  user-select: none;
+}
+
+/* Allow text selection in readable content */
+p, span, h1, h2, h3, h4, h5, li, dt, dd, code, pre {
+  -webkit-user-select: text;
+  user-select: text;
+}
+
+/* ── Typography ─────────────────────────────────────────────────────────────── */
+h1, h2, h3, h4, h5, h6 {
+  font-family: 'Poppins', system-ui, sans-serif;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  color: var(--app-ink);
+  margin: 0;
+}
+
+/* Space Mono for data only */
+code, pre, .data-mono {
+  font-family: 'Space Mono', ui-monospace, monospace;
+}
+
+/* ── Form elements ─────────────────────────────────────────────────────────── */
+input, textarea, select {
+  font-family: 'Inter', system-ui, sans-serif;
+  font-size: 13px;
+  color: var(--app-ink);
+  background: var(--app-bg);
+  border: 1px solid var(--app-border);
+  border-radius: var(--app-radius);
+  outline: none;
+  transition: border-color 0.12s, box-shadow 0.12s;
+  padding: 6px 10px;
+}
+
+input:focus, textarea:focus, select:focus {
+  border-color: var(--app-ink);
+  box-shadow: 0 0 0 3px rgba(10,10,10,.06);
+}
+
+input::placeholder, textarea::placeholder {
+  color: var(--app-ink-3);
+}
+
+/* ── Scrollbars (light) ─────────────────────────────────────────────────────── */
+::-webkit-scrollbar {
+  width: 4px;
+  height: 4px;
+}
+::-webkit-scrollbar-track {
+  background: var(--app-surface);
+}
+::-webkit-scrollbar-thumb {
+  background: var(--app-border);
+  border-radius: 2px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: var(--app-ink-3);
+}
+
+/* ── Drag-over state ────────────────────────────────────────────────────────── */
+.drag-over {
+  outline: 2px solid var(--app-ink);
+  outline-offset: -2px;
+  background: var(--app-surface) !important;
+}
+
+/* ── Volt accent bar — section heading underline. NO radius, stays sharp. ─── */
+.volt-bar {
+  height: 8px;
+  background: var(--volt);
+  border-radius: 0;
+}
+
+/* ── ETS logo tile — ALWAYS sharp. Override any inherited radius. ─────────── */
+.ets-tile {
+  border-radius: 0 !important;
+}

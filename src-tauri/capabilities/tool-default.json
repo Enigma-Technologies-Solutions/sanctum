@@ -1,0 +1,6 @@
+{
+  "identifier": "tool-default",
+  "description": "Tool windows — deny-all. No OS bridge. No IPC. No plugins.",
+  "windows": ["tool-*"],
+  "permissions": []
+}
