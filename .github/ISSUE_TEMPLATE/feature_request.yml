@@ -1,0 +1,49 @@
+name: Feature Request
+description: Suggest an improvement or new capability for Sanctum
+labels: [enhancement]
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem this solves
+      description: What are you trying to do that Sanctum doesn't support today?
+      placeholder: "When I run tools that need X, I can't do Y because..."
+    validations:
+      required: true
+
+  - type: textarea
+    id: solution
+    attributes:
+      label: Proposed solution
+      description: Describe what you'd like Sanctum to do differently.
+    validations:
+      required: true
+
+  - type: dropdown
+    id: area
+    attributes:
+      label: Area
+      options:
+        - Ingest (paste / drag-drop / file open)
+        - Capability scanner
+        - Permission approvals
+        - Tool sandbox / runtime
+        - Library / versioning
+        - UI / design
+        - Distribution / updates
+        - Enterprise / org policy
+        - Other
+    validations:
+      required: true
+
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives considered
+      description: Other approaches you've thought about, if any.
+
+  - type: textarea
+    id: context
+    attributes:
+      label: Additional context
+      description: Screenshots, examples, or links that help explain the request.

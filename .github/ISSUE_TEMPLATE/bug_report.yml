@@ -1,0 +1,65 @@
+name: Bug Report
+description: Something is broken in Sanctum
+labels: [bug]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        > **Security vulnerability?** Do **not** use this form.
+        > Email [ultra@enigma.sh](mailto:ultra@enigma.sh) instead — see [SECURITY.md](../../SECURITY.md).
+
+  - type: input
+    id: version
+    attributes:
+      label: Sanctum version
+      placeholder: "e.g. 0.1.0  (shown in the app header)"
+    validations:
+      required: true
+
+  - type: dropdown
+    id: os
+    attributes:
+      label: Operating system
+      options:
+        - macOS — Apple Silicon (arm64)
+        - macOS — Intel (x86_64)
+        - Windows 11
+        - Windows 10
+        - Linux (specify distro in description)
+    validations:
+      required: true
+
+  - type: textarea
+    id: reproduce
+    attributes:
+      label: Steps to reproduce
+      placeholder: |
+        1. Open Sanctum
+        2. Paste an HTML tool from clipboard
+        3. Click Run
+        4. ...
+    validations:
+      required: true
+
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected behaviour
+    validations:
+      required: true
+
+  - type: textarea
+    id: actual
+    attributes:
+      label: Actual behaviour
+    validations:
+      required: true
+
+  - type: textarea
+    id: logs
+    attributes:
+      label: Logs or screenshots
+      description: |
+        Attach screenshots or paste relevant log output.
+        On macOS, Tauri logs appear in Console.app filtered by "sanctum".
+        On Linux, run from a terminal and paste stderr output.

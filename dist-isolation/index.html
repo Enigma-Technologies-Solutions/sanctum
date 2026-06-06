@@ -1,0 +1,15 @@
+<!DOCTYPE html>
+<html>
+<head><meta charset="utf-8" /></head>
+<body>
+<!--
+  Tauri Isolation Pattern — sandboxed IPC interceptor.
+
+  This tiny app runs in a sandboxed iframe between the frontend and Tauri Core.
+  Every IPC message from the host UI passes through window.__TAURI_ISOLATION_HOOK__
+  before reaching Tauri Core. In v0 the hook is a passthrough; in v1 it will
+  gate device-access requests from tool windows through the device_broker.
+-->
+<script src="index.js"></script>
+</body>
+</html>
