@@ -4,6 +4,7 @@ dist-isolation/
 
 # Tauri build
 src-tauri/target/
+src-tauri/gen/
 
 # Node
 node_modules/
