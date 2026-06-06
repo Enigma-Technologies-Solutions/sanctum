@@ -219,7 +219,7 @@ pub async fn open_tool_window(
     }
 
     let manifest_json: String = ver_row.try_get("manifest").map_err(|e| e.to_string())?;
-    let manifest: ToolManifest =
+    let _manifest: ToolManifest =
         serde_json::from_str(&manifest_json).map_err(|e| e.to_string())?;
 
     // 4. Build dynamic CSP from user approvals (only capabilities that were

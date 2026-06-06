@@ -76,38 +76,13 @@ fn serve_tool_file(
         path_str
     };
 
-    // Build the candidate path and check for traversal
-    // v0-todo(hardening): use a pure-Rust path normalizer that doesn't require
-    // the file to exist (canonicalize fails on missing files). For now we validate
-    // by component stripping and fall back to canonicalize for confirmation.
-    let candidate = version_dir.join(relative);
-
-    // Component-level traversal check (no canonicalize needed)
-    let mut resolved = version_dir.clone();
-    for component in std::path::Path::new(relative).components() {
-        use std::path::Component;
-        match component {
-            Component::Normal(seg) => resolved.push(seg),
-            Component::CurDir => {}
-            // Any parent-dir or absolute component is a traversal attempt
-            Component::ParentDir | Component::RootDir | Component::Prefix(_) => {
-                return error_response(403, "Path traversal denied");
-            }
-        }
-    }
-
-    // Confirm resolved is still inside version_dir via canonicalize (belt+suspenders)
-    // Only do this if the file exists; missing file → 404, not 403.
-    if candidate.exists() {
-        match (candidate.canonicalize(), version_dir.canonicalize()) {
-            (Ok(canon_file), Ok(canon_dir)) => {
-                if !canon_file.starts_with(&canon_dir) {
-                    return error_response(403, "Path traversal denied (canonical check)");
-                }
-            }
-            _ => {} // let the read attempt below produce the 404
-        }
-    }
+    // Resolve the request path purely in memory — no canonicalize(), no filesystem
+    // access. normalize_within() walks components onto a stack and pops on `..`;
+    // if the stack underflows the path would escape version_dir → 403.
+    let resolved = match normalize_within(&version_dir, relative) {
+        Ok(p) => p,
+        Err(_) => return error_response(403, "Path traversal denied"),
+    };
 
     let content = match std::fs::read(&resolved) {
         Ok(c) => c,
@@ -128,6 +103,57 @@ fn serve_tool_file(
         .header("X-Sanctum-Origin", "tool")
         .body(content)
         .expect("valid response")
+}
+
+/// Resolve `relative` against `base` without any filesystem access.
+///
+/// Algorithm: walk components onto a stack; pop on `..`; error if the stack
+/// would underflow (path escapes `base`); error on any absolute component.
+/// By construction the returned path always starts with `base`.
+///
+/// This replaces the previous hybrid of an immediate `ParentDir` reject +
+/// a `Path::canonicalize()` fallback. `canonicalize()` requires the target to
+/// exist on disk, so it silently skipped validation for missing files. The old
+/// component check also incorrectly rejected legitimate `foo/../bar` paths
+/// (no practical impact since tool dirs are flat, but semantically wrong).
+fn normalize_within(
+    base: &std::path::Path,
+    relative: &str,
+) -> Result<PathBuf, &'static str> {
+    use std::path::Component;
+
+    let mut stack: Vec<std::ffi::OsString> = Vec::new();
+
+    for component in std::path::Path::new(relative).components() {
+        match component {
+            Component::Normal(seg) => stack.push(seg.to_os_string()),
+            Component::CurDir => {} // "." — no-op
+            Component::ParentDir => {
+                // ".." — pop one level. Empty stack means we'd escape base.
+                if stack.pop().is_none() {
+                    return Err("traversal: path escapes tool version directory");
+                }
+            }
+            // Leading "/" or a Windows drive prefix — always reject.
+            Component::RootDir | Component::Prefix(_) => {
+                return Err("traversal: absolute path in relative position");
+            }
+        }
+    }
+
+    let mut resolved = base.to_path_buf();
+    for seg in &stack {
+        resolved.push(seg);
+    }
+
+    // Invariant: by construction resolved always starts with base.
+    // If this fires there is a bug in this function — treat as a security defect.
+    debug_assert!(
+        resolved.starts_with(base),
+        "normalize_within: invariant violated — resolved path escaped base"
+    );
+
+    Ok(resolved)
 }
 
 fn error_response(status: u16, msg: &str) -> tauri::http::Response<Vec<u8>> {
@@ -209,4 +235,101 @@ pub fn run() {
         })
         .run(tauri::generate_context!())
         .expect("error running Sanctum");
+}
+
+// ── Tests ─────────────────────────────────────────────────────────────────────
+
+#[cfg(test)]
+mod tests {
+    use super::normalize_within;
+    use std::path::PathBuf;
+
+    fn base() -> PathBuf {
+        // Use a fixed synthetic path — normalize_within never touches the FS.
+        PathBuf::from("/data/tools/abc123/versions/deadbeef00")
+    }
+
+    // ── Valid paths ───────────────────────────────────────────────────────────
+
+    #[test]
+    fn plain_file_resolves() {
+        let p = normalize_within(&base(), "index.html").unwrap();
+        assert_eq!(p, base().join("index.html"));
+    }
+
+    #[test]
+    fn current_dir_prefix_ignored() {
+        let p = normalize_within(&base(), "./index.html").unwrap();
+        assert_eq!(p, base().join("index.html"));
+    }
+
+    #[test]
+    fn nested_file_resolves() {
+        let p = normalize_within(&base(), "assets/images/logo.png").unwrap();
+        assert_eq!(p, base().join("assets/images/logo.png"));
+    }
+
+    #[test]
+    fn parent_within_subdir_resolves() {
+        // "foo/../bar" normalises to "bar" — stays inside base, valid.
+        let p = normalize_within(&base(), "foo/../bar.txt").unwrap();
+        assert_eq!(p, base().join("bar.txt"));
+    }
+
+    #[test]
+    fn empty_relative_resolves_to_base() {
+        let p = normalize_within(&base(), "").unwrap();
+        assert_eq!(p, base());
+    }
+
+    // ── Traversal attempts — must all be rejected ─────────────────────────────
+
+    #[test]
+    fn traversal_double_dot_rejected() {
+        assert!(
+            normalize_within(&base(), "../../etc/passwd").is_err(),
+            "../../etc/passwd must be rejected"
+        );
+    }
+
+    #[test]
+    fn traversal_single_dot_dot_rejected() {
+        assert!(
+            normalize_within(&base(), "../sibling-version/secret.html").is_err(),
+            "../sibling-version/secret.html must be rejected"
+        );
+    }
+
+    #[test]
+    fn traversal_escape_after_subdir_rejected() {
+        // Descend into "foo" then escape twice — net result would be above base.
+        assert!(
+            normalize_within(&base(), "foo/../../etc/passwd").is_err(),
+            "foo/../../etc/passwd must be rejected"
+        );
+    }
+
+    #[test]
+    fn traversal_absolute_path_rejected() {
+        assert!(
+            normalize_within(&base(), "/etc/passwd").is_err(),
+            "/etc/passwd must be rejected"
+        );
+    }
+
+    #[test]
+    fn traversal_deep_escape_rejected() {
+        assert!(
+            normalize_within(&base(), "a/b/c/../../../../../../../etc/passwd").is_err(),
+            "deep escape must be rejected"
+        );
+    }
+
+    #[test]
+    fn traversal_dot_dot_only_rejected() {
+        assert!(
+            normalize_within(&base(), "..").is_err(),
+            "bare .. must be rejected"
+        );
+    }
 }
