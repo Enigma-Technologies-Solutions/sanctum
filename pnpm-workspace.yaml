@@ -1,0 +1,5 @@
+# pnpm v11+ workspace settings
+# (pnpm no longer reads the "pnpm" key in package.json)
+
+onlyBuiltDependencies:
+  - esbuild   # esbuild needs its postinstall to download the platform binary
