@@ -211,7 +211,6 @@ pub async fn update_tool_from_path(
 }
 
 async fn verify_tool_exists(pool: &sqlx::SqlitePool, tool_id: &str) -> Result<(), String> {
-    use sqlx::Row; // needed for .try_get() — used in fetch_optional chain below
     sqlx::query("SELECT id FROM tools WHERE id = $1")
         .bind(tool_id)
         .fetch_optional(pool)

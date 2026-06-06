@@ -54,7 +54,7 @@ fn serve_tool_file(
     // Parse the request path from the URI (scheme://host/path)
     let path_str = if let Some(after_scheme) = uri.split("://").nth(1) {
         // after_scheme = "tool-{id}/path/to/file"
-        let without_host = after_scheme.splitn(2, '/').nth(1).unwrap_or("index.html");
+        let without_host = after_scheme.split_once('/').map(|x| x.1).unwrap_or("index.html");
         // Strip query/fragment
         without_host
             .split('?')
