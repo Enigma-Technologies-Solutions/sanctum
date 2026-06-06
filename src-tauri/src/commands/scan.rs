@@ -82,8 +82,7 @@ pub fn scan_html(html: &str) -> Vec<DetectedCapability> {
     // Network — detect usage and extract literal URL hosts
     let has_fetch = html.contains("fetch(") || html.contains("fetch (");
     let has_xhr = html.contains("XMLHttpRequest");
-    let has_ws =
-        html.contains("new WebSocket") || html.contains("new window.WebSocket");
+    let has_ws = html.contains("new WebSocket") || html.contains("new window.WebSocket");
     let has_eventsource = html.contains("new EventSource");
 
     if has_fetch || has_xhr || has_ws || has_eventsource {
@@ -91,8 +90,7 @@ pub fn scan_html(html: &str) -> Vec<DetectedCapability> {
 
         // Extract hosts from any http(s):// literal in the source
         // Captures: scheme://host+port (stops at /, ", ', whitespace, ))
-        let url_re = Regex::new(r"https?://([a-zA-Z0-9\-._~:@!$&'*+,;=%]+)")
-            .expect("valid regex");
+        let url_re = Regex::new(r"https?://([a-zA-Z0-9\-._~:@!$&'*+,;=%]+)").expect("valid regex");
         for cap in url_re.captures_iter(html) {
             if let Some(host_port) = cap.get(1) {
                 let raw = host_port.as_str();

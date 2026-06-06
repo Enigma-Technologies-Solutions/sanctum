@@ -15,7 +15,6 @@
 ///   • Sanctum ships with a Sanctum-operated root key for community tools.
 ///   • The signature covers: sha256(manifest_json_canonical).
 ///   • Hardware-backed keys (Secure Enclave / TPM) are a v2 concern.
-
 use crate::models::ToolManifest;
 
 /// Verify a signature over a manifest.

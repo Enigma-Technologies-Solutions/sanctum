@@ -70,12 +70,13 @@ pub async fn create_version_inner(
             .await
             .map_err(|e| e.to_string())?;
 
-        let manifest_row =
-            sqlx::query("SELECT manifest, file_size, quarantined, created_at FROM tool_versions WHERE id = $1")
-                .bind(&sha)
-                .fetch_one(pool)
-                .await
-                .map_err(|e| e.to_string())?;
+        let manifest_row = sqlx::query(
+            "SELECT manifest, file_size, quarantined, created_at FROM tool_versions WHERE id = $1",
+        )
+        .bind(&sha)
+        .fetch_one(pool)
+        .await
+        .map_err(|e| e.to_string())?;
         let manifest_json: String = manifest_row.try_get("manifest").unwrap();
         let manifest: ToolManifest =
             serde_json::from_str(&manifest_json).map_err(|e| e.to_string())?;
@@ -167,14 +168,13 @@ pub async fn rollback_version(
     tool_id: String,
     version_id: String,
 ) -> Result<(), String> {
-    let row = sqlx::query(
-        "SELECT id, quarantined FROM tool_versions WHERE id = $1 AND tool_id = $2",
-    )
-    .bind(&version_id)
-    .bind(&tool_id)
-    .fetch_optional(&db.0)
-    .await
-    .map_err(|e| e.to_string())?;
+    let row =
+        sqlx::query("SELECT id, quarantined FROM tool_versions WHERE id = $1 AND tool_id = $2")
+            .bind(&version_id)
+            .bind(&tool_id)
+            .fetch_optional(&db.0)
+            .await
+            .map_err(|e| e.to_string())?;
 
     match row {
         None => return Err("Version not found for this tool".into()),

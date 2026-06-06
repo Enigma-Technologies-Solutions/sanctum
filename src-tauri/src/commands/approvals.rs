@@ -3,9 +3,9 @@
 
 use tauri::command;
 
+use crate::commands::ingest::load_tool_record;
 use crate::db::DbState;
 use crate::models::{DetectedCapability, ToolRecord};
-use crate::commands::ingest::load_tool_record;
 
 /// Persist user-approved capabilities for a tool.
 ///

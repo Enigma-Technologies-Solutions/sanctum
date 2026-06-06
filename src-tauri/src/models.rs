@@ -79,7 +79,10 @@ impl ToolManifest {
         if self.detected.is_empty() {
             return vec!["nothing beyond rendering HTML".into()];
         }
-        self.detected.iter().map(|c| c.to_plain_language()).collect()
+        self.detected
+            .iter()
+            .map(|c| c.to_plain_language())
+            .collect()
     }
 }
 

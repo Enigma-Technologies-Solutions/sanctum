@@ -7,8 +7,8 @@ use tauri::{command, Manager, WebviewUrl, WebviewWindowBuilder};
 use crate::commands::versioning::hash_bytes_hex;
 use crate::db::DbState;
 use crate::models::{CapabilityFeature, DetectedCapability, ToolManifest};
-use crate::AppDataDir;
 use crate::ActiveToolPaths;
+use crate::AppDataDir;
 
 /// Initialization script injected into every tool window BEFORE the tool's
 /// HTML is parsed. Removes Tauri IPC globals so tools have zero OS bridge.
@@ -75,11 +75,14 @@ pub fn build_tool_csp(approvals: &[DetectedCapability]) -> String {
         .filter(|h| h != "(dynamic)")
         .collect();
 
-    let allow_camera = approvals.iter().any(|c| {
-        matches!(c, DetectedCapability::Feature(CapabilityFeature::Camera))
-    });
+    let allow_camera = approvals
+        .iter()
+        .any(|c| matches!(c, DetectedCapability::Feature(CapabilityFeature::Camera)));
     let allow_mic = approvals.iter().any(|c| {
-        matches!(c, DetectedCapability::Feature(CapabilityFeature::Microphone))
+        matches!(
+            c,
+            DetectedCapability::Feature(CapabilityFeature::Microphone)
+        )
     });
 
     if net_hosts.is_empty() && !allow_camera && !allow_mic {
@@ -163,17 +166,18 @@ pub async fn open_tool_window(
     tool_id: String,
 ) -> Result<(), String> {
     // 1. Load current version + user approvals
-    let tool_row =
-        sqlx::query("SELECT name, current_ver, approvals FROM tools WHERE id = $1")
-            .bind(&tool_id)
-            .fetch_optional(&db.0)
-            .await
-            .map_err(|e| e.to_string())?
-            .ok_or_else(|| format!("Tool not found: {tool_id}"))?;
+    let tool_row = sqlx::query("SELECT name, current_ver, approvals FROM tools WHERE id = $1")
+        .bind(&tool_id)
+        .fetch_optional(&db.0)
+        .await
+        .map_err(|e| e.to_string())?
+        .ok_or_else(|| format!("Tool not found: {tool_id}"))?;
 
     let tool_name: String = tool_row.try_get("name").unwrap_or_else(|_| "Tool".into());
     let current_ver: Option<String> = tool_row.try_get("current_ver").unwrap_or(None);
-    let approvals_json: String = tool_row.try_get("approvals").unwrap_or_else(|_| "[]".into());
+    let approvals_json: String = tool_row
+        .try_get("approvals")
+        .unwrap_or_else(|_| "[]".into());
     let sha = current_ver.ok_or("Tool has no version to run")?;
 
     let approvals: Vec<DetectedCapability> =
@@ -188,8 +192,7 @@ pub async fn open_tool_window(
         .join(&sha);
     let html_path = version_dir.join("index.html");
 
-    let content = std::fs::read(&html_path)
-        .map_err(|e| format!("Cannot read tool file: {e}"))?;
+    let content = std::fs::read(&html_path).map_err(|e| format!("Cannot read tool file: {e}"))?;
 
     let actual_sha = hash_bytes_hex(&content);
     if actual_sha != sha {
@@ -206,12 +209,11 @@ pub async fn open_tool_window(
     }
 
     // 3. Check not already quarantined
-    let ver_row =
-        sqlx::query("SELECT quarantined, manifest FROM tool_versions WHERE id = $1")
-            .bind(&sha)
-            .fetch_one(&db.0)
-            .await
-            .map_err(|e| e.to_string())?;
+    let ver_row = sqlx::query("SELECT quarantined, manifest FROM tool_versions WHERE id = $1")
+        .bind(&sha)
+        .fetch_one(&db.0)
+        .await
+        .map_err(|e| e.to_string())?;
 
     let quarantined: i32 = ver_row.try_get("quarantined").unwrap_or(0);
     if quarantined != 0 {
@@ -247,8 +249,7 @@ pub async fn open_tool_window(
     let summary = approved_summary(&approvals);
     let title = format!(
         "{} — {} | ⚠ Third-party tool — not verified by Sanctum",
-        tool_name,
-        summary,
+        tool_name, summary,
     );
 
     WebviewWindowBuilder::new(&app, &label, WebviewUrl::CustomProtocol(url))

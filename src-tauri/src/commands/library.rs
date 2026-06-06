@@ -10,8 +10,7 @@ use crate::models::{ToolManifest, ToolRecord, ToolWithVersion, VersionRecord};
 
 fn parse_version_row(row: &sqlx::sqlite::SqliteRow) -> Result<VersionRecord, String> {
     let manifest_json: String = row.try_get("manifest").map_err(|e| e.to_string())?;
-    let manifest: ToolManifest =
-        serde_json::from_str(&manifest_json).map_err(|e| e.to_string())?;
+    let manifest: ToolManifest = serde_json::from_str(&manifest_json).map_err(|e| e.to_string())?;
     Ok(VersionRecord {
         id: row.try_get("id").map_err(|e| e.to_string())?,
         tool_id: row.try_get("tool_id").map_err(|e| e.to_string())?,
@@ -50,13 +49,12 @@ pub async fn list_tools(db: tauri::State<'_, DbState>) -> Result<Vec<ToolWithVer
             updated_at: row.try_get("updated_at").unwrap_or(0),
         };
 
-        let versions = sqlx::query(
-            "SELECT * FROM tool_versions WHERE tool_id = $1 ORDER BY version_num DESC",
-        )
-        .bind(&tool.id)
-        .fetch_all(&db.0)
-        .await
-        .map_err(|e| e.to_string())?;
+        let versions =
+            sqlx::query("SELECT * FROM tool_versions WHERE tool_id = $1 ORDER BY version_num DESC")
+                .bind(&tool.id)
+                .fetch_all(&db.0)
+                .await
+                .map_err(|e| e.to_string())?;
 
         let version_records: Vec<VersionRecord> = versions
             .iter()
@@ -84,13 +82,12 @@ pub async fn get_tool(
 ) -> Result<ToolWithVersion, String> {
     let tool = load_tool_record(&db.0, &tool_id).await?;
 
-    let versions = sqlx::query(
-        "SELECT * FROM tool_versions WHERE tool_id = $1 ORDER BY version_num DESC",
-    )
-    .bind(&tool_id)
-    .fetch_all(&db.0)
-    .await
-    .map_err(|e| e.to_string())?;
+    let versions =
+        sqlx::query("SELECT * FROM tool_versions WHERE tool_id = $1 ORDER BY version_num DESC")
+            .bind(&tool_id)
+            .fetch_all(&db.0)
+            .await
+            .map_err(|e| e.to_string())?;
 
     let version_records: Vec<VersionRecord> = versions
         .iter()

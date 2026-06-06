@@ -179,7 +179,8 @@ pub async fn ingest_from_clipboard(
 
 fn read_clipboard() -> Result<String, String> {
     let mut cb = arboard::Clipboard::new().map_err(|e| format!("Clipboard error: {e}"))?;
-    cb.get_text().map_err(|e| format!("Clipboard read error: {e}"))
+    cb.get_text()
+        .map_err(|e| format!("Clipboard read error: {e}"))
 }
 
 /// Add a new version to an existing tool from the OS clipboard.
