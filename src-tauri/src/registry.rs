@@ -10,7 +10,7 @@
 ///
 /// Planned interface (not yet implemented):
 ///
-/// ```rust
+/// ```rust,ignore
 /// pub struct RegistryEntry {
 ///     pub checksum: String,       // sha256:hex
 ///     pub publisher: String,      // publisher identifier

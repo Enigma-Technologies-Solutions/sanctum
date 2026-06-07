@@ -10,7 +10,7 @@
 ///
 /// Planned interface (not yet implemented):
 ///
-/// ```rust
+/// ```rust,ignore
 /// pub enum DeviceRequest {
 ///     Camera { label: String },
 ///     Microphone { label: String },
