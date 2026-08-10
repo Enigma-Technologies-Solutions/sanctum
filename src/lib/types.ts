@@ -50,6 +50,13 @@ export interface VersionRecord {
   created_at: number;
 }
 
+/** A pending signed update, as reported by the Rust updater command. */
+export interface UpdateInfo {
+  version: string;
+  current_version: string;
+  notes: string | null;
+}
+
 export interface ToolWithVersion {
   tool: ToolRecord;
   current_version: VersionRecord | null;

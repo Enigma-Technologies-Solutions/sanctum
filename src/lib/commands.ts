@@ -8,6 +8,7 @@ import type {
   MetadataUpdate,
   ToolManifest,
   ToolWithVersion,
+  UpdateInfo,
   VersionRecord,
 } from "./types";
 
@@ -96,5 +97,21 @@ export const Commands = {
   /** Open a tool in its isolated runtime window. */
   openToolWindow(toolId: string): Promise<void> {
     return invoke("open_tool_window", { toolId });
+  },
+
+  /**
+   * Check the release endpoint for a newer signed build.
+   * Resolves to null when already current; rejects on network failure.
+   */
+  checkForUpdate(): Promise<UpdateInfo | null> {
+    return invoke("check_for_update");
+  },
+
+  /**
+   * Download, verify, and install the pending update, then relaunch.
+   * The app is replaced by the new build — this call does not return normally.
+   */
+  installUpdate(): Promise<void> {
+    return invoke("install_update");
   },
 } as const;

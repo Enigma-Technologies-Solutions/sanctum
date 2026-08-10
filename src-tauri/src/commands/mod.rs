@@ -6,4 +6,5 @@ pub mod ingest;
 pub mod library;
 pub mod runner;
 pub mod scan;
+pub mod updater;
 pub mod versioning;

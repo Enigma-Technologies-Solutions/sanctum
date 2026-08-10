@@ -2,6 +2,7 @@
 // Copyright (C) 2026 Enigma Technologies Solutions
 
 import { Library } from "@/components/Library";
+import { UpdateBanner } from "@/components/UpdateBanner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 
 /**
@@ -156,6 +157,7 @@ function App() {
     <TooltipProvider delayDuration={400}>
       <div style={{ display: "flex", flexDirection: "column", height: "100vh", background: "#FFFFFF", overflow: "hidden" }}>
         <AppHeader />
+        <UpdateBanner />
         <main style={{ flex: 1, overflow: "hidden", position: "relative" }}>
           <Library />
         </main>

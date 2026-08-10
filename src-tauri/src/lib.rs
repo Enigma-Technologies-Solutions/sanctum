@@ -168,6 +168,10 @@ pub fn run() {
     tauri::Builder::default()
         .plugin(tauri_plugin_clipboard_manager::init())
         .plugin(tauri_plugin_dialog::init())
+        // Updater is registered for Rust-side use only. No capability file
+        // grants `updater:*`, so its IPC commands are unreachable from any
+        // webview — the host UI goes through commands::updater instead.
+        .plugin(tauri_plugin_updater::Builder::new().build())
         .manage(ActiveToolPaths(Mutex::new(HashMap::new())))
         // Register sanctum-tool:// custom protocol.
         //
@@ -207,6 +211,8 @@ pub fn run() {
             commands::library::delete_tool,
             commands::ingest::update_tool_from_clipboard,
             commands::ingest::update_tool_from_path,
+            commands::updater::check_for_update,
+            commands::updater::install_update,
         ])
         .setup(|app| {
             let data_dir = app
