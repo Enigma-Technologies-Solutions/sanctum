@@ -17,6 +17,32 @@ use crate::models::{CapabilityFeature, DetectedCapability, NetCapability, ToolMa
 // real security guarantee. The scan produces the human-readable permission
 // badge and drives the derived manifest; it is not a security control.
 
+/// Is this string safe to emit as a host inside a Content-Security-Policy?
+///
+/// Every host that reaches the CSP builder originates in tool-authored HTML, so
+/// this check is the only thing between an attacker-controlled string and a
+/// security header. It is deliberately stricter than RFC 1123 — anything that is
+/// not plainly a DNS hostname is rejected, in particular `;`, `,`, `'` and
+/// whitespace, which would otherwise let a crafted URL restructure the policy.
+///
+/// Rejects IP literals with brackets, wildcards, userinfo, and ports; the
+/// scanner strips ports before calling this, and approvals only ever contain
+/// hosts the scanner produced.
+pub fn is_valid_host(host: &str) -> bool {
+    if host.is_empty() || host.len() > 253 {
+        return false;
+    }
+    host.split('.').all(|label| {
+        !label.is_empty()
+            && label.len() <= 63
+            && !label.starts_with('-')
+            && !label.ends_with('-')
+            && label
+                .bytes()
+                .all(|b| b.is_ascii_alphanumeric() || b == b'-')
+    })
+}
+
 /// Scan HTML/JS content and return detected capabilities.
 pub fn scan_html(html: &str) -> Vec<DetectedCapability> {
     let mut detected: Vec<DetectedCapability> = Vec::new();
@@ -96,11 +122,16 @@ pub fn scan_html(html: &str) -> Vec<DetectedCapability> {
                 let raw = host_port.as_str();
                 // Strip port if present; take only hostname
                 let host = raw.split(':').next().unwrap_or(raw).to_lowercase();
-                // Exclude localhost / loopback — those aren't external hosts
+                // Exclude localhost / loopback — those aren't external hosts.
+                // Anything that is not a well-formed hostname is dropped rather
+                // than surfaced: the capture class above admits characters that
+                // are meaningful inside a CSP, and a malformed host must never
+                // reach the manifest, the approval UI, or the policy builder.
                 if !host.is_empty()
                     && host != "localhost"
                     && !host.starts_with("127.")
                     && !host.starts_with("::1")
+                    && is_valid_host(&host)
                 {
                     hosts.insert(host);
                 }
@@ -191,4 +222,129 @@ pub fn scan_capabilities(html: String) -> Vec<DetectedCapability> {
 pub fn capabilities_for_manifest(_manifest: ToolManifest) -> Vec<String> {
     // v0-todo(v1): map manifest.detected → granted capability identifiers
     vec![]
+}
+
+// ── Tests ─────────────────────────────────────────────────────────────────────
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    /// Hosts extracted from a scan, or None when no network use was detected.
+    fn scanned_hosts(html: &str) -> Option<Vec<String>> {
+        scan_html(html).into_iter().find_map(|c| match c {
+            DetectedCapability::Net(n) => Some(n.net),
+            _ => None,
+        })
+    }
+
+    // ── is_valid_host ─────────────────────────────────────────────────────────
+
+    #[test]
+    fn ordinary_hostnames_are_valid() {
+        for host in [
+            "example.com",
+            "api.example.com",
+            "my-api.example.co.uk",
+            "xn--80ak6aa92e.com",
+            "a.b.c.d.e.f",
+            "host123",
+        ] {
+            assert!(is_valid_host(host), "rejected valid host: {host}");
+        }
+    }
+
+    #[test]
+    fn csp_metacharacters_are_invalid() {
+        // These are the characters that make CSP injection possible.
+        for host in [
+            "evil.com;report-uri",
+            "evil.com,default-src",
+            "evil.com script-src",
+            "evil.com'",
+            "evil.com\"",
+            "evil.com*",
+            "evil.com/path",
+            "evil.com:443",
+            "evil.com%20x",
+            "evil.com\nx",
+        ] {
+            assert!(!is_valid_host(host), "accepted dangerous host: {host}");
+        }
+    }
+
+    #[test]
+    fn malformed_dns_labels_are_invalid() {
+        for host in [
+            "",
+            ".",
+            "..",
+            ".example.com",
+            "example.com.",
+            "a..b",
+            "-x.com",
+            "x-.com",
+        ] {
+            assert!(!is_valid_host(host), "accepted malformed host: {host}");
+        }
+    }
+
+    #[test]
+    fn overlong_names_and_labels_are_invalid() {
+        assert!(!is_valid_host(&"a".repeat(64)));
+        assert!(is_valid_host(&"a".repeat(63)));
+        let long = std::iter::repeat_n("abcdefgh", 40)
+            .collect::<Vec<_>>()
+            .join(".");
+        assert!(long.len() > 253);
+        assert!(!is_valid_host(&long));
+    }
+
+    // ── Host extraction ───────────────────────────────────────────────────────
+
+    #[test]
+    fn literal_host_is_extracted() {
+        let hosts = scanned_hosts(r#"<script>fetch("https://api.example.com/v1")</script>"#)
+            .expect("net capability detected");
+        assert_eq!(hosts, vec!["api.example.com"]);
+    }
+
+    #[test]
+    fn port_is_stripped_and_host_kept() {
+        let hosts = scanned_hosts(r#"<script>fetch("https://api.example.com:8443/v1")</script>"#)
+            .expect("net capability detected");
+        assert_eq!(hosts, vec!["api.example.com"]);
+    }
+
+    #[test]
+    fn crafted_host_never_reaches_the_manifest() {
+        // The capture class admits ';' — validation must drop the result rather
+        // than let it flow through to approvals and the CSP builder.
+        let hosts = scanned_hosts(r#"<script>fetch("https://evil.com;report-uri")</script>"#)
+            .expect("net capability detected");
+        assert_eq!(
+            hosts,
+            vec!["(dynamic)"],
+            "crafted host survived validation: {hosts:?}"
+        );
+    }
+
+    #[test]
+    fn loopback_hosts_are_not_reported_as_external() {
+        let hosts = scanned_hosts(r#"<script>fetch("http://localhost:3000/x")</script>"#)
+            .expect("net capability detected");
+        assert_eq!(hosts, vec!["(dynamic)"]);
+    }
+
+    #[test]
+    fn network_use_without_literal_hosts_is_marked_dynamic() {
+        let hosts = scanned_hosts(r#"<script>fetch(base + path)</script>"#)
+            .expect("net capability detected");
+        assert_eq!(hosts, vec!["(dynamic)"]);
+    }
+
+    #[test]
+    fn no_network_use_yields_no_net_capability() {
+        assert!(scanned_hosts("<p>static page</p>").is_none());
+    }
 }

