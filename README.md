@@ -67,7 +67,58 @@ pnpm install
 pnpm tauri dev
 ```
 
+On Linux you also need the GTK/WebKit and PC/SC development packages:
+
+```bash
+sudo apt install libwebkit2gtk-4.1-dev libgtk-3-dev libayatana-appindicator3-dev \
+                 librsvg2-dev patchelf libpcsclite-dev
+```
+
 Signed release builds require Apple Developer Program and Azure Trusted Signing credentials. See [.github/workflows/release.yml](.github/workflows/release.yml).
+
+### Raspberry Pi 400 / arm64 Linux
+
+Two ways to get a build onto a Pi. Both target **Raspberry Pi OS Bookworm,
+64-bit** — the 32-bit image is not a usable target, because WebKitGTK on armhf
+is not something Tauri supports in practice.
+
+**Download a `.deb` from CI** (no build on the Pi):
+
+Actions → *CI* or *Release* → run → artifacts → `linux-arm64`. Those jobs run on
+`ubuntu-22.04-arm`, whose glibc (2.35) is older than Bookworm's (2.36), so the
+package installs. An arm64 build made on 24.04 will not.
+
+```bash
+sudo apt install ./Sanctum_0.1.0_arm64.deb
+```
+
+**Or build on the Pi itself:**
+
+```bash
+./scripts/pi-setup.sh    # toolchain, PC/SC stack, Rust, Node, 2 GB swap
+./scripts/pi-build.sh    # release build + .deb   (~25 min on a Pi 400)
+./scripts/pi-build.sh --fast   # unoptimised binary, no bundle (~8 min)
+```
+
+`pi-build.sh` overrides the release profile through `CARGO_PROFILE_RELEASE_*`
+rather than editing `Cargo.toml`: fat LTO with one codegen unit is right for a
+shipped binary and wrong for four Cortex-A72 cores with 4 GB of RAM. It also
+caps parallel jobs at 2, because the link step is where Pi builds get
+OOM-killed.
+
+**Smart cards on the Pi.** The `.deb` depends on `pcscd`, `libpcsclite1` and
+`libccid`, so apt pulls the reader stack in. Confirm the daemon can see your
+reader before blaming Sanctum:
+
+```bash
+systemctl status pcscd
+pcsc_scan -r
+```
+
+A USB CCID reader on a Pi 400 is generally *steadier* than a bus-powered
+contactless one on a laptop: contactless cards brown out during key generation
+and go mute, which PC/SC reports as `MUTE` and Sanctum surfaces as a card that
+needs re-presenting.
 
 ---
 
@@ -136,6 +187,49 @@ Detected patterns:
 | `new Notification` / `Notification.requestPermission` | `notifications` |
 | `localStorage` / `sessionStorage` / `indexedDB` | `storage` |
 | `fetch()` / `XMLHttpRequest` / `new WebSocket` + literal `https://` URLs | `{"net": ["hostname",...]}` |
+| `sanctum.smartcard` + literal AIDs | `{"smartcard": ["a0000006472f0001",...]}` |
+
+### Smart card access
+
+Sanctum exposes one capability that a browser will not: direct APDU exchange
+with a smart card, over the platform PC/SC stack. It exists because the whole
+point of a desktop host is to offer what a web page cannot — a FIDO2 card can
+be driven at the CTAP2 level, including extensions like `hmac-secret` that the
+WebAuthn API deliberately does not expose to pages.
+
+Approval is **per applet**, not per device. The scan pulls literal AIDs out of
+the tool's source, and the prompt names them (`FIDO2 / WebAuthn (CTAP)`) so the
+user is agreeing to something readable. A tool that builds its AID at run time
+gets `(dynamic)`, which grants reader discovery and nothing else.
+
+Approved tools get `window.sanctum.smartcard`, injected only when the grant
+exists:
+
+```js
+const readers = await sanctum.smartcard.listReaders();
+const session = await sanctum.smartcard.open(readers[0].name);
+await session.select('a0000006472f0001');   // refused unless approved
+const r = await session.transmit('80100000000001040000');  // CTAP2 getInfo
+// r = { sw: 36864, ok: true, data: "00af01…" }
+await session.close();
+```
+
+There is no Tauri IPC behind this. The methods fetch same-origin URLs under
+`sanctum-tool://tool-{id}/__sanctum/v1/`, which the protocol handler answers in
+Rust; the caller's identity is the webview label supplied by the runtime, never
+anything the page can set. Enforcement lives in `smartcard.rs`:
+
+| Guard | Effect |
+|-------|--------|
+| Capability check | No approval → no readers, no sessions, no APDUs. |
+| AID allow-list | `select` refused unless that exact AID was approved. |
+| No re-selection | Raw `transmit` refuses interindustry `SELECT`, `MANAGE CHANNEL`, `GET RESPONSE` — a tool approved for FIDO cannot pivot to PIV or OpenPGP on the same card. |
+| Select-before-transmit | Raw APDUs are refused until an approved applet is selected. |
+| Session ownership | Sessions are bound to the opening tool and dropped when its window closes. |
+| Non-destructive disconnect | Every disconnect uses `LeaveCard`; Sanctum never power-cycles a card it did not have to. |
+
+The one CSP change: an approved tool gets `connect-src 'self'`, which is its own
+`sanctum-tool://` origin. It opens no path off the machine.
 
 Scanner limitations: dynamic string construction, obfuscated/minified code, CDN-loaded scripts. The sandbox enforces limits regardless of what the scan finds.
 
@@ -152,6 +246,7 @@ Scanner limitations: dynamic string construction, obfuscated/minified code, CDN-
 | Tool exfiltrates data over network | CSP `connect-src 'none'` injected by the protocol handler on every response. Enforced at the WebView level. |
 | One tool reads another's storage | Distinct `sanctum-tool://tool-{id}/` origins. Verified: write a key in tool-A's `localStorage`; tool-B (different ID) returns `null`. |
 | Tampered stored file runs | SHA-256 recomputed on every `open_tool_window`. Mismatch → quarantine → no window. |
+| Tool reaches a card applet it was not approved for | AID allow-list on `select`; interindustry `SELECT`/`MANAGE CHANNEL` refused on the raw channel, so the selected applet cannot change mid-session. |
 | Path traversal | Component-by-component check (reject `..`, absolute, prefix) + `canonicalize` confirmation. |
 
 ### What Sanctum does not prevent (v0, honest)
@@ -176,6 +271,7 @@ src-tauri/src/
 ├── models.rs           — ToolRecord, VersionRecord, ToolManifest, DetectedCapability
 ├── signing.rs          — Ed25519 verification seam (v1)
 ├── device_broker.rs    — hardware consent / elevation stub (v1)
+├── smartcard.rs        — PC/SC broker: AID allow-list, APDU policy, sessions
 ├── policy.rs           — org policy file stub (v2)
 ├── registry.rs         — server-side provenance client stub (v3)
 └── commands/

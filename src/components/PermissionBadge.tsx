@@ -103,7 +103,9 @@ export function PermissionBadge({ detected, mode = "compact" }: PermissionBadgeP
           const label =
             typeof cap === "string"
               ? (ABBREV[cap as CapabilityFeature] ?? cap)
-              : `Net: ${cap.net.slice(0, 1).join("")}`;
+              : "smartcard" in cap
+                ? "Smart card"
+                : `Net: ${cap.net.slice(0, 1).join("")}`;
           return <VoltPill key={i} label={label} tooltip={capabilityToPlain(cap)} />;
         })}
         {overflow > 0 && (
@@ -123,7 +125,9 @@ export function PermissionBadge({ detected, mode = "compact" }: PermissionBadgeP
         const label =
           typeof cap === "string"
             ? (ABBREV[cap as CapabilityFeature] ?? cap)
-            : "Network";
+            : "smartcard" in cap
+              ? "Smart card"
+              : "Network";
         return <VoltPill key={i} label={label} tooltip={capabilityToPlain(cap)} />;
       })}
     </div>
