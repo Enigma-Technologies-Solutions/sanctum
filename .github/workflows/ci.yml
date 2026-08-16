@@ -158,7 +158,13 @@ jobs:
       # `tauri build` refuses to run at all. A CI build is a compile-and-bundle
       # check, not something the update channel will ever serve, so it has no
       # business signing anything.
+      #
+      # shell: bash on every leg, Windows included. The default shell there is
+      # PowerShell, which strips the double quotes out of the inline JSON and
+      # hands the CLI `{bundle:{createUpdaterArtifacts:false}}` — not JSON, and
+      # rejected with "key must be a string".
       - name: pnpm tauri build
+        shell: bash
         run: pnpm tauri build ${{ matrix.tauri-args }} --config '{"bundle":{"createUpdaterArtifacts":false}}'
         env:
           # Suppress macOS notarization in CI (no signing certs present)
