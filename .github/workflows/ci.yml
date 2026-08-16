@@ -150,10 +150,30 @@ jobs:
         run: pnpm install --frozen-lockfile
 
       # Build the full Tauri app (frontend + Rust backend + bundle).
+      #
       # No signing secrets are injected in CI — the build produces unsigned
-      # artifacts. Signed release builds happen in release.yml on tag push.
+      # artifacts, and signed release builds happen in release.yml on tag push.
+      # createUpdaterArtifacts is switched off for the same reason: with a
+      # public key in tauri.conf.json and no private key in the environment,
+      # `tauri build` refuses to run at all. A CI build is a compile-and-bundle
+      # check, not something the update channel will ever serve, so it has no
+      # business signing anything.
       - name: pnpm tauri build
-        run: pnpm tauri build ${{ matrix.tauri-args }}
+        run: pnpm tauri build ${{ matrix.tauri-args }} --config '{"bundle":{"createUpdaterArtifacts":false}}'
         env:
           # Suppress macOS notarization in CI (no signing certs present)
           CI: true
+
+      # Keep the Linux bundles. The arm64 .deb is the one that matters: it is
+      # the only practical way to get Sanctum onto a Raspberry Pi without a
+      # ~25-minute build on the Pi itself.
+      - name: Upload Linux bundles
+        if: startsWith(matrix.os, 'ubuntu-')
+        uses: actions/upload-artifact@v4
+        with:
+          name: sanctum-${{ matrix.rust-target }}
+          path: |
+            src-tauri/target/release/bundle/deb/*.deb
+            src-tauri/target/release/bundle/appimage/*.AppImage
+          if-no-files-found: warn
+          retention-days: 14
