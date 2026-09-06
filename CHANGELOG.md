@@ -1,0 +1,114 @@
+<!--
+SPDX-License-Identifier: AGPL-3.0-only
+Copyright (C) 2026 Enigma Technologies Solutions
+-->
+
+# Changelog
+
+Notable changes to Sanctum. Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/);
+versions follow [semantic versioning](https://semver.org/spec/v2.0.0.html).
+
+`release.yml` links every GitHub Release body here, so each tag should leave a
+section behind.
+
+## [Unreleased]
+
+### Added — smart card access for tools
+
+Sanctum can hand an approved tool a raw APDU channel to **one** smart card
+applet, over the platform PC/SC stack (WinSCard, pcsc-lite, macOS PCSC — all
+shipped with the OS). This is the first working implementation of the
+`device_broker.rs` seam.
+
+The motivating case is CTAP2 `hmac-secret`: a FIDO2 card will compute
+`HMAC-SHA256(CredRandom, salt)` inside the chip, where `CredRandom` never
+leaves it. WebAuthn deliberately does not expose that to web pages, so it is
+the clearest example of the capability gap a desktop host exists to close.
+
+- `smartcard.rs` — the broker: reader enumeration, sessions, AID allow-list,
+  APDU policy, ISO 7816 response chaining.
+- `window.sanctum.smartcard` in approved tool windows —
+  `listReaders`, `open`, `select`, `transmit`, `close`.
+- `DetectedCapability::Smartcard` with per-applet approval; the static scan
+  lifts literal AIDs out of tool source so the prompt can name the applet
+  ("FIDO2 / WebAuthn (CTAP)") instead of asking for blanket card access.
+- Rust tests: 55 → 95.
+
+**No Tauri IPC was re-enabled for tool windows.** The bridge is same-origin
+`fetch` to `sanctum-tool://tool-{id}/__sanctum/v1/…`, answered by the custom
+protocol handler, where the caller's identity is the webview label supplied by
+the runtime rather than anything the page can set. Re-enabling IPC would have
+handed tools a general-purpose `invoke` and made the whole surface depend on
+the ACL never regressing.
+
+Enforcement, all in Rust:
+
+| Guard | Effect |
+|-------|--------|
+| Capability check | No approval → no readers, no sessions, no APDUs |
+| AID allow-list | `select` refused unless that exact AID was approved |
+| No re-selection | Raw `transmit` refuses interindustry `SELECT` / `MANAGE CHANNEL` / `GET RESPONSE`, so a tool approved for FIDO cannot pivot to PIV or OpenPGP on the same card |
+| Select-before-transmit | Raw APDUs refused until an approved applet is selected |
+| Session ownership | Sessions bound to the opening tool, dropped when its window closes |
+
+CSP change is one directive: approved tools get `connect-src 'self'
+sanctum-tool:` — their own origin, served entirely by Sanctum, with no path off
+the machine. The scheme is named explicitly because WebKitGTK does not reliably
+match a custom-scheme document against `'self'`.
+
+### Fixed
+
+- **Reader enumeration no longer resets cards.** Dropping a `pcsc::Card`
+  disconnects with `Disposition::ResetCard`; listing readers was therefore
+  power-cycling every card it looked at, which on a contactless card means
+  deactivating it until the user re-presents it. Every disconnect is now an
+  explicit `LeaveCard`.
+- **Card presence is read with `SCardGetStatusChange`,** not by connect-probing.
+  Connecting succeeds against cards the driver has already lost and cannot
+  distinguish present-and-working from present-but-`MUTE`.
+- **A card reset mid-session recovers in place** — reconnect, re-select the
+  applet, retry once. Only a physically absent card surfaces to the tool
+  (HTTP 409).
+- **WebKitGTK renders correctly on Raspberry Pi.** The DMABUF renderer paints
+  torn horizontal bands on the Pi's V3D driver; `WEBKIT_DISABLE_DMABUF_RENDERER`
+  is now set on Linux before GTK initialises, unless the environment already
+  sets it.
+
+### Changed — build and CI
+
+- **CI builds no longer attempt to sign.** With an updater public key in
+  `tauri.conf.json` and no private key in the environment, `tauri build`
+  refuses to run, which had been failing every platform. CI now builds with
+  `createUpdaterArtifacts` off; signing stays in `release.yml`.
+- **Linux arm64 is in both matrices,** on `ubuntu-22.04-arm` — deliberately
+  22.04, whose glibc (2.35) predates Raspberry Pi OS Bookworm's (2.36), so the
+  `.deb` installs there. A 24.04 build does not.
+- Linux jobs upload their `.deb` and `.AppImage` as workflow artifacts.
+- `scripts/pi-setup.sh` and `scripts/pi-build.sh` build on a Pi directly.
+- The build step runs under `bash` on every platform; PowerShell strips the
+  quotes out of inline JSON arguments.
+- The `.deb` declares `pcscd`, `libpcsclite1` and `libccid`.
+
+### Security
+
+- Updater signing key rotated to minisign ID `59F59E13694FB434`. The previous
+  key's public half had been left in `tauri.conf.json` after rotation — a
+  pairing that signs successfully and is then rejected by every client. Verify
+  `~/.tauri/*.key.pub` against the config `pubkey` after any rotation; the
+  failure is silent by construction.
+
+### Verified on hardware
+
+A Cryptknox FIDO2 card, driven from an HTML tool inside Sanctum on a Raspberry
+Pi 400 (Alcor Link AK9567, contact slot):
+
+- applet select, `getInfo` (`FIDO_2_1`, `hmac-secret`, no PIN set),
+  `makeCredential`, `clientPIN(getKeyAgreement)`, `getAssertion` with the
+  `hmac-secret` extension — all `9000`;
+- the derived secret is **stable** across repeated derivations with the same
+  passphrase, **different** for a different passphrase, and **survives an
+  application restart** — the bytes come from the card, not from anything the
+  page retained.
+
+Contactless readers brown the card out during key generation and leave it mute
+until re-presented; a contact reader does not.
