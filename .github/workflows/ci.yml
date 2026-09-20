@@ -78,17 +78,18 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          # macOS Apple Silicon (arm64) — GitHub Actions M-series runner
-          - name: macOS aarch64
+          # macOS universal (arm64 + Intel), built on the M-series runner.
+          #
+          # One leg rather than two. GitHub has retired the macos-13 Intel
+          # image, so an x86_64-only leg is never assigned a runner: it sits
+          # queued until the run is cancelled, which held PR #1 red for 24
+          # hours. Intel coverage now comes from cross-compiling on Apple
+          # Silicon, which is what release.yml has always done — so CI checks
+          # the bundle shape that actually ships instead of one that doesn't.
+          - name: macOS universal
             os: macos-14
-            rust-target: aarch64-apple-darwin
-            tauri-args: ''
-
-          # macOS Intel (x86_64) — older GitHub Actions Intel runner
-          - name: macOS x86_64
-            os: macos-13
-            rust-target: x86_64-apple-darwin
-            tauri-args: ''
+            rust-target: aarch64-apple-darwin,x86_64-apple-darwin
+            tauri-args: --target universal-apple-darwin
 
           # Windows x86_64
           - name: Windows x86_64
@@ -182,4 +183,17 @@ jobs:
             src-tauri/target/release/bundle/deb/*.deb
             src-tauri/target/release/bundle/appimage/*.AppImage
           if-no-files-found: warn
+          retention-days: 14
+
+      # Keep the macOS .dmg too. It is unsigned and un-notarized, so Gatekeeper
+      # will refuse a double-click (right-click → Open, or `xattr -cr` the .app),
+      # but it is the only macOS build anyone can download until release.yml
+      # has a Developer ID certificate to sign with.
+      - name: Upload macOS bundle
+        if: startsWith(matrix.os, 'macos-')
+        uses: actions/upload-artifact@v4
+        with:
+          name: sanctum-universal-apple-darwin
+          path: src-tauri/target/universal-apple-darwin/release/bundle/dmg/*.dmg
+          if-no-files-found: error
           retention-days: 14
