@@ -80,6 +80,18 @@ match a custom-scheme document against `'self'`.
   `tauri.conf.json` and no private key in the environment, `tauri build`
   refuses to run, which had been failing every platform. CI now builds with
   `createUpdaterArtifacts` off; signing stays in `release.yml`.
+- **macOS CI is one universal leg, not two per-arch legs.** GitHub retired the
+  `macos-13` Intel image, so the x86_64 job was never assigned a runner — it
+  queued for 24 hours until the run was cancelled, holding the matrix red while
+  every other leg passed. Intel coverage now comes from cross-compiling on the
+  M-series runner, matching what `release.yml` already ships. The unsigned
+  `.dmg` is uploaded as an artifact.
+- **`release.yml` no longer fails macOS when no signing certificate exists.**
+  The bundler codesigns on the *presence* of `APPLE_CERTIFICATE`; passing the
+  secret through unconditionally set it to the empty string and every macOS
+  build died importing an empty `.p12`. The Apple variables are now exported
+  only when the certificate secret is non-empty, so the leg builds unsigned
+  until the Developer ID certificate is enrolled.
 - **Linux arm64 is in both matrices,** on `ubuntu-22.04-arm` — deliberately
   22.04, whose glibc (2.35) predates Raspberry Pi OS Bookworm's (2.36), so the
   `.deb` installs there. A 24.04 build does not.
