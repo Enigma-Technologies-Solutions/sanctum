@@ -4,6 +4,11 @@ version = "0.1.0"
 description = "Sanctum — local-first secure tool runner"
 authors = ["Sanctum"]
 edition = "2021"
+# Not enforced by Cargo's resolver on its own — transitive deps (image, plist,
+# time) already require 1.88 and fail resolution below it regardless of this
+# field. Declared for tooling (cargo-msrv, crates.io, IDEs) and as documentation.
+# See rust-toolchain.toml, which is what actually pins contributors' toolchains.
+rust-version = "1.88"
 
 [lib]
 name = "sanctum_lib"

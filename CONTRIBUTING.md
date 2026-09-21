@@ -9,7 +9,7 @@
 ## Development setup
 
 ```bash
-# Prerequisites: Rust ≥ 1.77, Node.js ≥ 20, pnpm
+# Prerequisites: Rust ≥ 1.88 via rustup (pinned in rust-toolchain.toml), Node.js ≥ 20, pnpm
 
 git clone https://github.com/Enigma-Technologies-Solutions/sanctum
 cd sanctum

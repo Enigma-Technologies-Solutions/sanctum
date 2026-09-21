@@ -58,7 +58,14 @@ Building tools that work within Sanctum: [SANCTUM_FOR_AGENTS.md](SANCTUM_FOR_AGE
 
 ## Building from source
 
-**Prerequisites:** Rust ≥ 1.77 · Node.js ≥ 20 · pnpm
+**Prerequisites:** Rust ≥ 1.88 via [rustup](https://rustup.rs) (pinned in [`rust-toolchain.toml`](rust-toolchain.toml)) · Node.js ≥ 20 · pnpm
+
+rustup reads `rust-toolchain.toml` and installs the pinned toolchain for you —
+most contributors don't need to think about the version. It's pinned because
+the committed `src-tauri/Cargo.lock` includes crates (`image`, `plist`, `time`)
+whose own `rust-version` is 1.88; anything older — including the 1.85 that
+Debian 13 ships — fails at dependency resolution before compiling anything. A
+distro-packaged rustc will not satisfy this.
 
 ```bash
 git clone https://github.com/Enigma-Technologies-Solutions/sanctum
