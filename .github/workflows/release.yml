@@ -45,6 +45,15 @@ jobs:
             rust-targets: ''
             tauri-args: ''
 
+          # ── Linux arm64 — Raspberry Pi 400/5, arm64 laptops, arm servers ────
+          # Built on 22.04 (glibc 2.35) so the .deb installs on Raspberry Pi OS
+          # Bookworm (glibc 2.36). A 24.04 build would not.
+          - name: Linux arm64
+            os: ubuntu-22.04-arm
+            artifact: linux-arm64
+            rust-targets: ''
+            tauri-args: ''
+
     runs-on: ${{ matrix.os }}
 
     steps:
@@ -68,7 +77,7 @@ jobs:
           workspaces: src-tauri
 
       - name: Install Linux WebKit + GTK deps
-        if: matrix.os == 'ubuntu-22.04'
+        if: startsWith(matrix.os, 'ubuntu-')
         run: |
           sudo apt-get update
           sudo apt-get install -y \
@@ -76,10 +85,53 @@ jobs:
             libgtk-3-dev \
             libayatana-appindicator3-dev \
             librsvg2-dev \
-            patchelf
+            patchelf \
+            libpcsclite-dev
 
       - name: Install JS dependencies
         run: pnpm install --frozen-lockfile
+
+      # ── macOS signing, only when there is something to sign with ────────────
+      #
+      # The Tauri bundler decides to codesign on the *presence* of
+      # APPLE_CERTIFICATE, not on its value. Passing the secret straight into
+      # the tauri-action step set it to the empty string on a repo with no
+      # certificate enrolled, so every macOS build tried to import an empty
+      # .p12 and died with:
+      #
+      #   security: SecKeychainItemImport: One or more parameters passed to a
+      #   function were not valid.
+      #   failed to bundle project failed codesign application
+      #
+      # So the variables are exported here, into the job environment, and only
+      # when the certificate secret is non-empty. Until the Developer ID cert
+      # is enrolled the macOS leg builds unsigned instead of failing; once the
+      # secrets land, signing and notarization switch on with no edit here.
+      - name: Arm macOS signing
+        if: startsWith(matrix.os, 'macos-')
+        shell: bash
+        env:
+          APPLE_CERTIFICATE:          ${{ secrets.APPLE_CERTIFICATE }}
+          APPLE_CERTIFICATE_PASSWORD: ${{ secrets.APPLE_CERTIFICATE_PASSWORD }}
+          APPLE_SIGNING_IDENTITY:     ${{ secrets.APPLE_SIGNING_IDENTITY }}
+          APPLE_ID:                   ${{ secrets.APPLE_ID }}
+          APPLE_TEAM_ID:              ${{ secrets.APPLE_TEAM_ID }}
+          APPLE_PASSWORD:             ${{ secrets.APPLE_PASSWORD }}
+        run: |
+          if [ -z "$APPLE_CERTIFICATE" ]; then
+            echo "::warning::No APPLE_CERTIFICATE secret — building macOS unsigned."
+            echo "Gatekeeper will quarantine this .dmg; it is not shippable to users."
+            exit 0
+          fi
+          for var in APPLE_CERTIFICATE APPLE_CERTIFICATE_PASSWORD \
+                     APPLE_SIGNING_IDENTITY APPLE_ID APPLE_TEAM_ID APPLE_PASSWORD; do
+            {
+              echo "$var<<__SANCTUM_EOF__"
+              printf '%s\n' "${!var}"
+              echo "__SANCTUM_EOF__"
+            } >> "$GITHUB_ENV"
+          done
+          echo "macOS signing armed."
 
       # ── tauri-action — builds, (optionally) signs, and uploads artifacts ─────
       #
@@ -140,13 +192,9 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-          # macOS signing + notarization (leave empty until certs are enrolled)
-          APPLE_CERTIFICATE:          ${{ secrets.APPLE_CERTIFICATE }}
-          APPLE_CERTIFICATE_PASSWORD: ${{ secrets.APPLE_CERTIFICATE_PASSWORD }}
-          APPLE_SIGNING_IDENTITY:     ${{ secrets.APPLE_SIGNING_IDENTITY }}
-          APPLE_ID:                   ${{ secrets.APPLE_ID }}
-          APPLE_TEAM_ID:              ${{ secrets.APPLE_TEAM_ID }}
-          APPLE_PASSWORD:             ${{ secrets.APPLE_PASSWORD }}
+          # macOS signing + notarization is NOT listed here on purpose — see the
+          # "Arm macOS signing" step above, which exports these only when a
+          # certificate actually exists.
 
           # Windows signing (leave empty until cert is enrolled)
           WINDOWS_CERTIFICATE:          ${{ secrets.WINDOWS_CERTIFICATE }}

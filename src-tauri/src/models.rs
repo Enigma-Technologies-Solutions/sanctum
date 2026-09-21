@@ -6,12 +6,17 @@ use serde::{Deserialize, Serialize};
 // ── Capability manifest ───────────────────────────────────────────────────────
 
 /// A single detected capability from the static scan.
-/// Serialises as either a plain string ("camera") or an object ({"net":[…]}).
+/// Serialises as either a plain string ("camera") or an object ({"net":[…]},
+/// {"smartcard":[…]}).
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 #[serde(untagged)]
 pub enum DetectedCapability {
     Feature(CapabilityFeature),
     Net(NetCapability),
+    /// Smart card applets the tool asks to talk to, as AID hex strings.
+    /// Object-shaped like `Net` for the same reason: the approval is per
+    /// destination (there, a host; here, an applet), not a blanket yes.
+    Smartcard(SmartcardCapability),
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq, Hash)]
@@ -31,6 +36,27 @@ pub enum CapabilityFeature {
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 pub struct NetCapability {
     pub net: Vec<String>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
+pub struct SmartcardCapability {
+    /// Application identifiers (ISO 7816 AIDs) as lowercase hex, or the single
+    /// entry `(dynamic)` when the scan could not resolve which applet is used.
+    pub smartcard: Vec<String>,
+}
+
+/// Well-known applets, so the approval prompt says "FIDO2 / WebAuthn" instead
+/// of a bare hex string. Unknown AIDs are shown as hex — Sanctum does not
+/// guess, and an unfamiliar applet is exactly the case the user should read.
+pub fn known_applet_name(aid: &str) -> Option<&'static str> {
+    match aid {
+        "a0000006472f0001" => Some("FIDO2 / WebAuthn (CTAP)"),
+        "a000000308000010000100" => Some("PIV (smart card identity)"),
+        "d27600012401" => Some("OpenPGP card"),
+        "a000000527471117" => Some("YubiKey OTP"),
+        "a0000005272101" => Some("OATH (TOTP/HOTP)"),
+        _ => None,
+    }
 }
 
 impl DetectedCapability {
@@ -56,6 +82,23 @@ impl DetectedCapability {
                     "make network requests (destinations determined at runtime)".into()
                 } else {
                     format!("contact: {}", hosts.join(", "))
+                }
+            }
+            DetectedCapability::Smartcard(s) => {
+                let aids = &s.smartcard;
+                if aids.is_empty() {
+                    "talk to a smart card".into()
+                } else if aids.len() == 1 && aids[0] == "(dynamic)" {
+                    "talk to a smart card (applet determined at runtime)".into()
+                } else {
+                    let named: Vec<String> = aids
+                        .iter()
+                        .map(|a| match known_applet_name(a) {
+                            Some(n) => format!("{n} [{a}]"),
+                            None => format!("unknown applet [{a}]"),
+                        })
+                        .collect();
+                    format!("talk to your smart card: {}", named.join(", "))
                 }
             }
         }

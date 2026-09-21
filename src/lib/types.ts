@@ -16,7 +16,22 @@ export type CapabilityFeature =
 
 export type DetectedCapability =
   | CapabilityFeature
-  | { net: string[] };
+  | { net: string[] }
+  /** Smart card applets, as ISO 7816 AID hex strings, or ["(dynamic)"]. */
+  | { smartcard: string[] };
+
+/** Applets we can name in the approval prompt. Anything else is shown as hex. */
+const KNOWN_APPLETS: Record<string, string> = {
+  a0000006472f0001: "FIDO2 / WebAuthn (CTAP)",
+  a000000308000010000100: "PIV (smart card identity)",
+  d27600012401: "OpenPGP card",
+  a000000527471117: "YubiKey OTP",
+  a0000005272101: "OATH (TOTP/HOTP)",
+};
+
+export function appletLabel(aid: string): string {
+  return KNOWN_APPLETS[aid] ?? "unknown applet";
+}
 
 export interface ToolManifest {
   name: string;
@@ -91,6 +106,15 @@ export function capabilityToPlain(cap: DetectedCapability): string {
       storage: "read/write local browser storage",
     };
     return map[cap as CapabilityFeature] ?? cap;
+  }
+  if ("smartcard" in cap) {
+    const aids = cap.smartcard;
+    if (!aids.length) return "talk to a smart card";
+    if (aids.length === 1 && aids[0] === "(dynamic)")
+      return "talk to a smart card (applet determined at runtime)";
+    return `talk to your smart card: ${aids
+      .map((a) => `${appletLabel(a)} [${a}]`)
+      .join(", ")}`;
   }
   const hosts = cap.net;
   if (!hosts.length) return "make network requests";

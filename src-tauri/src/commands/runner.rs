@@ -31,6 +31,61 @@ const BLOCK_TAURI_IPC: &str = r#"
 })();
 "#;
 
+/// Bridge injected only into tool windows whose user approved smart card
+/// access. It is a thin wrapper over same-origin fetches to the `__sanctum/v1`
+/// endpoints served by the custom protocol handler; every check that matters
+/// lives in Rust (see `crate::smartcard`), because anything defined here runs
+/// in the page's own JS context and a determined tool can reimplement it.
+///
+/// What the injection *does* buy: a tool with no approval gets no
+/// `window.sanctum` at all, so feature detection reflects the grant, and the
+/// surface a tool sees is five named operations rather than a general IPC
+/// bridge. Tauri's own IPC globals stay removed by BLOCK_TAURI_IPC either way.
+const SMARTCARD_BRIDGE: &str = r#"
+(function () {
+  'use strict';
+  const BASE = '/__sanctum/v1/';
+
+  async function call(op, params) {
+    const qs = new URLSearchParams(params || {}).toString();
+    const res = await fetch(BASE + op + (qs ? '?' + qs : ''), { cache: 'no-store' });
+    let body = null;
+    try { body = await res.json(); } catch (_) {}
+    if (!res.ok) {
+      throw new Error((body && body.error) || ('Sanctum refused the request (' + res.status + ')'));
+    }
+    if (!body) throw new Error('Sanctum bridge returned a malformed response');
+    return body;
+  }
+
+  function makeSession(info) {
+    const id = info.session;
+    return Object.freeze({
+      id: id,
+      reader: info.reader,
+      atr: info.atr,
+      // Select an applet by AID. Refused unless the user approved that AID.
+      select: function (aid) { return call('select', { session: id, aid: aid }); },
+      // Send one command APDU as hex. Resolves to { sw, data, ok }.
+      transmit: function (apdu) { return call('transmit', { session: id, apdu: apdu }); },
+      close: function () { return call('close', { session: id }); },
+    });
+  }
+
+  const smartcard = Object.freeze({
+    listReaders: async function () { return (await call('readers')).readers; },
+    open: async function (reader) { return makeSession(await call('open', { reader: reader })); },
+  });
+
+  Object.defineProperty(window, 'sanctum', {
+    value: Object.freeze({ smartcard: smartcard }),
+    writable: false,
+    configurable: false,
+    enumerable: true,
+  });
+})();
+"#;
+
 /// CSP with everything denied — applied when no capabilities are approved.
 const BASELINE_CSP: &str = concat!(
     "default-src 'self'; ",
@@ -102,7 +157,14 @@ pub fn build_tool_csp(approvals: &[DetectedCapability]) -> String {
         )
     });
 
-    if net_hosts.is_empty() && !allow_camera && !allow_mic {
+    // Smart card access is reached by fetching `__sanctum/v1/…` on the tool's
+    // own origin, so it needs `connect-src 'self'` — and nothing more. 'self'
+    // here is the tool's private `sanctum-tool://tool-{id}` origin, which is
+    // served entirely by Sanctum's protocol handler, so it opens no path off
+    // the machine. The device grant is enforced in Rust, not by this directive.
+    let allow_smartcard = crate::smartcard::has_smartcard_capability(approvals);
+
+    if net_hosts.is_empty() && !allow_camera && !allow_mic && !allow_smartcard {
         return BASELINE_CSP.to_string();
     }
 
@@ -114,10 +176,17 @@ pub fn build_tool_csp(approvals: &[DetectedCapability]) -> String {
         .collect();
     let hosts = host_entries.join(" ");
 
-    let connect_src = if net_hosts.is_empty() {
-        "'none'".to_string()
-    } else {
-        hosts.clone()
+    // `sanctum-tool:` alongside 'self': WebKitGTK does not always treat a
+    // custom-scheme document as having an origin that 'self' matches, and a
+    // policy that works on macOS but silently blocks the bridge on Linux is
+    // worse than a slightly wider one. The scheme is served entirely by
+    // Sanctum's own protocol handler and each tool is confined to its own host
+    // by on_navigation, so naming it grants no reach the tool did not have.
+    let connect_src = match (allow_smartcard, net_hosts.is_empty()) {
+        (false, true) => "'none'".to_string(),
+        (false, false) => hosts.clone(),
+        (true, true) => "'self' sanctum-tool:".to_string(),
+        (true, false) => format!("'self' sanctum-tool: {hosts}"),
     };
 
     // Relax style-src and font-src so CSS/font CDNs (e.g. Google Fonts) work
@@ -274,10 +343,19 @@ pub async fn open_tool_window(
     //    actually detected in this version are meaningful; extras are harmless).
     let csp = build_tool_csp(&approvals);
 
-    // 5. Register path + CSP in shared state for the protocol handler
+    // 5. Register path + CSP + approvals in shared state for the protocol
+    //    handler. Approvals are snapshotted at launch: what the window may do
+    //    is fixed for its lifetime, matching the CSP it was served with.
     {
         let mut map = paths.0.lock().unwrap();
-        map.insert(tool_id.clone(), (version_dir, csp));
+        map.insert(
+            tool_id.clone(),
+            crate::ActiveTool {
+                dir: version_dir,
+                csp,
+                approvals: approvals.clone(),
+            },
+        );
     }
 
     // 6. Window label and custom-protocol URL
@@ -302,15 +380,34 @@ pub async fn open_tool_window(
     // is bypassable by simply navigating away — see is_allowed_tool_navigation.
     let nav_host = label.clone();
 
-    WebviewWindowBuilder::new(&app, &label, WebviewUrl::CustomProtocol(url))
+    let mut builder = WebviewWindowBuilder::new(&app, &label, WebviewUrl::CustomProtocol(url))
         .title(title)
         .initialization_script(BLOCK_TAURI_IPC)
         .on_navigation(move |url| is_allowed_tool_navigation(url, &nav_host))
         .inner_size(1024.0, 768.0)
         .min_inner_size(400.0, 300.0)
-        .center()
-        .build()
-        .map_err(|e| e.to_string())?;
+        .center();
+
+    if crate::smartcard::has_smartcard_capability(&approvals) {
+        builder = builder.initialization_script(SMARTCARD_BRIDGE);
+    }
+
+    let window = builder.build().map_err(|e| e.to_string())?;
+
+    // A closed window must not leave a card connected. Without this the PC/SC
+    // handle outlives the page that opened it, and the next tool to ask for
+    // the reader inherits a session it never opened.
+    {
+        let closing_app = app.clone();
+        let closing_tool = tool_id.clone();
+        window.on_window_event(move |event| {
+            if matches!(event, tauri::WindowEvent::Destroyed) {
+                closing_app
+                    .state::<crate::smartcard::SmartcardState>()
+                    .close_tool_sessions(&closing_tool);
+            }
+        });
+    }
 
     Ok(())
 }
@@ -470,6 +567,55 @@ mod tests {
     fn net_approval_leaves_media_denied() {
         let csp = build_tool_csp(&[net(&["api.example.com"])]);
         assert_eq!(directive(&csp, "media-src"), "'none'");
+    }
+
+    // ── Smart card ────────────────────────────────────────────────────────────
+
+    fn smartcard(aids: &[&str]) -> DetectedCapability {
+        DetectedCapability::Smartcard(crate::models::SmartcardCapability {
+            smartcard: aids.iter().map(|s| s.to_string()).collect(),
+        })
+    }
+
+    #[test]
+    fn smartcard_approval_opens_the_tools_own_origin_only() {
+        let csp = build_tool_csp(&[smartcard(&["a0000006472f0001"])]);
+        let connect = directive(&csp, "connect-src");
+        assert!(connect.contains("'self'"), "bridge unreachable: {csp}");
+        assert!(
+            connect.contains("sanctum-tool:"),
+            "custom scheme missing — the bridge fails on WebKitGTK: {csp}"
+        );
+        // Approving a card is not approving the network.
+        assert!(!connect.contains("https://"), "network granted: {csp}");
+    }
+
+    #[test]
+    fn smartcard_approval_widens_nothing_else() {
+        let csp = build_tool_csp(&[smartcard(&["a0000006472f0001"])]);
+        assert_eq!(directive(&csp, "script-src"), "'self' 'unsafe-inline'");
+        assert_eq!(directive(&csp, "media-src"), "'none'");
+        assert_eq!(directive(&csp, "form-action"), "'none'");
+        for name in ALWAYS_DENIED {
+            assert_eq!(directive(&csp, name), "'none'", "{name} widened: {csp}");
+        }
+        assert_eq!(directive_names(BASELINE_CSP), directive_names(&csp));
+    }
+
+    #[test]
+    fn a_dynamic_smartcard_approval_still_reaches_the_bridge() {
+        // The applet is refused later, in the broker — but the tool must be
+        // able to enumerate readers to tell the user which card to present.
+        let csp = build_tool_csp(&[smartcard(&["(dynamic)"])]);
+        assert!(directive(&csp, "connect-src").contains("'self'"));
+    }
+
+    #[test]
+    fn smartcard_and_net_approvals_coexist() {
+        let csp = build_tool_csp(&[smartcard(&["a0000006472f0001"]), net(&["api.example.com"])]);
+        let connect = directive(&csp, "connect-src");
+        assert!(connect.contains("'self'"));
+        assert!(connect.contains("https://api.example.com"));
     }
 
     // ── Camera / microphone ───────────────────────────────────────────────────

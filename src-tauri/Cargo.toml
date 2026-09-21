@@ -36,6 +36,10 @@ url = "2"
 # added later if the frontend ever needs direct DB access from JS.
 sqlx = { version = "0.8", features = ["sqlite", "runtime-tokio"] }
 mime_guess = "2"
+# PC/SC smart card access. Binds the platform resource manager — WinSCard on
+# Windows, pcsc-lite on Linux, the PCSC framework on macOS — all of which ship
+# with the OS, so this adds no runtime dependency for users.
+pcsc = "2"
 chrono = { version = "0.4", features = ["serde"] }
 # Clipboard access from Rust side (for ingest_from_clipboard command).
 # arboard is cross-platform (macOS/Windows/Linux) and avoids exposing

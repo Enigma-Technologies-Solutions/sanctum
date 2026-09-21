@@ -37,7 +37,7 @@
       "endpoints": [
         "https://github.com/Enigma-Technologies-Solutions/sanctum/releases/latest/download/latest.json"
       ],
-      "pubkey": "dW50cnVzdGVkIGNvbW1lbnQ6IG1pbmlzaWduIHB1YmxpYyBrZXk6IEI3ODlFQTlFM0I5MzBFQkYKUldTL0RwTTdudXFKdHpyNUkwNkh1Q3NCMk0rWER5WHhJcGRvTEFXQjZia2lUK3VMZnpRQ3ZwNEgK",
+      "pubkey": "dW50cnVzdGVkIGNvbW1lbnQ6IG1pbmlzaWduIHB1YmxpYyBrZXk6IDU5RjU5RTEzNjk0RkI0MzQKUldRMHRFOXBFNTcxV2JCQ3lPaldRQkV3L3M3Y3Q3SGFaWW5PZE9rSzhYcWZHd2E2R3FidkpGbmIK",
       "windows": {
         "installMode": "passive"
       }
@@ -47,6 +47,11 @@
     "active": true,
     "targets": "all",
     "createUpdaterArtifacts": true,
+    "linux": {
+      "deb": {
+        "depends": ["pcscd", "libpcsclite1", "libccid"]
+      }
+    },
     "icon": [
       "icons/32x32.png",
       "icons/128x128.png",

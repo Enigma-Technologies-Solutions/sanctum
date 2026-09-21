@@ -55,7 +55,8 @@ jobs:
             libgtk-3-dev \
             libayatana-appindicator3-dev \
             librsvg2-dev \
-            patchelf
+            patchelf \
+            libpcsclite-dev
 
       - name: cargo fmt
         run: cargo fmt --manifest-path src-tauri/Cargo.toml -- --check
@@ -77,17 +78,18 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          # macOS Apple Silicon (arm64) — GitHub Actions M-series runner
-          - name: macOS aarch64
+          # macOS universal (arm64 + Intel), built on the M-series runner.
+          #
+          # One leg rather than two. GitHub has retired the macos-13 Intel
+          # image, so an x86_64-only leg is never assigned a runner: it sits
+          # queued until the run is cancelled, which held PR #1 red for 24
+          # hours. Intel coverage now comes from cross-compiling on Apple
+          # Silicon, which is what release.yml has always done — so CI checks
+          # the bundle shape that actually ships instead of one that doesn't.
+          - name: macOS universal
             os: macos-14
-            rust-target: aarch64-apple-darwin
-            tauri-args: ''
-
-          # macOS Intel (x86_64) — older GitHub Actions Intel runner
-          - name: macOS x86_64
-            os: macos-13
-            rust-target: x86_64-apple-darwin
-            tauri-args: ''
+            rust-target: aarch64-apple-darwin,x86_64-apple-darwin
+            tauri-args: --target universal-apple-darwin
 
           # Windows x86_64
           - name: Windows x86_64
@@ -99,6 +101,17 @@ jobs:
           - name: Linux x86_64
             os: ubuntu-22.04
             rust-target: x86_64-unknown-linux-gnu
+            tauri-args: ''
+
+          # Linux arm64 — Raspberry Pi 400/5 class hardware, and the only way
+          # to get a .deb for them without a 40-minute build on the Pi itself.
+          #
+          # 22.04 rather than 24.04 is deliberate: its glibc (2.35) is older
+          # than Raspberry Pi OS Bookworm's (2.36), so the package installs
+          # there. A 24.04 build links against 2.39 and will not.
+          - name: Linux arm64
+            os: ubuntu-22.04-arm
+            rust-target: aarch64-unknown-linux-gnu
             tauri-args: ''
 
     steps:
@@ -123,7 +136,7 @@ jobs:
           key: ${{ matrix.rust-target }}
 
       - name: Install Linux WebKit + GTK deps
-        if: matrix.os == 'ubuntu-22.04'
+        if: startsWith(matrix.os, 'ubuntu-')
         run: |
           sudo apt-get update
           sudo apt-get install -y \
@@ -131,16 +144,56 @@ jobs:
             libgtk-3-dev \
             libayatana-appindicator3-dev \
             librsvg2-dev \
-            patchelf
+            patchelf \
+            libpcsclite-dev
 
       - name: Install JS dependencies
         run: pnpm install --frozen-lockfile
 
       # Build the full Tauri app (frontend + Rust backend + bundle).
+      #
       # No signing secrets are injected in CI — the build produces unsigned
-      # artifacts. Signed release builds happen in release.yml on tag push.
+      # artifacts, and signed release builds happen in release.yml on tag push.
+      # createUpdaterArtifacts is switched off for the same reason: with a
+      # public key in tauri.conf.json and no private key in the environment,
+      # `tauri build` refuses to run at all. A CI build is a compile-and-bundle
+      # check, not something the update channel will ever serve, so it has no
+      # business signing anything.
+      #
+      # shell: bash on every leg, Windows included. The default shell there is
+      # PowerShell, which strips the double quotes out of the inline JSON and
+      # hands the CLI `{bundle:{createUpdaterArtifacts:false}}` — not JSON, and
+      # rejected with "key must be a string".
       - name: pnpm tauri build
-        run: pnpm tauri build ${{ matrix.tauri-args }}
+        shell: bash
+        run: pnpm tauri build ${{ matrix.tauri-args }} --config '{"bundle":{"createUpdaterArtifacts":false}}'
         env:
           # Suppress macOS notarization in CI (no signing certs present)
           CI: true
+
+      # Keep the Linux bundles. The arm64 .deb is the one that matters: it is
+      # the only practical way to get Sanctum onto a Raspberry Pi without a
+      # ~25-minute build on the Pi itself.
+      - name: Upload Linux bundles
+        if: startsWith(matrix.os, 'ubuntu-')
+        uses: actions/upload-artifact@v4
+        with:
+          name: sanctum-${{ matrix.rust-target }}
+          path: |
+            src-tauri/target/release/bundle/deb/*.deb
+            src-tauri/target/release/bundle/appimage/*.AppImage
+          if-no-files-found: warn
+          retention-days: 14
+
+      # Keep the macOS .dmg too. It is unsigned and un-notarized, so Gatekeeper
+      # will refuse a double-click (right-click → Open, or `xattr -cr` the .app),
+      # but it is the only macOS build anyone can download until release.yml
+      # has a Developer ID certificate to sign with.
+      - name: Upload macOS bundle
+        if: startsWith(matrix.os, 'macos-')
+        uses: actions/upload-artifact@v4
+        with:
+          name: sanctum-universal-apple-darwin
+          path: src-tauri/target/universal-apple-darwin/release/bundle/dmg/*.dmg
+          if-no-files-found: error
+          retention-days: 14

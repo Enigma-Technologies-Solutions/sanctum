@@ -13,20 +13,38 @@ pub mod models;
 pub mod policy;
 pub mod registry;
 pub mod signing;
+pub mod smartcard;
 
 // ── Managed state ─────────────────────────────────────────────────────────────
 
 /// App data directory — stable, injectable into commands without AppHandle.
 pub struct AppDataDir(pub PathBuf);
 
-/// Map from tool_id → (version directory, pre-computed CSP string).
-/// Populated by open_tool_window with the dynamic CSP built from user approvals.
-/// The protocol handler reads both on every request — no DB round-trip needed.
-pub struct ActiveToolPaths(pub Mutex<HashMap<String, (PathBuf, String)>>);
+/// What a currently-open tool window is allowed to do, snapshotted by
+/// `open_tool_window` at launch. The protocol handler reads this on every
+/// request — no DB round-trip, and no way for an approval changed mid-session
+/// to disagree with the CSP the window was already served.
+#[derive(Clone)]
+pub struct ActiveTool {
+    /// Version directory the tool's files are served from.
+    pub dir: PathBuf,
+    /// Pre-computed Content-Security-Policy for this window.
+    pub csp: String,
+    /// User-approved capabilities. Authoritative for device-broker requests.
+    pub approvals: Vec<models::DetectedCapability>,
+}
+
+/// Map from tool_id → the window's launch-time grant.
+pub struct ActiveToolPaths(pub Mutex<HashMap<String, ActiveTool>>);
 
 // CSP is no longer a global constant — it is computed per-tool in runner.rs
 // based on the user's approved capabilities and stored in ActiveToolPaths alongside
 // the version directory. The protocol handler reads the stored CSP on each request.
+
+/// Reserved path prefix on every tool origin. Requests under it are answered
+/// by the device broker instead of the file server, so `__sanctum/` is not a
+/// usable directory name inside a tool.
+pub const BRIDGE_PREFIX: &str = "__sanctum/v1/";
 
 // ── Custom protocol handler ───────────────────────────────────────────────────
 
@@ -41,15 +59,16 @@ fn serve_tool_file(
         _ => return error_response(403, "Forbidden: invalid tool label"),
     };
 
-    // Look up version directory + pre-computed CSP for this tool
+    // Look up the launch-time grant for this tool
     let state = app.state::<ActiveToolPaths>();
-    let (version_dir, csp) = {
+    let active = {
         let map = state.0.lock().unwrap();
         match map.get(tool_id) {
             Some(entry) => entry.clone(),
             None => return error_response(404, "Tool not loaded"),
         }
     };
+    let (version_dir, csp) = (active.dir.clone(), active.csp.clone());
 
     // Parse the request path from the URI (scheme://host/path)
     let path_str = if let Some(after_scheme) = uri.split("://").nth(1) {
@@ -75,6 +94,19 @@ fn serve_tool_file(
     } else {
         path_str
     };
+
+    // Device-broker endpoints live under a reserved prefix on the tool's own
+    // origin. Routing them here — before any filesystem lookup — means a tool
+    // cannot shadow them with a file of the same name, and means the caller's
+    // identity is the webview label the runtime gave us rather than anything
+    // the page could set.
+    if let Some(op) = relative
+        .trim_start_matches('/')
+        .strip_prefix(BRIDGE_PREFIX)
+        .filter(|op| !op.is_empty())
+    {
+        return smartcard::serve_bridge(app, tool_id, &active.approvals, op, uri);
+    }
 
     // Resolve the request path purely in memory — no canonicalize(), no filesystem
     // access. normalize_within() walks components onto a stack and pops on `..`;
@@ -173,6 +205,7 @@ pub fn run() {
         // webview — the host UI goes through commands::updater instead.
         .plugin(tauri_plugin_updater::Builder::new().build())
         .manage(ActiveToolPaths(Mutex::new(HashMap::new())))
+        .manage(smartcard::SmartcardState::new())
         // Register sanctum-tool:// custom protocol.
         //
         // Storage isolation: each tool is served from a distinct host

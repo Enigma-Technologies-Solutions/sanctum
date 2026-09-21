@@ -5,7 +5,10 @@ use regex::Regex;
 use std::collections::HashSet;
 use tauri::command;
 
-use crate::models::{CapabilityFeature, DetectedCapability, NetCapability, ToolManifest};
+use crate::models::{
+    CapabilityFeature, DetectedCapability, NetCapability, SmartcardCapability, ToolManifest,
+};
+use crate::smartcard::is_valid_aid;
 
 // NOTE: This is a pattern-based static scan — a heuristic advisory layer.
 // It CANNOT detect capabilities hidden behind:
@@ -149,10 +152,45 @@ pub fn scan_html(html: &str) -> Vec<DetectedCapability> {
         detected.push(DetectedCapability::Net(NetCapability { net: host_list }));
     }
 
-    // Sort for stable output (features first, net last)
+    // Smart card — the Sanctum-only bridge, so detection keys off the API name
+    // rather than a browser global. Which applet matters more than whether the
+    // API is used at all, so pull literal AIDs out the same way hosts are
+    // pulled out of fetch() calls above.
+    if html.contains("sanctum.smartcard") || html.contains("sanctum[\"smartcard\"]") {
+        let mut aids: HashSet<String> = HashSet::new();
+
+        // `session.select("a0000006472f0001")` and `const AID = "…"` / `aid: "…"`
+        for pattern in [
+            r#"(?i)\.select\s*\(\s*["']([0-9a-f]{10,32})["']"#,
+            // `const AID = "…"`, `aid: "…"`, `const FIDO_AID = "…"` — any
+            // identifier containing "aid", since the value still has to look
+            // like an AID to survive validation below.
+            r#"(?i)\b[\w$]*aid[\w$]*\s*[:=]\s*["']([0-9a-f]{10,32})["']"#,
+        ] {
+            let re = Regex::new(pattern).expect("valid regex");
+            for cap in re.captures_iter(html) {
+                let aid = cap[1].to_lowercase();
+                if is_valid_aid(&aid) {
+                    aids.insert(aid);
+                }
+            }
+        }
+
+        if aids.is_empty() {
+            aids.insert("(dynamic)".to_string());
+        }
+        let mut aid_list: Vec<String> = aids.into_iter().collect();
+        aid_list.sort();
+        detected.push(DetectedCapability::Smartcard(SmartcardCapability {
+            smartcard: aid_list,
+        }));
+    }
+
+    // Sort for stable output (features first, then net, then smart card)
     detected.sort_by_key(|c| match c {
         DetectedCapability::Feature(_) => 0,
         DetectedCapability::Net(_) => 1,
+        DetectedCapability::Smartcard(_) => 2,
     });
 
     detected
@@ -346,5 +384,84 @@ mod tests {
     #[test]
     fn no_network_use_yields_no_net_capability() {
         assert!(scanned_hosts("<p>static page</p>").is_none());
+    }
+
+    // ── Smart card detection ──────────────────────────────────────────────────
+
+    /// AIDs extracted from a scan, or None when no smart card use was detected.
+    fn scanned_aids(html: &str) -> Option<Vec<String>> {
+        scan_html(html).into_iter().find_map(|c| match c {
+            DetectedCapability::Smartcard(s) => Some(s.smartcard),
+            _ => None,
+        })
+    }
+
+    #[test]
+    fn smartcard_api_use_is_detected() {
+        let aids = scanned_aids(r#"<script>await sanctum.smartcard.listReaders()</script>"#)
+            .expect("smart card capability detected");
+        assert_eq!(aids, vec!["(dynamic)"]);
+    }
+
+    #[test]
+    fn a_page_that_never_touches_the_api_declares_nothing() {
+        assert!(scanned_aids("<p>static page</p>").is_none());
+        // The word alone is not the API — no false positive from prose.
+        assert!(scanned_aids("<p>this tool reads a smartcard</p>").is_none());
+    }
+
+    #[test]
+    fn literal_aid_in_select_is_extracted() {
+        let aids =
+            scanned_aids(r#"<script>sanctum.smartcard; s.select("A0000006472F0001")</script>"#)
+                .expect("detected");
+        assert_eq!(aids, vec!["a0000006472f0001"]);
+    }
+
+    #[test]
+    fn aid_constant_is_extracted() {
+        let aids =
+            scanned_aids(r#"<script>const AID = "a0000006472f0001"; sanctum.smartcard;</script>"#)
+                .expect("detected");
+        assert_eq!(aids, vec!["a0000006472f0001"]);
+    }
+
+    #[test]
+    fn a_prefixed_aid_constant_is_extracted() {
+        // The name tools actually use for it.
+        let aids = scanned_aids(
+            r#"<script>const FIDO_AID = 'a0000006472f0001'; sanctum.smartcard;</script>"#,
+        )
+        .expect("detected");
+        assert_eq!(aids, vec!["a0000006472f0001"]);
+    }
+
+    #[test]
+    fn every_literal_applet_is_listed() {
+        let aids = scanned_aids(
+            r#"<script>sanctum.smartcard;
+               s.select("a0000006472f0001"); s.select("a000000308000010000100");</script>"#,
+        )
+        .expect("detected");
+        assert_eq!(
+            aids,
+            vec!["a000000308000010000100", "a0000006472f0001"],
+            "both applets must reach the approval prompt"
+        );
+    }
+
+    #[test]
+    fn a_runtime_built_aid_is_marked_dynamic() {
+        let aids = scanned_aids(r#"<script>sanctum.smartcard; s.select(prefix + rest)</script>"#)
+            .expect("detected");
+        assert_eq!(aids, vec!["(dynamic)"]);
+    }
+
+    #[test]
+    fn a_malformed_aid_literal_does_not_become_an_approval() {
+        // Too short to be an AID — the scan must not offer it for approval.
+        let aids = scanned_aids(r#"<script>sanctum.smartcard; s.select("a0000006")</script>"#)
+            .expect("detected");
+        assert_eq!(aids, vec!["(dynamic)"]);
     }
 }

@@ -20,7 +20,8 @@ import {
 // ── Capability approval helpers ────────────────────────────────────────────
 
 function capKey(cap: DetectedCapability): string {
-  return typeof cap === "string" ? cap : "net";
+  if (typeof cap === "string") return cap;
+  return "smartcard" in cap ? "smartcard" : "net";
 }
 
 function isApproved(cap: DetectedCapability, approvals: DetectedCapability[]): boolean {
@@ -42,6 +43,7 @@ const CAP_ICON: Record<string, string> = {
   camera: "📷", microphone: "🎙", geolocation: "📍",
   notifications: "🔔", usb: "🔌", serial: "🔌",
   hid: "🖱", bluetooth: "📶", storage: "💾", net: "🌐",
+  smartcard: "💳",
 };
 
 // ── Approval risk warnings ─────────────────────────────────────────────────
@@ -54,6 +56,11 @@ function capRiskNote(cap: DetectedCapability): string {
     if (cap === "storage")
       return "Tool can persist data locally. Cleared when you remove the tool.";
     return "";
+  }
+  if ("smartcard" in cap) {
+    if (cap.smartcard.length === 1 && cap.smartcard[0] === "(dynamic)")
+      return "This tool picks its applet at run time, so Sanctum cannot tell you which one. Approving grants reader discovery only — every applet selection will still be refused.";
+    return "Grants direct APDU access to the listed applets on any card you insert. Sanctum blocks re-selection, so the tool cannot reach other applets on the same card.";
   }
   return "Allows the tool to make network requests to the listed domains.";
 }
