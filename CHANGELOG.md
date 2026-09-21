@@ -74,6 +74,15 @@ match a custom-scheme document against `'self'`.
   is now set on Linux before GTK initialises, unless the environment already
   sets it.
 
+### Changed — bundle identifier
+
+- **Bundle identifier is now `sh.enigma.sanctum`** (was `app.sanctum.dev`, a
+  domain ETS never owned). Changed before the first signed release on purpose:
+  the identifier is baked into the code-signing identity and the app-data path
+  (`~/Library/Application Support/sh.enigma.sanctum/` on macOS), so changing it
+  after release would strand every user's `sanctum.db`. Development installs
+  keep their data at the old path; move the directory across to carry it over.
+
 ### Changed — build and CI
 
 - **CI builds no longer attempt to sign.** With an updater public key in

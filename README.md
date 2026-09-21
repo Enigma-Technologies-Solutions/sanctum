@@ -146,7 +146,7 @@ needs re-presenting.
 ## Storage layout
 
 ```
-{AppDataDir}/                      # macOS: ~/Library/Application Support/app.sanctum.dev
+{AppDataDir}/                      # macOS: ~/Library/Application Support/sh.enigma.sanctum
 ├── sanctum.db                     # SQLite — tool index, versions, manifests, approvals
 └── tools/
     └── {tool_id}/                 # UUID v4
