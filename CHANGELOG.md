@@ -13,6 +13,16 @@ section behind.
 
 ## [Unreleased]
 
+## [0.1.0] - 2026-09-21
+
+First release. macOS builds are signed with a Developer ID certificate
+(`Enigma Technologies Solutions Limited`, team `477TM7R48U`), notarized by Apple
+and stapled, so they open with only the standard downloaded-from-the-Internet
+prompt. Windows installers are not yet code-signed; SmartScreen will ask for
+*More info → Run anyway*. Linux packages are unsigned, as is usual for
+`.deb`/`.AppImage`. Every update payload on every platform is minisign-signed
+and verified before install.
+
 ### Added — smart card access for tools
 
 Sanctum can hand an approved tool a raw APDU channel to **one** smart card
@@ -133,3 +143,6 @@ Pi 400 (Alcor Link AK9567, contact slot):
 
 Contactless readers brown the card out during key generation and leave it mute
 until re-presented; a contact reader does not.
+
+[Unreleased]: https://github.com/Enigma-Technologies-Solutions/sanctum/compare/v0.1.0...HEAD
+[0.1.0]: https://github.com/Enigma-Technologies-Solutions/sanctum/releases/tag/v0.1.0

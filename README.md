@@ -74,7 +74,7 @@ sudo apt install libwebkit2gtk-4.1-dev libgtk-3-dev libayatana-appindicator3-dev
                  librsvg2-dev patchelf libpcsclite-dev
 ```
 
-Signed release builds require Apple Developer Program and Azure Trusted Signing credentials. See [.github/workflows/release.yml](.github/workflows/release.yml).
+Release builds are produced by [.github/workflows/release.yml](.github/workflows/release.yml). macOS builds are signed with a Developer ID certificate and notarized; the job builds unsigned, with a warning, when the `APPLE_*` secrets are absent. Windows code signing (Azure Trusted Signing) is not wired yet.
 
 ### Raspberry Pi 400 / arm64 Linux
 
@@ -135,7 +135,7 @@ needs re-presenting.
 | Per-tool origin isolation | ✓ |
 | IPC removal | ✓ |
 | SQLite library (list, tag, rollback) | ✓ |
-| Signed + notarized release builds | pending |
+| Signed + notarized release builds | ✓ macOS · Windows pending |
 | Signed auto-updates | ✓ wired, unverified until first signed release |
 | AST-based scanner (catches obfuscation) | roadmap |
 | Org policy file | roadmap |
