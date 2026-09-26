@@ -6,13 +6,13 @@ body:
     attributes:
       value: |
         > **Security vulnerability?** Do **not** use this form.
-        > Email [ultra@enigma.sh](mailto:ultra@enigma.sh) instead — see [SECURITY.md](../../SECURITY.md).
+        > Email [ultra@enigma.sh](mailto:ultra@enigma.sh) instead. See [SECURITY.md](../../SECURITY.md).
 
   - type: input
     id: version
     attributes:
       label: Sanctum version
-      placeholder: "e.g. 0.1.0  (shown in the app header)"
+      placeholder: "e.g. 0.1.0 (from the release you downloaded)"
     validations:
       required: true
 
@@ -21,8 +21,8 @@ body:
     attributes:
       label: Operating system
       options:
-        - macOS — Apple Silicon (arm64)
-        - macOS — Intel (x86_64)
+        - macOS, Apple Silicon (arm64)
+        - macOS, Intel (x86_64)
         - Windows 11
         - Windows 10
         - Linux (specify distro in description)

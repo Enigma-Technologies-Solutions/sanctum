@@ -15,7 +15,10 @@ import {
   AlertTriangle, ArrowLeft, Check, Clock,
   Loader2, Play, RotateCcw, Tag, X, Shield, Info,
   Trash2, RefreshCw, Clipboard, FolderOpen,
+  Camera, Mic, MapPin, Bell, Usb, Cable, Mouse, Bluetooth, HardDrive, Globe,
+  CreditCard, Settings,
 } from "lucide-react";
+import type { LucideIcon } from "lucide-react";
 
 // ── Capability approval helpers ────────────────────────────────────────────
 
@@ -38,12 +41,12 @@ function toggleCap(
     : [...approvals, cap];
 }
 
-// ── Cap row icons (simple emoji/text fallback avoids icon deps) ────────────
-const CAP_ICON: Record<string, string> = {
-  camera: "📷", microphone: "🎙", geolocation: "📍",
-  notifications: "🔔", usb: "🔌", serial: "🔌",
-  hid: "🖱", bluetooth: "📶", storage: "💾", net: "🌐",
-  smartcard: "💳",
+// ── Cap row icons ──────────────────────────────────────────────────────────
+const CAP_ICON: Record<string, LucideIcon> = {
+  camera: Camera, microphone: Mic, geolocation: MapPin,
+  notifications: Bell, usb: Usb, serial: Cable,
+  hid: Mouse, bluetooth: Bluetooth, storage: HardDrive, net: Globe,
+  smartcard: CreditCard,
 };
 
 // ── Approval risk warnings ─────────────────────────────────────────────────
@@ -59,7 +62,7 @@ function capRiskNote(cap: DetectedCapability): string {
   }
   if ("smartcard" in cap) {
     if (cap.smartcard.length === 1 && cap.smartcard[0] === "(dynamic)")
-      return "This tool picks its applet at run time, so Sanctum cannot tell you which one. Approving grants reader discovery only — every applet selection will still be refused.";
+      return "This tool picks its applet at run time, so Sanctum cannot tell you which one. Approving only lets it list readers. Every applet selection will still be refused.";
     return "Grants direct APDU access to the listed applets on any card you insert. Sanctum blocks re-selection, so the tool cannot reach other applets on the same card.";
   }
   return "Allows the tool to make network requests to the listed domains.";
@@ -383,6 +386,7 @@ export function InspectView({ item, onBack, onRun, onRefresh, onDelete }: Inspec
                         const approved = isApproved(cap, approvals);
                         const key = capKey(cap);
                         const plain = capabilityToPlain(cap);
+                        const CapIcon = CAP_ICON[key] ?? Settings;
                         const riskNote = capRiskNote(cap);
                         const isNet = typeof cap === "object" && "net" in cap;
                         const hosts = isNet ? (cap as { net: string[] }).net : [];
@@ -400,7 +404,7 @@ export function InspectView({ item, onBack, onRun, onRefresh, onDelete }: Inspec
                           >
                             {/* Row header */}
                             <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
-                              <span style={{ fontSize: "16px", flexShrink: 0 }}>{CAP_ICON[key] ?? "⚙"}</span>
+                              <CapIcon size={16} color="#565B62" style={{ flexShrink: 0 }} aria-hidden />
                               <div style={{ flex: 1, minWidth: 0 }}>
                                 <div style={{
                                   fontFamily: "Inter, system-ui, sans-serif",
@@ -471,7 +475,7 @@ export function InspectView({ item, onBack, onRun, onRefresh, onDelete }: Inspec
                     </ul>
                   )}
                   <p style={{ fontFamily: "Inter, system-ui, sans-serif", fontSize: "11px", color: "#8A9099", margin: "6px 0 0" }}>
-                    Changes take effect on next Run — close and reopen the tool window.
+                    Changes apply the next time you run the tool. Close and reopen its window.
                   </p>
                 </div>
 
@@ -484,10 +488,11 @@ export function InspectView({ item, onBack, onRun, onRefresh, onDelete }: Inspec
                   <Shield className="h-4 w-4 flex-shrink-0 mt-0.5" style={{ color: "#565B62" }} />
                   <p style={{ fontFamily: "Inter, system-ui, sans-serif", fontSize: "12px", color: "#565B62", margin: 0, lineHeight: 1.5 }}>
                     <strong style={{ color: "#0A0A0A" }}>Scan note:</strong>{" "}
-                    Regex-based static analysis — dynamic eval or obfuscated code can hide
-                    capabilities from the scan. The sandbox enforces only what you approve;
-                    unapproved network calls are blocked by{" "}
-                    <code style={{ fontFamily: "'Space Mono', monospace", fontSize: "11px" }}>connect-src</code> CSP.
+                    The scan uses regular expressions, so eval or obfuscated code can hide
+                    capabilities from it. That doesn't grant them: the sandbox only allows what
+                    you approve, and the{" "}
+                    <code style={{ fontFamily: "'Space Mono', monospace", fontSize: "11px" }}>connect-src</code> CSP
+                    blocks network calls you haven't approved.
                   </p>
                 </div>
               </div>
@@ -525,7 +530,7 @@ export function InspectView({ item, onBack, onRun, onRefresh, onDelete }: Inspec
                       }}
                       onClick={() => setEditingDesc(true)}
                     >
-                      {description || "No description — click to add"}
+                      {description || "No description. Click to add one."}
                     </p>
                   )}
                 </div>

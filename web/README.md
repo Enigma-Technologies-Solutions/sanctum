@@ -1,10 +1,7 @@
 # Sanctum landing site
 
-Single-page marketing site. **Zero build step, zero dependencies, zero JavaScript.**
-
-A product whose pitch is "we removed the attack surface" shouldn't ship a marketing site
-with an npm tree and four CDN origins in it. This is hand-written HTML and CSS. Fonts are
-self-hosted. Nothing on the page makes a third-party request.
+Single-page site with no build step, no dependencies and no JavaScript. It's hand-written
+HTML and CSS with self-hosted fonts, and the page makes no third-party requests.
 
 ## Run it locally
 
@@ -31,6 +28,13 @@ web/
     ├── fonts.css     # @font-face declarations
     └── fonts/        # Inter (variable), Poppins, Space Mono; latin subsets, 96 KB total
 ```
+
+## Icons
+
+Icons come from [Lucide](https://lucide.dev) (ISC), the same set the desktop app uses
+through `lucide-react`. Don't mix in another family or use emoji. Paste the icon's SVG
+inline with `class="i"` and `aria-hidden="true"`; for list markers, use the `.i-check` /
+`.i-x` mask classes in `styles.css`.
 
 ## Design
 

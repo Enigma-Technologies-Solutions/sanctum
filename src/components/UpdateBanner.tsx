@@ -70,7 +70,7 @@ export function UpdateBanner() {
       <ArrowUpCircle size={15} style={{ flexShrink: 0, opacity: isError ? 0.45 : 1 }} />
 
       {isError ? (
-        <span style={{ color: "#5A6069" }}>Update check failed — {error}</span>
+        <span style={{ color: "#5A6069" }}>Update check failed: {error}</span>
       ) : (
         <>
           <span>

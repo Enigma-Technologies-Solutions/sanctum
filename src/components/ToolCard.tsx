@@ -181,7 +181,7 @@ export function ToolCard({ item, onRun, onInspect, onDeleted, onUpdated }: ToolC
             fontFamily: "Inter, system-ui, sans-serif", fontSize: 12, color: "#B0301F",
           }}>
             <AlertTriangle style={{ width: 14, height: 14, flexShrink: 0 }} />
-            Quarantined — integrity check failed
+            Quarantined: integrity check failed
           </div>
         )}
 
