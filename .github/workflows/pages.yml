@@ -1,0 +1,48 @@
+name: Pages
+
+# Publishes the landing site in web/ to GitHub Pages, served at
+# https://sanctum.enigma.sh (custom domain set in repo Settings → Pages).
+#
+# web/ is hand-written static HTML and CSS with no build step, so this uploads
+# the directory exactly as committed. Nothing is compiled, bundled or fetched.
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'web/**'
+      - '.github/workflows/pages.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write      # to publish the site
+  id-token: write   # to prove the deployment came from this workflow
+
+# One deployment at a time, and never cancel one halfway: a cancelled Pages
+# deploy can leave the previous artifact half-replaced.
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    name: Deploy site
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: actions/configure-pages@v5
+
+      # _headers and README.md ship too. GitHub Pages ignores _headers (it
+      # cannot send custom response headers); it is kept so the same directory
+      # deploys unchanged to Cloudflare Pages or Netlify, which honour it.
+      - uses: actions/upload-pages-artifact@v4
+        with:
+          path: web
+
+      - id: deployment
+        uses: actions/deploy-pages@v4
