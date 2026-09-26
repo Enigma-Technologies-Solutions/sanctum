@@ -4,8 +4,8 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 
-<title>Sanctum: run AI-generated tools in a hard-isolated sandbox</title>
-<meta name="description" content="Sanctum scans AI-generated HTML tools, shows you exactly what they want to touch, and runs them in a sandbox that blocks everything you didn't approve. Open source, local-first, free forever for individuals.">
+<title>Sanctum: a sandbox for AI-generated HTML tools</title>
+<meta name="description" content="Sanctum is a desktop app for running single-file HTML tools written by AI models. It lists what each tool uses and blocks anything you haven't approved. Open source and free for individuals.">
 
 <!-- GitHub Pages cannot send response headers, so the policy that _headers would
      carry is delivered here instead. frame-ancestors is not honoured in a meta tag;
@@ -18,8 +18,8 @@
 
 <meta property="og:type" content="website">
 <meta property="og:site_name" content="Sanctum">
-<meta property="og:title" content="Sanctum: run AI-generated tools. See what they can touch.">
-<meta property="og:description" content="Paste an AI-generated HTML tool. Sanctum tells you what it wants (camera, network, storage) and blocks everything you didn't approve. Open source.">
+<meta property="og:title" content="Sanctum: a sandbox for AI-generated HTML tools">
+<meta property="og:description" content="Paste in an HTML tool a model wrote for you. Sanctum lists what it uses, like the camera or network hosts, and blocks anything you haven't approved.">
 <meta property="og:url" content="https://sanctum.enigma.sh/">
 <meta property="og:image" content="https://sanctum.enigma.sh/assets/og.png">
 <meta property="og:image:width" content="1200">
@@ -63,24 +63,24 @@
     <div class="hero__copy">
       <a class="pill" href="https://github.com/Enigma-Technologies-Solutions/sanctum/releases/latest" rel="noopener">
         <span class="pill__tag">v0.1.0</span>
-        <span>Signed &amp; notarized for macOS</span>
-        <span class="pill__arrow" aria-hidden="true">→</span>
+        <span>macOS build signed and notarized</span>
+        <span class="pill__arrow"><svg class="i" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg></span>
       </a>
 
-      <h1>Run AI‑generated tools. See what they can touch. <em>Block everything else.</em></h1>
+      <h1>A sandbox for the HTML tools <em>AI models write for you.</em></h1>
 
       <p class="hero__sub">
-        An AI writes you a tool in a single HTML file. Sanctum scans it, shows you every
-        capability it wants, and runs it in a sandbox where anything you didn't approve is
-        blocked before the tool's first line executes.
+        Paste in a single-file tool. Sanctum lists what it found in the source, such as
+        camera access or the hosts it calls, and runs the tool with only the parts you
+        turn on. The rest is blocked before the tool's first line of script runs.
       </p>
 
       <div class="btn-row">
-        <a class="btn btn--volt" href="https://github.com/Enigma-Technologies-Solutions/sanctum/releases/latest" rel="noopener">Download Sanctum <span aria-hidden="true">→</span></a>
-        <a class="btn btn--ghost" href="https://github.com/Enigma-Technologies-Solutions/sanctum" rel="noopener">View source</a>
+        <a class="btn btn--volt" href="https://github.com/Enigma-Technologies-Solutions/sanctum/releases/latest" rel="noopener">Download <svg class="i" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg></a>
+        <a class="btn btn--ghost" href="https://github.com/Enigma-Technologies-Solutions/sanctum" rel="noopener">Source on GitHub</a>
       </div>
 
-      <p class="fine">Free forever for individuals · macOS · Windows · Linux · No account</p>
+      <p class="fine">Free for individuals · macOS, Windows, Linux · No account</p>
     </div>
 
     <!-- Product mockup: the approval screen. Built in HTML/CSS; nothing here is an image. -->
@@ -159,11 +159,11 @@
     <div class="shead">
       <div>
         <p class="eyebrow">The problem</p>
-        <h2 class="h2">From <span class="keep">double-click-and-hope</span> to a sandbox that shows its work.</h2>
+        <h2 class="h2">The same file, opened two ways.</h2>
       </div>
       <p class="lede">
-        A model hands you 800 lines of HTML and JavaScript. Somewhere in there might be a
-        <code>fetch</code> to a host you've never heard of. Same file, two ways to open it.
+        A model gives you 800 lines of HTML and JavaScript. You're unlikely to read all of
+        it, and one of those lines could be a <code>fetch</code> to a host you've never heard of.
       </p>
     </div>
 
@@ -179,10 +179,10 @@
             <li><span class="mono">CAM</span><span class="tgt">getUserMedia()</span><b class="st st--warn">prompt</b></li>
           </ul>
         </div>
-        <p class="ba__note">Every request goes out. Nothing told you what the tool reaches for until it had already reached.</p>
+        <p class="ba__note">Every request goes out. You only find out what the tool contacted afterwards, if at all.</p>
       </article>
 
-      <span class="ba__arrow" aria-hidden="true">→</span>
+      <span class="ba__arrow"><svg class="i" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg></span>
 
       <article class="card ba__card ba__card--good">
         <p class="eyebrow eyebrow--flush">Opened in Sanctum</p>
@@ -195,7 +195,7 @@
             <li><span class="mono">CAM</span><span class="tgt">getUserMedia()</span><b class="st st--bad">not granted</b></li>
           </ul>
         </div>
-        <p class="ba__note">You saw the manifest first. The one host you approved works; everything else hits a wall the tool can't talk its way past.</p>
+        <p class="ba__note">You approved <code>api.example.com</code> before the tool ran. The Content Security Policy refuses the other requests.</p>
       </article>
     </div>
   </div>
@@ -207,9 +207,9 @@
     <div class="shead">
       <div>
         <p class="eyebrow">How it works</p>
-        <h2 class="h2">Four steps, no trust required.</h2>
+        <h2 class="h2">What happens when you add a tool</h2>
       </div>
-      <p class="lede">Paste a tool, read what it wants, approve what you're comfortable with. The sandbox does the rest.</p>
+      <p class="lede">Sanctum never runs the file from where you got it. It works from its own stored copy.</p>
     </div>
 
     <div class="steps">
@@ -217,7 +217,7 @@
         <div class="step__text">
           <p class="eyebrow eyebrow--flush">Step 01</p>
           <h3>Ingest</h3>
-          <p>Paste from the clipboard or load a file. Sanctum copies it into content-addressed storage and stamps it with a SHA-256 hash. The original is never executed.</p>
+          <p>Paste from the clipboard or pick a file. Sanctum stores a copy under its SHA-256 hash and only ever runs that copy.</p>
         </div>
         <div class="step__vis" aria-hidden="true">
           <div class="vis-file">
@@ -232,7 +232,7 @@
         <div class="step__text">
           <p class="eyebrow eyebrow--flush">Step 02</p>
           <h3>Scan</h3>
-          <p>Static analysis pulls out every capability signal (camera, USB, serial, geolocation, storage, smart cards) plus the literal hostname of every endpoint.</p>
+          <p>A static scan looks for capability signals like camera, USB, serial, geolocation, storage and smart cards, and records every literal hostname in the source.</p>
         </div>
         <div class="step__vis" aria-hidden="true">
           <pre class="vis-code"><span>const r = await </span><mark>fetch</mark><span>(</span>
@@ -246,7 +246,7 @@
         <div class="step__text">
           <p class="eyebrow eyebrow--flush">Step 03</p>
           <h3>Approve</h3>
-          <p>A permission manifest, not a dialog box. Toggle each capability. Network is per host: approve the one endpoint the tool needs and nothing else.</p>
+          <p>Each capability gets its own toggle. Network access is per host, so you can allow the one API a tool needs and leave the rest off.</p>
         </div>
         <div class="step__vis" aria-hidden="true">
           <div class="vis-toggle"><span>api.example.com</span><span class="tgl tgl--on"></span></div>
@@ -258,7 +258,7 @@
         <div class="step__text">
           <p class="eyebrow eyebrow--flush">Step 04</p>
           <h3>Run</h3>
-          <p>The tool opens at its own isolated origin, under a Content Security Policy built from your approvals. The OS bridge is gone before its HTML is parsed.</p>
+          <p>The tool opens at its own origin under a Content Security Policy built from your approvals. Sanctum removes the app's IPC globals before the tool's HTML is parsed.</p>
         </div>
         <div class="step__vis" aria-hidden="true">
           <p class="mono vis-origin">sanctum-tool://tool-7f3a/</p>
@@ -275,9 +275,9 @@
     <div class="shead">
       <div>
         <p class="eyebrow">Security model</p>
-        <h2 class="h2">Five layers, in enforcement order.</h2>
+        <h2 class="h2">What the runtime enforces</h2>
       </div>
-      <p class="lede">Every layer is enforced by the runtime, not by the scanner. A tool that hides its intent still hits the same walls.</p>
+      <p class="lede">The scan only fills in the approval screen. The controls below apply whether or not the scan caught anything.</p>
     </div>
 
     <div class="feat">
@@ -298,7 +298,7 @@
         <div class="feat__text">
           <p class="mono feat__n">01</p>
           <h3>Origin isolation</h3>
-          <p>Each tool runs at its own origin. The WebView scopes storage, cookies and service workers per origin, so two tools can never read each other's data.</p>
+          <p>Each tool runs at its own origin, and the WebView scopes storage, cookies and service workers by origin. One tool can't read another tool's data.</p>
         </div>
       </article>
 
@@ -311,31 +311,31 @@
         <div class="feat__text">
           <p class="mono feat__n">02</p>
           <h3>CSP enforcement</h3>
-          <p>Every fetch-type directive starts denied. Approved hosts are injected as explicit <code>https:</code> and <code>wss:</code> entries when the window is created. Nothing is relaxed unless you relaxed it.</p>
+          <p>Every fetch directive starts at <code>'none'</code>. When the window is created, each host you approved is added as an explicit <code>https:</code> and <code>wss:</code> entry.</p>
         </div>
       </article>
 
       <article class="card feat__card">
         <div class="feat__vis" aria-hidden="true">
           <pre class="vis-policy">window.__TAURI__
-<b class="bad">→ undefined</b></pre>
+<b class="bad">undefined</b></pre>
         </div>
         <div class="feat__text">
           <p class="mono feat__n">03</p>
           <h3>IPC removal</h3>
-          <p>Every <code>__TAURI__*</code> global is deleted before the tool's HTML is parsed. The tool's capability set is empty, so a smuggled-in IPC bootstrap reaches nothing.</p>
+          <p>Every <code>__TAURI__*</code> global is deleted before the tool's HTML is parsed. Tool windows also have an empty capability set, so rebuilding the IPC bootstrap doesn't reach any command.</p>
         </div>
       </article>
 
       <article class="card feat__card">
         <div class="feat__vis" aria-hidden="true">
-          <pre class="vis-policy">3a4b5c…e91f <b class="ok">✓ match</b>
-3a4b5c…0000 <b class="bad">✗ quarantined</b></pre>
+          <pre class="vis-policy">3a4b5c…e91f <b class="ok"><span class="i-check"></span> match</b>
+3a4b5c…0000 <b class="bad"><span class="i-x"></span> quarantined</b></pre>
         </div>
         <div class="feat__text">
           <p class="mono feat__n">04</p>
           <h3>Integrity check</h3>
-          <p>The stored file's SHA-256 is recomputed on every launch. A mismatch quarantines the tool permanently. No prompt, no override.</p>
+          <p>The stored file's SHA-256 is recomputed on every launch. If it doesn't match, the tool is quarantined and its window isn't created. There's no prompt to override it.</p>
         </div>
       </article>
 
@@ -347,7 +347,7 @@
         <div class="feat__text">
           <p class="mono feat__n">05</p>
           <h3>Static scan <span class="tag">advisory</span></h3>
-          <p>The scanner tells you what to approve. It is deliberately not the security control. Anything it misses is simply never granted.</p>
+          <p>The scanner decides what shows up on the approval screen, and that's all it does. If it misses a capability, that capability is never granted.</p>
         </div>
       </article>
     </div>
@@ -360,9 +360,9 @@
     <div class="shead">
       <div>
         <p class="eyebrow">New in 0.1 · Hardware</p>
-        <h2 class="h2">Smart cards, one applet at a time.</h2>
+        <h2 class="h2">Smart card access is per applet</h2>
       </div>
-      <p class="lede">A tool can talk to a FIDO2, PIV or OpenPGP card, but only to the exact applet you approved. That unlocks things WebAuthn never exposes to a web page, like CTAP2 <code>hmac-secret</code>.</p>
+      <p class="lede">A tool can send commands to a FIDO2, PIV or OpenPGP card, but only to the applet you approved. That gives tools access to things WebAuthn doesn't expose to web pages, such as CTAP2 <code>hmac-secret</code>.</p>
     </div>
 
     <div class="duo">
@@ -378,8 +378,8 @@
           </div>
         </div>
         <div class="duo__text">
-          <h3>Approval names the applet.</h3>
-          <p>The scan lifts literal applet IDs out of the source, so you approve “FIDO2 / WebAuthn”, not blanket access to whatever card is in the reader.</p>
+          <h3>You approve a specific applet</h3>
+          <p>The scan picks up literal applet IDs from the source, so the prompt asks about “FIDO2 / WebAuthn” rather than the whole card.</p>
         </div>
       </article>
 
@@ -392,8 +392,8 @@
           </ul>
         </div>
         <div class="duo__text">
-          <h3>No pivoting on the same card.</h3>
-          <p>Raw commands can't re-select, so a tool approved for FIDO can't reach your PIV or OpenPGP keys. Sessions close with the tool's window.</p>
+          <h3>Other applets stay out of reach</h3>
+          <p>Raw commands can't re-select, so a tool approved for FIDO2 can't reach the PIV or OpenPGP applets on the same card. The session closes when the tool's window does.</p>
         </div>
       </article>
     </div>
@@ -406,19 +406,19 @@
     <div class="band">
       <div class="band__copy">
         <p class="eyebrow eyebrow--ink">The default</p>
-        <h2 class="h2">Blocked until you say otherwise.</h2>
+        <h2 class="h2">Tools start with nothing.</h2>
         <ul class="band__list">
-          <li>No network until you approve a host</li>
-          <li>No native code: tool windows have no OS bridge</li>
-          <li>No shared storage between tools</li>
-          <li>No account and no telemetry in Sanctum itself</li>
+          <li>Network access needs an approved host</li>
+          <li>Tool windows can't call into the app or the OS</li>
+          <li>Tools don't share storage</li>
+          <li>Sanctum has no account and sends no telemetry</li>
         </ul>
       </div>
       <div class="band__vis" aria-hidden="true">
         <div class="denied">
           <p class="mono denied__label">Tool capability set</p>
           <p class="denied__big">{ }</p>
-          <p class="denied__note">Empty by default. You add to it.</p>
+          <p class="denied__note">Empty until you approve something.</p>
         </div>
       </div>
     </div>
@@ -433,7 +433,7 @@
         <p class="eyebrow">Comparison</p>
         <h2 class="h2">Why not just open it in a browser?</h2>
       </div>
-      <p class="lede">A browser tab trusts the page. A virtual machine isolates it but tells you nothing. Sanctum shows you what a tool wants, then enforces your answer.</p>
+      <p class="lede">A browser tab runs the page straight away with normal web permissions. A virtual machine isolates it, but doesn't tell you what it tried to reach. Sanctum shows what a tool uses before it runs and enforces what you approve.</p>
     </div>
 
     <div class="table-scroll">
@@ -453,7 +453,7 @@
           <tr><th scope="row">Tamper check on every launch</th><td><span class="x">No</span></td><td><span class="x">No</span></td><td class="cmp__us"><span class="y">Yes</span></td></tr>
           <tr><th scope="row">Smart card access</th><td>Not available</td><td>Whole reader</td><td class="cmp__us">One approved applet</td></tr>
           <tr><th scope="row">Setup</th><td>None</td><td>Hypervisor + guest OS</td><td class="cmp__us">One app</td></tr>
-          <tr><th scope="row">Price for individuals</th><td>Free</td><td>Free to licensed</td><td class="cmp__us">Free forever</td></tr>
+          <tr><th scope="row">Price for individuals</th><td>Free</td><td>Free to licensed</td><td class="cmp__us">Free</td></tr>
         </tbody>
       </table>
     </div>
@@ -466,44 +466,43 @@
     <div class="shead">
       <div>
         <p class="eyebrow">Pricing</p>
-        <h2 class="h2">Free for you. Priced for your company.</h2>
+        <h2 class="h2">The app is free. Organizations pay for fleet controls.</h2>
       </div>
-      <p class="lede">The security model is not a paid feature and never will be. Organizations pay for control and evidence across a fleet. That's a different problem, with a different buyer.</p>
+      <p class="lede">The free version has the whole sandbox. The paid plan is for companies running Sanctum on many machines who need central policy and audit logs.</p>
     </div>
 
     <div class="plans">
       <article class="card plan">
         <p class="plan__name">Individual</p>
-        <p class="plan__price">Free<span>forever</span></p>
-        <p class="plan__note">Not a trial, not a seat count, not a crippled tier. The whole sandbox, permanently.</p>
+        <p class="plan__price">Free</p>
+        <p class="plan__note">The full app, with no limit on tools or versions.</p>
         <ul class="plan__list">
-          <li>Complete sandbox: every layer, nothing withheld</li>
-          <li>Unlimited tools and versions</li>
+          <li>Every sandbox layer described above</li>
           <li>Static capability scanner</li>
           <li>Smart card access, per applet</li>
           <li>macOS, Windows and Linux</li>
           <li>Full source under AGPL-3.0</li>
         </ul>
-        <a class="btn btn--ghost btn--block" href="https://github.com/Enigma-Technologies-Solutions/sanctum/releases/latest" rel="noopener">Download Sanctum</a>
-        <p class="plan__foot">No account. No telemetry.</p>
+        <a class="btn btn--ghost btn--block" href="https://github.com/Enigma-Technologies-Solutions/sanctum/releases/latest" rel="noopener">Download</a>
+        <p class="plan__foot">No account or telemetry</p>
       </article>
 
       <article class="card plan plan--feature">
         <span class="plan__badge">Design partners</span>
         <p class="plan__name">Organization</p>
-        <p class="plan__price">Let's talk</p>
-        <p class="plan__note">We're pricing with our first design partners rather than guessing at a number in public.</p>
+        <p class="plan__price">Not published</p>
+        <p class="plan__note">We're setting prices with our first design partners.</p>
         <ul class="plan__list">
           <li>Everything in Individual, for every employee</li>
-          <li>Signed org policy that pins what can <em>ever</em> be approved <span class="tag">in development</span></li>
+          <li>Signed org policy that limits what users can approve <span class="tag">in development</span></li>
           <li>Fleet deployment via Jamf, Intune and MDM <span class="tag">in development</span></li>
           <li>Audit log of every ingest, approval and run <span class="tag">in development</span></li>
           <li>SSO and SCIM provisioning <span class="tag">in development</span></li>
           <li>Priority vulnerability disclosure channel</li>
           <li>Commercial licensing for AGPL-incompatible use</li>
         </ul>
-        <a class="btn btn--volt btn--block" href="mailto:ultra@enigma.sh?subject=Sanctum%3A%20design%20partner%20program">Join the design partner program</a>
-        <p class="plan__foot">ultra@enigma.sh · we reply to every message</p>
+        <a class="btn btn--volt btn--block" href="mailto:ultra@enigma.sh?subject=Sanctum%3A%20design%20partner%20program">Email us about the design partner program</a>
+        <p class="plan__foot">ultra@enigma.sh</p>
       </article>
     </div>
   </div>
@@ -515,25 +514,25 @@
   <div class="wrap faq">
     <div class="faq__head">
       <p class="eyebrow">FAQ</p>
-      <h2 class="h2">Common questions</h2>
+      <h2 class="h2">Questions</h2>
     </div>
 
     <div class="faq__list">
       <details>
         <summary>What counts as an “HTML tool”?</summary>
-        <p>A single HTML file with its script and styles inline: the calculators, parsers, dashboards and converters AI models write when you ask for “a little tool that…”. If it runs by double-clicking an <code>.html</code> file, Sanctum can run it.</p>
+        <p>A single HTML file with its scripts and styles inline, like the calculators, parsers and converters a model writes when you ask for “a small tool that…”. If it works when you double-click the <code>.html</code> file, Sanctum can run it.</p>
       </details>
       <details>
         <summary>Does Sanctum send anything anywhere?</summary>
-        <p>No account, no telemetry, no analytics. The one request Sanctum makes on its own is an update check against its GitHub releases. Updates are signature-verified in Rust against a key compiled into the app, and never install without your click.</p>
+        <p>There's no account, telemetry or analytics. The only request Sanctum makes by itself is an update check against its GitHub releases. Updates are signature-checked in Rust against a public key built into the app, and only install when you click to install them.</p>
       </details>
       <details>
         <summary>What if a tool needs the network?</summary>
-        <p>The scanner lists every literal hostname in the source. Approve the ones you trust and Sanctum adds exactly those to the tool's Content Security Policy as <code>https:</code> and <code>wss:</code> entries. Anything else, including hosts assembled at run time, stays blocked.</p>
+        <p>The scanner lists every literal hostname in the source. Sanctum adds the ones you approve to the tool's Content Security Policy as <code>https:</code> and <code>wss:</code> entries. Other hosts stay blocked, including any the tool builds at run time.</p>
       </details>
       <details>
         <summary>Can a tool hide what it does from the scanner?</summary>
-        <p>It can try, and that's why the scanner isn't the security control. The scan only decides what's on the approval screen. The sandbox enforces your approvals, so a capability the scan never saw is a capability that was never granted.</p>
+        <p>It can, which is why the scanner isn't the security control. The scan decides what appears on the approval screen and the sandbox enforces your approvals, so anything the scan didn't see was never granted.</p>
       </details>
       <details>
         <summary>Which platforms are supported?</summary>
@@ -541,11 +540,11 @@
       </details>
       <details>
         <summary>Why is the individual version free?</summary>
-        <p>Because the sandbox is the product's promise, and a promise behind a paywall isn't one. What organizations pay for (signed policy, fleet deployment, audit evidence) is a different problem with a different buyer.</p>
+        <p>We don't think the security model should depend on whether you pay. Organizations pay for signed policy, fleet deployment and audit logs, which an individual doesn't need.</p>
       </details>
       <details>
         <summary>Why AGPL-3.0?</summary>
-        <p>So anyone can read the code that stands between a tool and their machine, and improvements stay open. If AGPL doesn't fit how your company ships software, a commercial license is available.</p>
+        <p>So anyone can read the code that sits between a tool and their machine, and changes to it stay open. If AGPL doesn't work for how your company ships software, we offer a commercial license.</p>
       </details>
     </div>
   </div>
@@ -554,13 +553,13 @@
 <!-- ══ Closing CTA ═══════════════════════════════════════════════════════ -->
 <section class="section cta">
   <div class="wrap cta__inner">
-    <h2 class="cta__h">Read the code before you trust the sandbox.</h2>
-    <p class="lede">Under 2,000 lines of Rust stand between an AI-generated tool and your machine. All of it is public, and all of it is yours to audit.</p>
+    <h2 class="cta__h">The source is on GitHub.</h2>
+    <p class="lede">The sandbox is implemented in Rust under <code>src-tauri/src</code>, licensed AGPL-3.0.</p>
     <div class="btn-row btn-row--center">
-      <a class="btn btn--volt" href="https://github.com/Enigma-Technologies-Solutions/sanctum/releases/latest" rel="noopener">Download Sanctum <span aria-hidden="true">→</span></a>
-      <a class="btn btn--ghost" href="https://github.com/Enigma-Technologies-Solutions/sanctum" rel="noopener">Browse the source</a>
+      <a class="btn btn--volt" href="https://github.com/Enigma-Technologies-Solutions/sanctum/releases/latest" rel="noopener">Download <svg class="i" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg></a>
+      <a class="btn btn--ghost" href="https://github.com/Enigma-Technologies-Solutions/sanctum" rel="noopener">Source on GitHub</a>
     </div>
-    <p class="fine">Free forever for individuals · macOS · Windows · Linux · AGPL-3.0</p>
+    <p class="fine">Free for individuals · macOS, Windows, Linux · AGPL-3.0</p>
   </div>
 </section>
 
@@ -572,7 +571,7 @@
     <div class="foot__grid">
       <div class="foot__brand">
         <a class="wordmark" href="#top">SANCTUM<span class="wordmark__sq" aria-hidden="true"></span></a>
-        <p class="foot__blurb">Run AI-generated tools. See what they can touch. Block everything else.</p>
+        <p class="foot__blurb">A desktop sandbox for AI-generated HTML tools.</p>
       </div>
 
       <div>

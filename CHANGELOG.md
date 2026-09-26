@@ -23,21 +23,21 @@ prompt. Windows installers are not yet code-signed; SmartScreen will ask for
 `.deb`/`.AppImage`. Every update payload on every platform is minisign-signed
 and verified before install.
 
-### Added — smart card access for tools
+### Added: smart card access for tools
 
 Sanctum can hand an approved tool a raw APDU channel to **one** smart card
-applet, over the platform PC/SC stack (WinSCard, pcsc-lite, macOS PCSC — all
+applet, over the platform PC/SC stack (WinSCard, pcsc-lite or macOS PCSC, all
 shipped with the OS). This is the first working implementation of the
 `device_broker.rs` seam.
 
 The motivating case is CTAP2 `hmac-secret`: a FIDO2 card will compute
 `HMAC-SHA256(CredRandom, salt)` inside the chip, where `CredRandom` never
-leaves it. WebAuthn deliberately does not expose that to web pages, so it is
-the clearest example of the capability gap a desktop host exists to close.
+leaves it. WebAuthn doesn't expose that to web pages, so a browser-based tool can't
+use it.
 
-- `smartcard.rs` — the broker: reader enumeration, sessions, AID allow-list,
+- `smartcard.rs`: the broker, with reader enumeration, sessions, AID allow-list,
   APDU policy, ISO 7816 response chaining.
-- `window.sanctum.smartcard` in approved tool windows —
+- `window.sanctum.smartcard` in approved tool windows:
   `listReaders`, `open`, `select`, `transmit`, `close`.
 - `DetectedCapability::Smartcard` with per-applet approval; the static scan
   lifts literal AIDs out of tool source so the prompt can name the applet
@@ -62,7 +62,7 @@ Enforcement, all in Rust:
 | Session ownership | Sessions bound to the opening tool, dropped when its window closes |
 
 CSP change is one directive: approved tools get `connect-src 'self'
-sanctum-tool:` — their own origin, served entirely by Sanctum, with no path off
+sanctum-tool:`, their own origin, served entirely by Sanctum, with no path off
 the machine. The scheme is named explicitly because WebKitGTK does not reliably
 match a custom-scheme document against `'self'`.
 
@@ -76,15 +76,15 @@ match a custom-scheme document against `'self'`.
 - **Card presence is read with `SCardGetStatusChange`,** not by connect-probing.
   Connecting succeeds against cards the driver has already lost and cannot
   distinguish present-and-working from present-but-`MUTE`.
-- **A card reset mid-session recovers in place** — reconnect, re-select the
-  applet, retry once. Only a physically absent card surfaces to the tool
+- **A card reset mid-session recovers in place.** Sanctum reconnects, re-selects the
+  applet and retries once. Only a physically absent card surfaces to the tool
   (HTTP 409).
 - **WebKitGTK renders correctly on Raspberry Pi.** The DMABUF renderer paints
   torn horizontal bands on the Pi's V3D driver; `WEBKIT_DISABLE_DMABUF_RENDERER`
   is now set on Linux before GTK initialises, unless the environment already
   sets it.
 
-### Changed — bundle identifier
+### Changed: bundle identifier
 
 - **Bundle identifier is now `sh.enigma.sanctum`** (was `app.sanctum.dev`, a
   domain ETS never owned). Changed before the first signed release on purpose:
@@ -93,14 +93,14 @@ match a custom-scheme document against `'self'`.
   after release would strand every user's `sanctum.db`. Development installs
   keep their data at the old path; move the directory across to carry it over.
 
-### Changed — build and CI
+### Changed: build and CI
 
 - **CI builds no longer attempt to sign.** With an updater public key in
   `tauri.conf.json` and no private key in the environment, `tauri build`
   refuses to run, which had been failing every platform. CI now builds with
   `createUpdaterArtifacts` off; signing stays in `release.yml`.
 - **macOS CI is one universal leg, not two per-arch legs.** GitHub retired the
-  `macos-13` Intel image, so the x86_64 job was never assigned a runner — it
+  `macos-13` Intel image, so the x86_64 job was never assigned a runner. It
   queued for 24 hours until the run was cancelled, holding the matrix red while
   every other leg passed. Intel coverage now comes from cross-compiling on the
   M-series runner, matching what `release.yml` already ships. The unsigned
@@ -111,8 +111,8 @@ match a custom-scheme document against `'self'`.
   build died importing an empty `.p12`. The Apple variables are now exported
   only when the certificate secret is non-empty, so the leg builds unsigned
   until the Developer ID certificate is enrolled.
-- **Linux arm64 is in both matrices,** on `ubuntu-22.04-arm` — deliberately
-  22.04, whose glibc (2.35) predates Raspberry Pi OS Bookworm's (2.36), so the
+- **Linux arm64 is in both matrices,** on `ubuntu-22.04-arm`. It is
+  22.04 on purpose, whose glibc (2.35) predates Raspberry Pi OS Bookworm's (2.36), so the
   `.deb` installs there. A 24.04 build does not.
 - Linux jobs upload their `.deb` and `.AppImage` as workflow artifacts.
 - `scripts/pi-setup.sh` and `scripts/pi-build.sh` build on a Pi directly.
@@ -123,7 +123,7 @@ match a custom-scheme document against `'self'`.
 ### Security
 
 - Updater signing key rotated to minisign ID `59F59E13694FB434`. The previous
-  key's public half had been left in `tauri.conf.json` after rotation — a
+  key's public half had been left in `tauri.conf.json` after rotation, a
   pairing that signs successfully and is then rejected by every client. Verify
   `~/.tauri/*.key.pub` against the config `pubkey` after any rotation; the
   failure is silent by construction.
@@ -135,10 +135,10 @@ Pi 400 (Alcor Link AK9567, contact slot):
 
 - applet select, `getInfo` (`FIDO_2_1`, `hmac-secret`, no PIN set),
   `makeCredential`, `clientPIN(getKeyAgreement)`, `getAssertion` with the
-  `hmac-secret` extension — all `9000`;
+  `hmac-secret` extension, all returning `9000`;
 - the derived secret is **stable** across repeated derivations with the same
   passphrase, **different** for a different passphrase, and **survives an
-  application restart** — the bytes come from the card, not from anything the
+  application restart**, because the bytes come from the card, not from anything the
   page retained.
 
 Contactless readers brown the card out during key generation and leave it mute

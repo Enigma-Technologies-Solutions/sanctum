@@ -1,4 +1,4 @@
-# Tool Signing — v1
+# Tool signing (v1)
 
 ## Purpose
 Signing provides publisher identity and tamper-evidence beyond SHA-256 checksums. A
@@ -23,7 +23,7 @@ whitespace. Canonical serialisation is fixed at v1 to prevent envelope attacks.
 | Windows | Authenticode (EV code-signing cert, `signtool.exe`) or Azure Trusted Signing |
 | Linux | GPG detached signature over the `.html` + manifest bundle |
 
-Platform codesign is orthogonal to the Ed25519 tool manifest signature — both can
+Platform codesign is orthogonal to the Ed25519 tool manifest signature; both can
 be present simultaneously.
 
 ## Hardware-backed keys (v2 scope)

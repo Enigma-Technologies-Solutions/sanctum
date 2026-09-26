@@ -1,258 +1,175 @@
-# Sanctum — Architecture Reference for HTML Tool Authors
+# Writing HTML tools for Sanctum
 
-Sanctum is a macOS desktop app that runs AI-generated HTML tools in isolated sandboxes. This document covers everything an HTML tool needs to know to work correctly within Sanctum.
+Sanctum is a desktop app (macOS, Windows, Linux) that runs single-file HTML tools in a sandbox. This page is for anyone, human or model, writing a tool that should work inside it.
 
----
+## How a tool is loaded
 
-## How a Tool Is Loaded
+1. **Ingest.** The user pastes HTML from the clipboard or picks a file. Sanctum stores a copy and never runs the original.
+2. **Scan.** Sanctum scans the raw HTML for capability signals (API names, URL literals). The scan only decides what the approval screen shows. It isn't what enforces the sandbox.
+3. **Integrity.** The file's SHA-256 is its version ID. It's recomputed on every launch.
+4. **Approval.** The user sees the detected capabilities and turns each one on or off.
+5. **Run.** A new WebView window serves the tool from a custom protocol, with a Content Security Policy built from the approved capabilities.
 
-1. **Ingest** — Sanctum accepts HTML via paste from clipboard or file path.
-2. **Static scan** — Rust scans the raw HTML for capability signals (API patterns, URL literals). This is advisory only; it drives the permission UI, not security enforcement.
-3. **Integrity stamp** — SHA-256 of the file is the version ID. Tampering quarantines the tool permanently.
-4. **Approval gate** — The user sees the detected capabilities and approves or denies each one.
-5. **Run** — A new WebView window opens, serving the tool from a custom protocol with a dynamically built CSP matching only the approved capabilities.
+## Origin
 
----
-
-## Origin Model — the Most Important Thing to Understand
-
-Every tool runs at a distinct web origin:
+Every tool runs at its own origin:
 
 ```
 sanctum-tool://tool-{uuid}/
 ```
 
-`{uuid}` is assigned at ingest time and never changes for that tool record. This origin is the tool's permanent address.
-
-**Implications:**
+The UUID is assigned at ingest and doesn't change for that tool. On Windows the WebView serves custom schemes over `http://sanctum-tool.localhost/` instead, so don't hardcode the scheme.
 
 | Concern | Behavior |
 |---|---|
-| `localStorage` | Scoped to this origin. Persists across runs. Invisible to all other tools. |
+| `localStorage`, `indexedDB` | Scoped to this origin. Persist across runs. |
 | `sessionStorage` | Scoped to this origin. Cleared when the window closes. |
-| `indexedDB` | Scoped to this origin. Persists across runs. |
 | `document.cookie` | Scoped to this origin. |
-| Cross-tool access | Impossible — different UUIDs = different origins = no shared storage. |
-| **Reinstall** | **New UUID = new origin = all persisted storage becomes inaccessible.** |
+| Other tools | Different UUID, different origin, so no shared storage. |
+| Delete and re-add | New UUID, new origin. Everything the old copy stored is unreachable. |
 
-To read your own origin at runtime:
 ```js
-const myOrigin = window.location.origin; // "sanctum-tool://tool-{uuid}"
+const myOrigin = window.location.origin;   // "sanctum-tool://tool-{uuid}"
 const myHost   = window.location.hostname; // "tool-{uuid}"
 ```
 
----
+## Default restrictions
 
-## What Is Blocked by Default
-
-### No Tauri IPC
-An initialization script runs before any tool code and permanently removes all Tauri globals:
+An initialization script removes these globals before any tool code runs:
 
 ```
 window.__TAURI__, __TAURI_IPC__, __TAURI_INTERNALS__, __TAURI_INVOKE__, ipc, __TAURI_METADATA__
 ```
 
-Tools have **zero access to the Tauri/Rust bridge**. Do not attempt to call `invoke()` or any Tauri plugin. There is no workaround.
+Tool windows also have an empty Tauri capability set. Don't try to call `invoke()` or a Tauri plugin; nothing will answer.
 
-### Baseline CSP (no approvals)
+The CSP when nothing is approved:
+
 ```
 default-src 'self'
 script-src  'self' 'unsafe-inline'
 style-src   'self' 'unsafe-inline'
 img-src     'self' data: blob:
 font-src    'self' data:
-connect-src 'none'            ← all fetch/XHR/WebSocket blocked
+connect-src 'none'
 media-src   'none'
 worker-src  'none'
 frame-src   'none'
 object-src  'none'
+form-action 'none'
 base-uri    'self'
 ```
 
-`connect-src 'none'` means **all network I/O is blocked by default** — no `fetch()`, no `XMLHttpRequest`, no `WebSocket`, no `EventSource`.
+`connect-src 'none'` blocks `fetch()`, `XMLHttpRequest`, `WebSocket`, `EventSource` and `navigator.sendBeacon`. Top-level navigation away from the tool's own origin is also refused, so `location.href = "https://..."` doesn't work as a way out.
 
----
-
-## Capability Approval System
-
-The static scanner detects capability signals and presents them to the user before the tool runs. The user approves or denies each one. Approvals take effect on the next `open_tool_window` call.
-
-### Scanned Signals → Capabilities
+## What the scanner looks for
 
 | Pattern in source | Capability |
 |---|---|
-| `getUserMedia` | Camera + Microphone |
+| `getUserMedia` | Camera and microphone |
 | `navigator.usb` | USB |
 | `navigator.serial` | Serial |
 | `navigator.hid` | HID |
 | `navigator.bluetooth` | Bluetooth |
-| `navigator.geolocation` / `getCurrentPosition` / `watchPosition` | Geolocation |
-| `new Notification` / `Notification.requestPermission` | Notifications |
-| `localStorage` / `sessionStorage` / `indexedDB` / `caches.open` | Storage |
-| `fetch(` / `XMLHttpRequest` / `new WebSocket` / `new EventSource` | Network |
+| `navigator.geolocation`, `getCurrentPosition`, `watchPosition` | Geolocation |
+| `new Notification`, `Notification.requestPermission` | Notifications |
+| `localStorage`, `sessionStorage`, `indexedDB`, `caches.open` | Storage |
+| `fetch(`, `XMLHttpRequest`, `new WebSocket`, `new EventSource` | Network |
+| `sanctum.smartcard` plus literal AIDs | Smart card, per applet |
 
-For network, Sanctum also extracts literal `https://` URLs from source and lists the hostnames. If no literal hosts are found, it marks the network capability as `(dynamic)`.
+For network access the scanner also collects the hostnames of literal `https://` URLs. If it finds network calls but no literal hosts, it records the host list as `(dynamic)`.
 
-### What Approval Unlocks
+The scan is a set of regular expressions. It misses URLs built from pieces (`"ht" + "tps://..."`), code run through `eval()` or `new Function()`, minified or obfuscated code, and scripts loaded from a CDN. Missing something doesn't grant it: the CSP only contains what the user approved.
 
-| Approved capability | CSP relaxation |
+## What approval changes
+
+| Approved capability | Effect on the CSP |
 |---|---|
-| Network (specific hosts) | `connect-src`, `style-src`, `font-src`, `img-src` expand to include `https://{host}` and `wss://{host}` |
-| Camera / Microphone | `media-src` expands to `'self' blob: mediastream:` |
-| Storage | No CSP change needed — same-origin storage always available |
-| Geolocation, Notifications, USB, Serial, HID, Bluetooth | CSP unchanged — these are browser permission APIs, not fetch-type directives |
+| Network, specific hosts | `connect-src`, `style-src`, `font-src` and `img-src` gain `https://{host}` and `wss://{host}` for each host |
+| Network, `(dynamic)` only | Nothing. `(dynamic)` is a label on the approval screen and never becomes a CSP source. |
+| Camera or microphone | `media-src` becomes `'self' blob: mediastream:`, and the OS asks the user as well |
+| Storage | Nothing. Same-origin storage always works; this entry is there so the user knows. |
+| Smart card | `connect-src` gains `'self' sanctum-tool:` so the tool can reach Sanctum's card bridge on its own origin, and `window.sanctum.smartcard` is injected. See the [README](README.md#smart-card-access). |
+| Geolocation, notifications, USB, serial, HID, Bluetooth | Nothing yet. No CSP directive covers these, and Sanctum doesn't gate them itself, so the WebView and OS permission prompts decide whether or not the user approved them. |
 
-### Scanner Limitations
+Approvals apply the next time the tool's window is opened.
 
-The scan is **heuristic, not exhaustive**. It cannot detect:
-- Capabilities hidden behind dynamic string construction: `fetch("ht"+"tps://evil.com")`
-- Obfuscated or minified code using indirect eval
-- Code loaded via `eval()` or `new Function()`
-- CDN-hosted scripts that request capabilities
+## Network access
 
-**The CSP is the real security boundary. The scanner is advisory.**
+A tool that calls an external service needs to:
 
----
-
-## Network Access
-
-Tools that need to contact external services must:
-1. Use literal `https://hostname` URLs in source code so the scanner can extract the host.
-2. Have those hosts approved by the user.
-3. Use `fetch()`, `XMLHttpRequest`, `WebSocket`, or `EventSource` — all work once `connect-src` is relaxed.
-
-Dynamic network (runtime-constructed URLs) is detectable by the scanner as `(dynamic)` but the user must still approve it. The CSP cannot enforce per-host allowlisting for dynamic URLs; if the user approves dynamic network, `connect-src` is set permissively.
-
----
-
-## Storage
-
-All Web Storage APIs work within the tool's origin with no special approval needed:
-- `localStorage` — persistent, survives app restart
-- `sessionStorage` — tab-scoped, cleared on window close
-- `indexedDB` — persistent, survives app restart
-- `Cache API` (`caches.open`) — persistent
-
-**Warning:** Storage is tied to the tool's UUID. If the tool is deleted and re-ingested, all stored data is unreachable.
-
----
-
-## APIs That Work Without Approval
-
-These browser APIs function normally in Sanctum tools without any capability approval:
-
-| API | Notes |
-|---|---|
-| Canvas 2D / WebGL | Fully available |
-| Web Audio API | Fully available |
-| Web Workers | Blocked by `worker-src 'none'` in baseline CSP — needs network approval to relax |
-| Web Crypto (`crypto.subtle`) | Fully available — secure context satisfied by custom protocol |
-| `crypto.randomUUID()` | Available |
-| `requestAnimationFrame` | Available |
-| `ResizeObserver`, `IntersectionObserver` | Available |
-| `navigator.clipboard` (read/write) | Available — OS may prompt the user |
-| Drag and drop | Available |
-| File API (`<input type="file">`) | Available |
-| `TextEncoder` / `TextDecoder` | Available |
-| `structuredClone`, `JSON` | Available |
-| `setTimeout` / `setInterval` | Available |
-
----
-
-## WebAuthn / Passkeys
-
-WebAuthn (`navigator.credentials.create()` / `.get()`) **works in Sanctum tools** with important caveats.
-
-**Why it works:**
-- WKWebView (macOS) treats `sanctum-tool://` as a secure context — the primary WebAuthn requirement.
-- `navigator.credentials` is not a network fetch; CSP `connect-src` does not block it.
-- Platform authenticators (Touch ID, security keys) are handled by the OS layer, which Sanctum does not intercept in v0.
-
-**Critical: the `rpId` must match the tool's host.** The tool cannot know its UUID at development time, so the `rpId` must be set dynamically:
+1. Put the full `https://hostname` URL in the source as a literal, so the scanner finds the host.
+2. Have the user approve that host.
 
 ```js
-// Correct — derives rpId from the actual running origin
+const BASE = "https://api.example.com";
+fetch(`${BASE}/endpoint`); // the scanner picks up api.example.com
+```
+
+URLs built at run time from anything other than a literal host won't work, even if the user approves `(dynamic)`.
+
+## APIs that work without approval
+
+Canvas 2D, WebGL, Web Audio, Web Crypto (`crypto.subtle`, `crypto.randomUUID()`), `TextEncoder`/`TextDecoder`, `structuredClone`, `requestAnimationFrame`, `ResizeObserver`, `IntersectionObserver`, timers, drag and drop, `<input type="file">`, and `navigator.clipboard` (the OS may prompt). The custom protocol counts as a secure context, so APIs that require one are available.
+
+## What doesn't work
+
+| Feature | Why |
+|---|---|
+| `window.__TAURI__`, `invoke()` | Removed before the tool runs |
+| Web Workers, Shared Workers, Service Workers | `worker-src 'none'`, whatever is approved |
+| `<iframe>` | `frame-src 'none'` |
+| `<embed>`, `<object>` | `object-src 'none'` |
+| Form submission | `form-action 'none'` |
+| Scripts from a CDN | `script-src` is `'self' 'unsafe-inline'` only. Inline the library. |
+| `postMessage` or `BroadcastChannel` to another tool | Different origins |
+| `eval()`, `new Function()` | Runs, but the scanner can't see what it does |
+
+## WebAuthn and passkeys
+
+`navigator.credentials.create()` and `.get()` work on macOS, where WKWebView treats `sanctum-tool://` as a secure context. They aren't network fetches, so `connect-src` doesn't affect them. Other platforms haven't been checked yet.
+
+The `rpId` has to match the tool's host, which the tool can't know ahead of time. Read it at run time:
+
+```js
 const rpId = window.location.hostname; // "tool-{uuid}"
 
 const credential = await navigator.credentials.create({
   publicKey: {
     rp: { id: rpId, name: "My Tool" },
-    // ... rest of options
-  }
+    // ...
+  },
 });
 ```
 
-**Hardcoding `rpId` to a domain name will fail.** There is no DNS or HTTPS origin here.
+A hardcoded domain as `rpId` will fail. Credentials are bound to `tool-{uuid}`, so if the user deletes and re-adds the tool, old credentials can't be used. Tell users they'll need to enroll again in that case.
 
-**Origin stability caveat:** Credentials are permanently bound to `sanctum-tool://tool-{uuid}/`. If the user deletes and re-adds the tool, the UUID changes, the origin changes, and all previously registered credentials become inaccessible. Design your credential storage accordingly — consider exporting/importing credential metadata alongside the tool, or making re-enrollment frictionless.
+The scanner doesn't detect `navigator.credentials` yet, so WebAuthn use won't appear on the approval screen. It still works.
 
-**Scanner gap:** `navigator.credentials` is not currently detected by the capability scanner. A tool using WebAuthn will not show a Passkeys capability badge. This has no runtime impact — WebAuthn works regardless — but users will not see it in the permission manifest.
+## Assets
 
----
+Put CSS and JavaScript inline, and embed images and fonts as `data:` URIs. An external asset only loads if its host has been approved.
 
-## What Does Not Work
+## Versions and integrity
 
-| Feature | Status | Reason |
+Each version is stored under its SHA-256. Before opening a window Sanctum re-hashes the stored file. If it doesn't match, that version is quarantined and won't run again; the user has to add a clean copy. Don't expect to edit a stored tool on disk between runs.
+
+## Quick reference
+
+| Capability | By default | After approval |
 |---|---|---|
-| `window.__TAURI__` | Blocked | Nuked by initialization script |
-| Tauri `invoke()` | Blocked | IPC globals removed |
-| `eval()` / `new Function(src)` | Works but undetectable by scanner | Not a recommended pattern |
-| `<iframe>` embedding other origins | Blocked | `frame-src 'none'` |
-| `<embed>` / `<object>` | Blocked | `object-src 'none'` |
-| Service Workers | Blocked | `worker-src 'none'` in baseline |
-| Shared Workers | Blocked | `worker-src 'none'` in baseline |
-| Cross-tool `postMessage` | Blocked | Different origins, no shared BroadcastChannel |
-| Loading scripts from CDN | Blocked unless CDN host is approved | `script-src 'self' 'unsafe-inline'` only |
-| `navigator.sendBeacon` | Blocked | Respects `connect-src` |
+| HTML, CSS, inline JS | Works | |
+| Web Crypto | Works | |
+| Storage (all kinds) | Works | |
+| File input | Works | |
+| Canvas, WebGL, Web Audio | Works | |
+| WebAuthn | Works on macOS (see `rpId`) | |
+| Network | Blocked | Allowed for approved hosts |
+| Camera, microphone | Blocked | Allowed, plus OS prompt |
+| Geolocation, notifications | OS prompt decides | OS prompt decides |
+| USB, serial, HID, Bluetooth | OS prompt decides | OS prompt decides |
+| Smart card | Not available | Approved applets only |
+| Tauri IPC | Not available | Not available |
+| Frames, workers | Blocked | Blocked |
 
----
-
-## Practical Patterns
-
-### Self-contained tool (no network)
-Write everything inline. Use `<style>` and `<script>` tags directly in the HTML. All storage APIs and crypto work. The scanner will detect nothing, and the user will see "sandboxed — no network, no device access."
-
-### Tool with external API
-Include the API base URL as a literal in the source:
-```js
-const BASE = "https://api.example.com";
-fetch(`${BASE}/endpoint`); // scanner extracts api.example.com
-```
-The user will be prompted to approve `api.example.com`.
-
-### Tool using WebAuthn
-```js
-const rpId = window.location.hostname; // dynamic — don't hardcode
-```
-Inform users that uninstalling and reinstalling the tool will require re-enrollment.
-
-### Tool with assets (CSS, images, fonts)
-Bundle everything inline as base64 data URIs, or inline the CSS/JS directly in the HTML. External asset URLs must be in the approved host list to load.
-
----
-
-## Version and Integrity
-
-Each version of a tool is content-addressed by its SHA-256 hash. On every `open_tool_window` call, Sanctum re-hashes the stored file and compares it to the stored version ID. Any mismatch quarantines the tool permanently — it will not run until manually cleared.
-
-Do not rely on being able to modify tool files on disk between runs. Sanctum will detect the change.
-
----
-
-## Summary Table
-
-| Capability | Default | After approval |
-|---|---|---|
-| Render HTML/CSS/JS | ✓ Always | — |
-| Web Crypto | ✓ Always | — |
-| Local storage (all types) | ✓ Always | — |
-| File input (`<input>`) | ✓ Always | — |
-| Canvas / WebGL / Audio | ✓ Always | — |
-| WebAuthn / Passkeys | ✓ Always (with rpId caveat) | — |
-| Network (`fetch`, XHR, WS) | ✗ Blocked | ✓ Per-host CSP relaxation |
-| Camera / Microphone | ✗ Blocked by CSP + OS | ✓ media-src relaxed + OS prompt |
-| Geolocation | ✗ Blocked by OS | ✓ OS prompt only |
-| Notifications | ✗ Blocked by OS | ✓ OS prompt only |
-| USB / Serial / HID / BT | ✗ Blocked by OS | ✓ OS prompt (v1: device_broker) |
-| Tauri IPC | ✗ Permanently blocked | ✗ Not available |
-| Framing / Workers | ✗ Blocked by CSP | ✗ Not available in v0 |
+A tool with nothing approved shows "sandboxed, no network or device access" in its window title.

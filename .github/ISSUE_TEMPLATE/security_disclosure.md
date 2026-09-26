@@ -1,6 +1,6 @@
 ---
 name: Security disclosure
-about: "STOP — do not use this template for vulnerabilities. See SECURITY.md."
+about: "Do not use this template for vulnerabilities. See SECURITY.md."
 labels: ''
 ---
 

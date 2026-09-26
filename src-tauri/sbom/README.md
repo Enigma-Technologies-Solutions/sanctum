@@ -1,4 +1,4 @@
-# SBOM — Software Bill of Materials (v1)
+# SBOM: software bill of materials (v1)
 
 ## Purpose
 Each tool ingested into Sanctum should ship with an SBOM so operators know exactly
@@ -10,7 +10,7 @@ covers:
   host extraction)
 
 ## Format
-CycloneDX JSON (spec version 1.6) — machine-readable, widely supported by SBOM
+CycloneDX JSON (spec version 1.6), machine-readable and widely supported by SBOM
 tooling (Dependency-Track, Grype, Trivy).
 
 ## Generation plan (v1)

@@ -153,7 +153,7 @@ pub fn normalize_aid(aid: &str) -> Result<String, BrokerError> {
     let lower = aid.trim().to_ascii_lowercase();
     if !is_valid_aid(&lower) {
         return Err(BrokerError::BadRequest(format!(
-            "not a valid AID (expected 5–16 bytes as hex): {aid}"
+            "not a valid AID (expected 5 to 16 bytes as hex): {aid}"
         )));
     }
     Ok(lower)
@@ -202,7 +202,7 @@ pub fn has_smartcard_capability(approvals: &[DetectedCapability]) -> bool {
 ///   issuing its own GET RESPONSE would desynchronise it.
 pub fn is_forbidden_apdu(apdu: &[u8]) -> Option<&'static str> {
     if apdu.len() < 4 {
-        return Some("APDU too short — needs at least CLA INS P1 P2.");
+        return Some("APDU too short: needs at least CLA INS P1 P2.");
     }
     let (cla, ins) = (apdu[0], apdu[1]);
     if cla & 0x80 != 0 {
@@ -214,7 +214,7 @@ pub fn is_forbidden_apdu(apdu: &[u8]) -> Option<&'static str> {
              Use sanctum.smartcard session.select(aid), which checks the AID \
              against what you approved.",
         ),
-        0x70 => Some("MANAGE CHANNEL is not allowed — it would bypass applet approval."),
+        0x70 => Some("MANAGE CHANNEL is not allowed because it would bypass applet approval."),
         0xC0 => Some("GET RESPONSE is handled by Sanctum; do not send it yourself."),
         _ => None,
     }
@@ -392,7 +392,7 @@ pub fn open_session(
 ) -> Result<OpenResult, BrokerError> {
     if state.count_for(tool_id) >= MAX_SESSIONS_PER_TOOL {
         return Err(BrokerError::BadRequest(format!(
-            "too many open card sessions (limit {MAX_SESSIONS_PER_TOOL}) — close one first"
+            "too many open card sessions (limit {MAX_SESSIONS_PER_TOOL}); close one first"
         )));
     }
 
@@ -546,7 +546,7 @@ fn transmit_chained(card: &mut pcsc::Card, apdu: &[u8]) -> Result<ApduResult, Br
     }
 
     Err(BrokerError::Pcsc(
-        "card kept asking for GET RESPONSE — chaining did not terminate".into(),
+        "card kept asking for GET RESPONSE; chaining did not terminate".into(),
     ))
 }
 
@@ -657,7 +657,7 @@ pub fn transmit(
     };
     if session.selected_aid.is_none() {
         return Err(BrokerError::Denied(
-            "no applet selected — call session.select(aid) first.",
+            "no applet selected; call session.select(aid) first.",
         ));
     }
 

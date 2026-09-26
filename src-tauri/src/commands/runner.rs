@@ -263,7 +263,7 @@ fn is_allowed_tool_navigation(url: &url::Url, expected_host: &str) -> bool {
 /// based on its approved (not just detected) capabilities.
 fn approved_summary(approvals: &[DetectedCapability]) -> String {
     if approvals.is_empty() {
-        return "sandboxed — no network, no device access".to_string();
+        return "sandboxed, no network or device access".to_string();
     }
     approvals
         .iter()
@@ -332,7 +332,7 @@ pub async fn open_tool_window(
 
     let quarantined: i32 = ver_row.try_get("quarantined").unwrap_or(0);
     if quarantined != 0 {
-        return Err(format!("Tool '{tool_name}' is quarantined — will not run."));
+        return Err(format!("Tool '{tool_name}' is quarantined and won't run."));
     }
 
     let manifest_json: String = ver_row.try_get("manifest").map_err(|e| e.to_string())?;
@@ -372,7 +372,7 @@ pub async fn open_tool_window(
     // 7. Build window title showing APPROVED (not just detected) capabilities
     let summary = approved_summary(&approvals);
     let title = format!(
-        "{} — {} | ⚠ Third-party tool — not verified by Sanctum",
+        "{} ({}) | ⚠ Third-party tool, not verified by Sanctum",
         tool_name, summary,
     );
 
@@ -832,7 +832,7 @@ mod tests {
     fn summary_of_no_approvals_states_full_containment() {
         assert_eq!(
             approved_summary(&[]),
-            "sandboxed — no network, no device access"
+            "sandboxed, no network or device access"
         );
     }
 

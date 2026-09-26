@@ -223,6 +223,32 @@ code {
   white-space: nowrap;
 }
 
+/* ── Icons ───────────────────────────────────────────────────────────────
+   Lucide (lucide.dev, ISC). Inline <svg class="i"> in markup; CSS masks for
+   list markers. Keep to this one family. */
+.i {
+  width: 1em;
+  height: 1em;
+  flex: none;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  vertical-align: -0.125em;
+}
+.i-check, .i-x {
+  display: inline-block;
+  width: 1em;
+  height: 1em;
+  flex: none;
+  background-color: currentColor;
+  -webkit-mask: var(--mask) center / contain no-repeat;
+  mask: var(--mask) center / contain no-repeat;
+}
+.i-check { --mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M20 6 9 17l-5-5'/%3E%3C/svg%3E"); }
+.i-x     { --mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M18 6 6 18'/%3E%3Cpath d='m6 6 12 12'/%3E%3C/svg%3E"); }
+
 /* ── Buttons ───────────────────────────────────────────────────────────── */
 .btn {
   display: inline-flex;
@@ -326,7 +352,7 @@ code {
   border-radius: 999px;
   padding: 2px 9px;
 }
-.pill__arrow { color: var(--ink-3); }
+.pill__arrow { color: var(--ink-3); display: inline-flex; }
 
 .hero h1 {
   font-size: clamp(40px, 5.1vw, 70px);
@@ -500,8 +526,7 @@ code {
   border-radius: 50%;
   background: var(--volt);
   color: var(--volt-ink);
-  font-size: 20px;
-  font-weight: 700;
+  font-size: 22px;
 }
 @media (max-width: 959px) { .ba__arrow { transform: rotate(90deg); } }
 
@@ -649,6 +674,7 @@ code {
 .vis-policy b { font-weight: 400; }
 .vis-policy .ok  { color: var(--volt); }
 .vis-policy .bad { color: var(--bad); }
+.vis-policy .i-check, .vis-policy .i-x { vertical-align: -0.1em; }
 .vis-policy .dim { color: var(--ink-3); }
 
 .iso { display: flex; align-items: stretch; gap: 14px; width: 100%; }
@@ -732,17 +758,12 @@ code {
 .band__list { display: grid; gap: 12px; margin-top: 28px; font-size: 16px; font-weight: 500; }
 .band__list li { display: flex; align-items: center; gap: 12px; }
 .band__list li::before {
-  content: "✓";
-  display: grid;
-  place-items: center;
+  content: "";
   width: 20px;
   height: 20px;
   flex: none;
   border-radius: 5px;
-  background: var(--volt-ink);
-  color: var(--volt);
-  font-size: 12px;
-  font-weight: 700;
+  background: var(--volt-ink) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23FBFF00' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M20 6 9 17l-5-5'/%3E%3C/svg%3E") center / 12px no-repeat;
 }
 
 .denied {
@@ -785,8 +806,8 @@ code {
 .cmp .cmp__us { background: var(--volt-a12); color: var(--ink); font-weight: 600; }
 .cmp thead .cmp__us { color: var(--volt); }
 .cmp .x, .cmp .y { display: inline-flex; align-items: center; gap: 7px; }
-.cmp .x::before { content: "✕"; color: var(--ink-3); font-size: 12px; }
-.cmp .y::before { content: "✓"; color: var(--volt); font-weight: 700; }
+.cmp .x::before { content: ""; width: 12px; height: 12px; background-color: var(--ink-3); -webkit-mask: var(--mask) center / contain no-repeat; mask: var(--mask) center / contain no-repeat; --mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M18 6 6 18'/%3E%3Cpath d='m6 6 12 12'/%3E%3C/svg%3E"); }
+.cmp .y::before { content: ""; width: 14px; height: 14px; background-color: var(--volt); -webkit-mask: var(--mask) center / contain no-repeat; mask: var(--mask) center / contain no-repeat; --mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M20 6 9 17l-5-5'/%3E%3C/svg%3E"); }
 .cmp .x { color: var(--ink-3); }
 
 /* ── Pricing ───────────────────────────────────────────────────────────── */
@@ -820,7 +841,7 @@ code {
 .plan__note { color: var(--ink-2); font-size: 15px; padding-bottom: 24px; border-bottom: 1px solid var(--line); }
 .plan__list { display: grid; gap: 11px; margin: 24px 0 32px; font-size: 14.5px; color: var(--ink-2); flex: 1; }
 .plan__list li { position: relative; padding-left: 26px; }
-.plan__list li::before { content: "✓"; position: absolute; left: 0; color: var(--volt); font-weight: 700; }
+.plan__list li::before { content: ""; position: absolute; left: 0; top: 0.3em; width: 14px; height: 14px; background-color: var(--volt); -webkit-mask: var(--mask) center / contain no-repeat; mask: var(--mask) center / contain no-repeat; --mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M20 6 9 17l-5-5'/%3E%3C/svg%3E"); }
 .plan__foot { font-family: var(--mono); font-size: 11.5px; color: var(--ink-3); margin-top: 14px; text-align: center; }
 
 /* ── FAQ ───────────────────────────────────────────────────────────────── */
