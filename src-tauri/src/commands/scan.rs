@@ -464,4 +464,25 @@ mod tests {
             .expect("detected");
         assert_eq!(aids, vec!["(dynamic)"]);
     }
+
+    // ── Shipped examples ──────────────────────────────────────────────────────
+
+    /// The OTP vault example asks for exactly two things: its own storage and
+    /// the YubiKey OATH applet. A regression here changes what users are asked
+    /// to approve, so it is pinned.
+    #[test]
+    fn otp_vault_example_asks_for_storage_and_oath_only() {
+        let html = include_str!("../../../examples/otp-vault/index.html");
+        let caps = scan_html(html);
+        assert!(
+            scanned_hosts(html).is_none(),
+            "example must not request network: {caps:?}"
+        );
+        assert!(caps.contains(&DetectedCapability::Feature(CapabilityFeature::Storage)));
+        assert_eq!(
+            scanned_aids(html).expect("smart card detected"),
+            vec!["a0000005272101"]
+        );
+        assert_eq!(caps.len(), 2, "unexpected capabilities: {caps:?}");
+    }
 }

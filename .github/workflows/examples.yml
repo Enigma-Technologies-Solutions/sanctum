@@ -1,0 +1,70 @@
+name: Examples
+
+# Records the SHA-256 of every example tool and, on main, publishes a GitHub
+# artifact attestation for each file: a Sigstore-signed SLSA build provenance
+# statement, logged in the public Rekor transparency log, that ties the file's
+# digest to this repository, commit and workflow.
+#
+# Verify a downloaded copy with:
+#   gh attestation verify index.html --repo Enigma-Technologies-Solutions/sanctum
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'examples/**'
+      - '.github/workflows/examples.yml'
+  pull_request:
+    paths:
+      - 'examples/**'
+      - '.github/workflows/examples.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  checksums:
+    name: Checksums and provenance
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write      # Sigstore signing identity for the attestation
+      attestations: write  # store the attestation on this repository
+
+    steps:
+      - uses: actions/checkout@v6
+
+      # A tool that loads a script or stylesheet from another host would run
+      # different code from the file that was hashed. Examples must be one file.
+      - name: Check examples are self-contained
+        run: |
+          set -euo pipefail
+          if grep -nE '<script[^>]+src=|<link[^>]+rel="?stylesheet' examples/*/index.html; then
+            echo "::error::An example loads an external script or stylesheet."
+            exit 1
+          fi
+
+      - name: Compute SHA-256
+        run: |
+          set -euo pipefail
+          sha256sum examples/*/index.html | tee SHA256SUMS
+          {
+            echo '### Example checksums'
+            echo '```'
+            cat SHA256SUMS
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Attest build provenance
+        if: github.event_name != 'pull_request'
+        uses: actions/attest-build-provenance@v4
+        with:
+          subject-path: 'examples/*/index.html'
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: examples
+          path: |
+            examples/*/index.html
+            SHA256SUMS
+          if-no-files-found: error

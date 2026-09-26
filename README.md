@@ -140,7 +140,7 @@ needs re-presenting.
 | Signed auto-updates | Wired up; first real test is the 0.1.1 update |
 | AST-based scanner (catches obfuscation) | roadmap |
 | Org policy file | roadmap |
-| Tool registry / provenance | roadmap |
+| Tool registry / provenance | roadmap ([design](docs/registry.md)); example provenance attested in CI |
 
 ---
 
