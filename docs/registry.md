@@ -174,6 +174,10 @@ which supports Ed25519, or a cloud HSM) are the next step and do not change the 
 
 ## Stage 2: organisation policy (`policy.rs`)
 
+**Stage 2a is built:** `pinned_checksums` only, read from an admin-owned file, enforced in
+`open_tool_window` against the freshly verified hash, failing closed on a broken file. See
+[policy.md](policy.md). The rest of this section is stage 2b.
+
 A read-only policy file deployed by MDM (macOS configuration profile, Windows registry or
 GPO, `/etc/sanctum/policy.json` on Linux), signed by the organisation's policy key, which
 is pinned by the same MDM channel. Sanctum never fetches policy from a registry. The stub's
@@ -284,7 +288,7 @@ a future, explicit capability does so.
 |---|---|---|---|
 | 0 | Workflow only | Verifiable build provenance | Done on the examples branch |
 | 1 | Bundle format, verify, install with provenance, CLI | Publisher identity inside the app | In progress |
-| 2a | `pinned_checksums` only | Hash allow-listing without key management | Next |
+| 2a | `pinned_checksums` only | Hash allow-listing without key management | Built, see policy.md |
 | 3 | Signed index client, revocation, store UI | Catalogue and fleet-wide status | Proposal |
 | 2b | Full policy file, private registries | Central enforcement | Proposal |
 | IdP | Registry server with OIDC, SCIM, audit | The enterprise product | Proposal |

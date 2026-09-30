@@ -24,6 +24,9 @@ section behind.
   is added to the binary, every signer shows as unknown.
 - `sanctum-bundle` command line tool (`src-tauri/crates/sanctum-bundle`) to create keys,
   issue publisher certificates, and sign and inspect bundles, and `scripts/sign-tool.sh`.
+- Organisation policy, first control: `pinned_checksums`. An administrator places a
+  read-only `policy.json` in a system path and only listed tool versions open. A policy file
+  that cannot be trusted blocks tools instead of being ignored. See `docs/policy.md`.
 - `docs/registry.md`: design for the trusted registry and private registries.
 
 ## [0.1.0] - 2026-09-21

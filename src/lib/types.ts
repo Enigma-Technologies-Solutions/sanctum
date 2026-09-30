@@ -103,6 +103,16 @@ export interface BundleInstall extends IngestResult {
   warnings: string[];
 }
 
+/** Organisation policy state, from the admin-managed policy file. */
+export interface PolicyStatus {
+  /** A policy file is present (valid or not). */
+  managed: boolean;
+  /** Number of pinned checksums when pinning is in use. */
+  pinnedCount: number | null;
+  /** Set when the policy cannot be applied. Tools are blocked until it is fixed. */
+  error: string | null;
+}
+
 export interface MetadataUpdate {
   name?: string;
   description?: string;

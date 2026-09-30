@@ -10,6 +10,7 @@ import type {
   ToolManifest,
   ToolWithVersion,
   UpdateInfo,
+  PolicyStatus,
   ProvenanceRecord,
   VersionRecord,
 } from "./types";
@@ -35,6 +36,11 @@ export const Commands = {
   /** Install a signed .sanctum bundle. Rust verifies it; the tool still starts with no approvals. */
   ingestBundleFromPath(path: string): Promise<BundleInstall> {
     return invoke("ingest_bundle_from_path", { path });
+  },
+
+  /** Whether an organisation policy manages this install, and whether it applied. */
+  getPolicyStatus(): Promise<PolicyStatus> {
+    return invoke("get_policy_status");
   },
 
   /** Provenance for a version, or null when it was not installed from a signed bundle. */

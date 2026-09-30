@@ -2,7 +2,7 @@
 // Copyright (C) 2026 Enigma Technologies Solutions
 
 import { useState, useEffect, useCallback } from "react";
-import type { ToolWithVersion, IngestResult } from "@/lib/types";
+import type { ToolWithVersion, IngestResult, PolicyStatus } from "@/lib/types";
 import { Commands } from "@/lib/commands";
 import { ToolCard } from "./ToolCard";
 import { IngestBar } from "./IngestBar";
@@ -17,6 +17,11 @@ export function Library() {
   const [inspecting, setInspecting] = useState<string | null>(null);
   const [dragOver, setDragOver] = useState(false);
   const [runError, setRunError] = useState<string | null>(null);
+  const [policy, setPolicy] = useState<PolicyStatus | null>(null);
+
+  useEffect(() => {
+    Commands.getPolicyStatus().then(setPolicy).catch(() => {});
+  }, []);
 
   const refresh = useCallback(async () => {
     try {
@@ -165,6 +170,27 @@ export function Library() {
         <div className="volt-bar" style={{ width: "48px", marginBottom: "16px" }} />
 
         <IngestBar onIngested={handleIngested} />
+
+        {policy?.managed && (
+          <div
+            style={{
+              marginTop: "10px",
+              background: policy.error ? "rgba(210,64,46,.08)" : "#F7F8FA",
+              border: `1px solid ${policy.error ? "rgba(210,64,46,.2)" : "#E3E6EA"}`,
+              borderRadius: "6px",
+              padding: "8px 12px",
+              fontFamily: "Inter, system-ui, sans-serif",
+              fontSize: "12px",
+              color: policy.error ? "#B0301F" : "#3A4048",
+            }}
+          >
+            {policy.error
+              ? `Your organisation's policy could not be applied, so tools are blocked. ${policy.error}`
+              : policy.pinnedCount !== null
+                ? `Your organisation limits which tools can run. ${policy.pinnedCount} approved ${policy.pinnedCount === 1 ? "version" : "versions"}. Other tools can be added but will not open.`
+                : "Your organisation manages this installation."}
+          </div>
+        )}
 
         {runError && (
           <div
