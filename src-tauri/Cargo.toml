@@ -45,6 +45,14 @@ chrono = { version = "0.4", features = ["serde"] }
 # arboard is cross-platform (macOS/Windows/Linux) and avoids exposing
 # the clipboard plugin's JS-only API to Rust.
 arboard = "3"
+# Signed tool bundles: format and verification. Shared with the signing CLI so there
+# is one implementation of what "verified" means.
+sanctum-bundle = { path = "crates/sanctum-bundle" }
+
+[dev-dependencies]
+ed25519-dalek = { version = "2", features = ["rand_core"] }
+rand_core = { version = "0.6", features = ["getrandom"] }
+tokio = { version = "1", features = ["macros", "rt-multi-thread"] }
 
 [profile.release]
 panic = "abort"

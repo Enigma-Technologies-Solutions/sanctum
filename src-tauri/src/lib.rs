@@ -14,6 +14,7 @@ pub mod policy;
 pub mod registry;
 pub mod signing;
 pub mod smartcard;
+pub mod trust;
 
 // ── Managed state ─────────────────────────────────────────────────────────────
 
@@ -231,6 +232,8 @@ pub fn run() {
             commands::ingest::ingest_html,
             commands::ingest::ingest_from_clipboard,
             commands::ingest::ingest_from_path,
+            commands::bundle::ingest_bundle_from_path,
+            commands::bundle::get_provenance,
             commands::library::list_tools,
             commands::library::get_tool,
             commands::library::update_metadata,

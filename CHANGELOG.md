@@ -13,6 +13,19 @@ section behind.
 
 ## [Unreleased]
 
+### Added
+
+- Signed tool bundles (`.sanctum`). A bundle carries an HTML tool and an Ed25519 signature
+  over its hash, name, version and declared capabilities. Sanctum checks the signature and
+  the file hash before anything is written, refuses a file that uses capabilities the
+  publisher did not declare, and refuses to move an app to an older version. Installing a
+  bundle approves nothing: the tool starts with no permissions like any other.
+- The tool's Inspect view shows the publisher for bundle installs. Until the Enigma root key
+  is added to the binary, every signer shows as unknown.
+- `sanctum-bundle` command line tool (`src-tauri/crates/sanctum-bundle`) to create keys,
+  issue publisher certificates, and sign and inspect bundles, and `scripts/sign-tool.sh`.
+- `docs/registry.md`: design for the trusted registry and private registries.
+
 ## [0.1.0] - 2026-09-21
 
 First release. macOS builds are signed with a Developer ID certificate

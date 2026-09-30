@@ -84,6 +84,25 @@ export interface IngestResult {
   isNewTool: boolean;
 }
 
+/** Where a version came from when it was installed from a signed .sanctum bundle. */
+export interface ProvenanceRecord {
+  versionId: string;
+  appId: string;
+  publisherKey: string;
+  publisherName: string | null;
+  /** "verified" (signer is a trust anchor) or "unknown_signer". Neither grants any permission. */
+  trust: "verified" | "unknown_signer";
+  name: string;
+  version: string;
+  issuedAt: number;
+  installedAt: number;
+}
+
+export interface BundleInstall extends IngestResult {
+  provenance: ProvenanceRecord;
+  warnings: string[];
+}
+
 export interface MetadataUpdate {
   name?: string;
   description?: string;

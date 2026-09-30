@@ -4,11 +4,13 @@
 import { invoke } from "@tauri-apps/api/core";
 import type {
   DetectedCapability,
+  BundleInstall,
   IngestResult,
   MetadataUpdate,
   ToolManifest,
   ToolWithVersion,
   UpdateInfo,
+  ProvenanceRecord,
   VersionRecord,
 } from "./types";
 
@@ -28,6 +30,16 @@ export const Commands = {
   /** Ingest an HTML tool from a filesystem path (Rust reads the file). */
   ingestFromPath(path: string): Promise<IngestResult> {
     return invoke("ingest_from_path", { path });
+  },
+
+  /** Install a signed .sanctum bundle. Rust verifies it; the tool still starts with no approvals. */
+  ingestBundleFromPath(path: string): Promise<BundleInstall> {
+    return invoke("ingest_bundle_from_path", { path });
+  },
+
+  /** Provenance for a version, or null when it was not installed from a signed bundle. */
+  getProvenance(versionId: string): Promise<ProvenanceRecord | null> {
+    return invoke("get_provenance", { versionId });
   },
 
   /** Permanently delete a tool and all its versions. Irreversible. */

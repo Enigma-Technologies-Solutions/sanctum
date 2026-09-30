@@ -3,7 +3,12 @@
 
 import { useState, useCallback, useEffect } from "react";
 import { open } from "@tauri-apps/plugin-dialog";
-import type { ToolWithVersion, VersionRecord, DetectedCapability } from "@/lib/types";
+import type {
+  ToolWithVersion,
+  VersionRecord,
+  DetectedCapability,
+  ProvenanceRecord,
+} from "@/lib/types";
 import { formatBytes, formatDate, capabilityToPlain } from "@/lib/types";
 import { Commands } from "@/lib/commands";
 import { Button } from "@/components/ui/button";
@@ -21,6 +26,13 @@ import {
 import type { LucideIcon } from "lucide-react";
 
 // ── Capability approval helpers ────────────────────────────────────────────
+
+/** What the "Signed" row says. Never "safe": a signature names a publisher and nothing else. */
+function provenanceLabel(p: ProvenanceRecord | null): string {
+  if (!p) return "Unsigned";
+  if (p.trust === "verified") return `Verified publisher: ${p.publisherName ?? p.publisherKey}`;
+  return `Signed by an unknown publisher (${p.publisherKey.slice(0, 16)}…)`;
+}
 
 function capKey(cap: DetectedCapability): string {
   if (typeof cap === "string") return cap;
@@ -105,10 +117,24 @@ export function InspectView({ item, onBack, onRun, onRefresh, onDelete }: Inspec
   const [rolling, setRolling] = useState(false);
   const [approvalSaving, setApprovalSaving] = useState(false);
   const [showUpdate, setShowUpdate] = useState(false);
+  const [provenance, setProvenance] = useState<ProvenanceRecord | null>(null);
   const [updating, setUpdating] = useState(false);
   const [updateError, setUpdateError] = useState<string | null>(null);
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [deleting, setDeleting] = useState(false);
+
+  // Provenance exists only for versions installed from a signed bundle.
+  const versionId = cv?.id;
+  useEffect(() => {
+    let live = true;
+    setProvenance(null);
+    if (versionId) {
+      Commands.getProvenance(versionId)
+        .then((p) => { if (live) setProvenance(p); })
+        .catch(() => {});
+    }
+    return () => { live = false; };
+  }, [versionId]);
 
   // Sync approvals if parent refreshes the tool record
   useEffect(() => {
@@ -592,19 +618,26 @@ export function InspectView({ item, onBack, onRun, onRefresh, onDelete }: Inspec
                         ["Size",    formatBytes(cv.file_size), true],
                         ["Ingested",formatDate(cv.created_at), false],
                         ["Version", `v${cv.version_num}`, true],
-                        ["Signed",  cv.manifest.signature ? "Yes" : "Unsigned", false],
+                        ["Signed",  provenanceLabel(provenance), false],
                       ].map(([label, value, isMono]) => (
                         <>
                           <dt key={`dt-${label}`} style={{ fontFamily: "Inter, system-ui, sans-serif", fontSize: "12px", color: "#8A9099", alignSelf: "baseline" }}>{label}</dt>
                           <dd key={`dd-${label}`} style={{
                             fontFamily: isMono ? "'Space Mono', monospace" : "Inter, system-ui, sans-serif",
                             fontSize: isMono ? "11px" : "13px",
-                            color: label === "Signed" && !cv.manifest.signature ? "#92600D" : "#0A0A0A",
+                            color: label === "Signed" && !provenance ? "#92600D" : "#0A0A0A",
                             wordBreak: "break-all", margin: 0,
                           }}>{value as string}</dd>
                         </>
                       ))}
                     </dl>
+                    {provenance && (
+                      <p style={{ fontFamily: "Inter, system-ui, sans-serif", fontSize: "12px", color: "#8A9099", margin: "10px 0 0", lineHeight: 1.5 }}>
+                        A signature says who published this file and that it has not been changed.
+                        It does not mean the tool is safe, and it gives the tool no permissions.
+                        Approve only what you want it to do, above.
+                      </p>
+                    )}
                   </div>
                 )}
               </div>

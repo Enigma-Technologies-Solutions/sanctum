@@ -45,11 +45,13 @@ export function Library() {
     listen<DropPayload>("tauri://file-drop", ({ payload }) => {
       setDragOver(false);
       const htmlPaths = (payload?.paths ?? []).filter(
-        (p) => p.endsWith(".html") || p.endsWith(".htm")
+        (p) => p.endsWith(".html") || p.endsWith(".htm") || p.endsWith(".sanctum")
       );
       setRunError(null);
       htmlPaths.forEach((path) => {
-        Commands.ingestFromPath(path)
+        (path.endsWith(".sanctum")
+          ? Commands.ingestBundleFromPath(path)
+          : Commands.ingestFromPath(path))
           .then(handleIngested)
           .catch((e) => setRunError(String(e)));
       });
