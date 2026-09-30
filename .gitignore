@@ -31,3 +31,6 @@ node_modules/
 
 # Sanctum bundle signing keys (sanctum-bundle keygen). Name key files *.sanctum-key.
 *.sanctum-key
+
+# Built, signed bundles are release artifacts, not source.
+examples/**/*.sanctum
