@@ -9,7 +9,7 @@ import type {
   DetectedCapability,
   ProvenanceRecord,
 } from "@/lib/types";
-import { formatBytes, formatDate, capabilityToPlain } from "@/lib/types";
+import { formatBytes, formatDate, capabilityToPlain, SIGNATURE_MEANING } from "@/lib/types";
 import { Commands } from "@/lib/commands";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
@@ -105,7 +105,7 @@ interface InspectViewProps {
 }
 
 export function InspectView({ item, onBack, onRun, onRefresh, onDelete }: InspectViewProps) {
-  const { tool, current_version: cv, all_versions } = item;
+  const { tool, current_version: cv, all_versions, provenance } = item;
   const [editingName, setEditingName] = useState(false);
   const [name, setName] = useState(tool.name);
   const [editingDesc, setEditingDesc] = useState(false);
@@ -117,24 +117,10 @@ export function InspectView({ item, onBack, onRun, onRefresh, onDelete }: Inspec
   const [rolling, setRolling] = useState(false);
   const [approvalSaving, setApprovalSaving] = useState(false);
   const [showUpdate, setShowUpdate] = useState(false);
-  const [provenance, setProvenance] = useState<ProvenanceRecord | null>(null);
   const [updating, setUpdating] = useState(false);
   const [updateError, setUpdateError] = useState<string | null>(null);
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [deleting, setDeleting] = useState(false);
-
-  // Provenance exists only for versions installed from a signed bundle.
-  const versionId = cv?.id;
-  useEffect(() => {
-    let live = true;
-    setProvenance(null);
-    if (versionId) {
-      Commands.getProvenance(versionId)
-        .then((p) => { if (live) setProvenance(p); })
-        .catch(() => {});
-    }
-    return () => { live = false; };
-  }, [versionId]);
 
   // Sync approvals if parent refreshes the tool record
   useEffect(() => {
@@ -633,9 +619,7 @@ export function InspectView({ item, onBack, onRun, onRefresh, onDelete }: Inspec
                     </dl>
                     {provenance && (
                       <p style={{ fontFamily: "Inter, system-ui, sans-serif", fontSize: "12px", color: "#8A9099", margin: "10px 0 0", lineHeight: 1.5 }}>
-                        A signature says who published this file and that it has not been changed.
-                        It does not mean the tool is safe, and it gives the tool no permissions.
-                        Approve only what you want it to do, above.
+                        {SIGNATURE_MEANING} Approve only what you want it to do, above.
                       </p>
                     )}
                   </div>

@@ -151,3 +151,62 @@ input::placeholder, textarea::placeholder {
 .ets-tile {
   border-radius: 0 !important;
 }
+
+/* ── Tool card ─────────────────────────────────────────────────────────────── */
+.tool-card {
+  background: #fff;
+  border: 1px solid var(--app-border);
+  border-radius: 10px;
+  box-shadow: var(--app-shadow);
+  display: flex;
+  flex-direction: column;
+  transition: box-shadow .15s, border-color .15s;
+}
+.tool-card:hover,
+.tool-card:focus-within {
+  box-shadow: 0 4px 10px rgba(16,24,40,.08), 0 2px 4px rgba(16,24,40,.05);
+  border-color: #D3D8DF;
+}
+.tool-card-quarantined { border-color: rgba(210,64,46,.35); }
+
+.card-btn {
+  display: inline-flex; align-items: center; justify-content: center; gap: 6px;
+  height: 34px; padding: 0 14px; font-size: 13px; font-weight: 600; line-height: 1;
+  border: 1px solid var(--app-border); background: #fff; color: #3A4048;
+  cursor: pointer; white-space: nowrap; outline: none;
+  transition: background .12s, color .12s;
+}
+.card-btn:hover:not(:disabled) { background: var(--app-surface); color: var(--app-ink); }
+.card-btn:focus-visible { position: relative; z-index: 1; box-shadow: 0 0 0 2px #fff, 0 0 0 4px var(--app-ink); }
+.card-btn:disabled { opacity: .4; cursor: not-allowed; }
+.card-btn-primary { background: var(--app-ink); border-color: var(--app-ink); color: #fff; }
+.card-btn-primary:hover:not(:disabled) { background: #26282B; color: #fff; }
+.card-btn-left { border-radius: 8px 0 0 8px; }
+.card-btn-right { border-radius: 0 8px 8px 0; margin-left: -1px; }
+
+.card-icon-btn {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 34px; height: 34px; border-radius: 8px; border: 0; background: transparent;
+  color: var(--app-ink-3); cursor: pointer; outline: none;
+  transition: background .12s, color .12s;
+}
+.card-icon-btn:hover { background: var(--app-raised); color: var(--app-ink); }
+.card-icon-btn:focus-visible { box-shadow: 0 0 0 2px #fff, 0 0 0 4px var(--app-ink); }
+
+.card-menu-item {
+  display: flex; width: 100%; align-items: center; gap: 8px;
+  padding: 7px 10px; border: 0; border-radius: 6px; background: transparent;
+  font-size: 13px; font-weight: 500; color: #3A4048; text-align: left; cursor: pointer; outline: none;
+}
+.card-menu-item:hover, .card-menu-item:focus { background: var(--app-surface); color: var(--app-ink); }
+.card-menu-item-danger { color: #B0301F; }
+.card-menu-item-danger:hover, .card-menu-item-danger:focus { background: rgba(210,64,46,.07); color: #B0301F; }
+
+.cap-chip {
+  display: inline-flex; align-items: center; gap: 6px;
+  height: 22px; padding: 0 8px; border-radius: 6px;
+  border: 1px solid var(--app-border); background: #fff; color: var(--app-ink);
+  font-size: 11.5px; font-weight: 500; white-space: nowrap; cursor: default;
+}
+.cap-chip-quiet { background: var(--app-surface); color: var(--app-ink-2); }
+.cap-dot { width: 7px; height: 7px; background: var(--volt); box-shadow: inset 0 0 0 1px rgba(10,10,10,.55); border-radius: 0; flex-shrink: 0; }

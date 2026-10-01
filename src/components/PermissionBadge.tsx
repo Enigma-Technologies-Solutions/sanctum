@@ -90,15 +90,39 @@ function NoAccessBadge() {
   );
 }
 
+// Compact chip for library cards: neutral surface with a small volt square, so a row of
+// capabilities reads as a list instead of a wall of yellow.
+function CapChip({ label, tooltip }: { label: string; tooltip?: string }) {
+  const chip = (
+    <span className="cap-chip" tabIndex={tooltip ? 0 : undefined}>
+      <span className="cap-dot" aria-hidden="true" />
+      {label}
+    </span>
+  );
+  if (!tooltip) return chip;
+  return (
+    <Tooltip>
+      <TooltipTrigger asChild>{chip}</TooltipTrigger>
+      <TooltipContent className="max-w-[220px] whitespace-pre-line">{tooltip}</TooltipContent>
+    </Tooltip>
+  );
+}
+
 export function PermissionBadge({ detected, mode = "compact" }: PermissionBadgeProps) {
-  if (detected.length === 0) return <NoAccessBadge />;
+  if (detected.length === 0) {
+    return mode === "compact" ? (
+      <span className="cap-chip cap-chip-quiet">No special access</span>
+    ) : (
+      <NoAccessBadge />
+    );
+  }
 
   if (mode === "compact") {
-    const MAX = 2;
+    const MAX = 3;
     const visible = detected.slice(0, MAX);
     const overflow = detected.length - MAX;
     return (
-      <div className="flex flex-wrap gap-1">
+      <div className="flex flex-wrap gap-1.5">
         {visible.map((cap, i) => {
           const label =
             typeof cap === "string"
@@ -106,10 +130,10 @@ export function PermissionBadge({ detected, mode = "compact" }: PermissionBadgeP
               : "smartcard" in cap
                 ? "Smart card"
                 : `Net: ${cap.net.slice(0, 1).join("")}`;
-          return <VoltPill key={i} label={label} tooltip={capabilityToPlain(cap)} />;
+          return <CapChip key={i} label={label} tooltip={capabilityToPlain(cap)} />;
         })}
         {overflow > 0 && (
-          <VoltPill
+          <CapChip
             label={`+${overflow} more`}
             tooltip={detected.slice(MAX).map(capabilityToPlain).join("\n")}
           />

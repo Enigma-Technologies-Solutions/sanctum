@@ -19,6 +19,29 @@ const COMPILED_ANCHORS: &[(&str, &str)] = &[(
     "Enigma Technologies Solutions",
 )];
 
+/// A trust anchor as shown in Settings. Public information only.
+#[derive(Debug, Clone, serde::Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct TrustAnchorInfo {
+    pub name: String,
+    pub key_id: String,
+}
+
+fn anchor_infos(list: &[(&str, &str)]) -> Vec<TrustAnchorInfo> {
+    list.iter()
+        .map(|(id, name)| TrustAnchorInfo {
+            name: (*name).to_string(),
+            key_id: (*id).to_string(),
+        })
+        .collect()
+}
+
+/// The publisher keys this build recognises. Read-only; nothing in the UI can change them.
+#[tauri::command]
+pub fn get_trust_anchors() -> Vec<TrustAnchorInfo> {
+    anchor_infos(COMPILED_ANCHORS)
+}
+
 pub fn production_anchors() -> Vec<Anchor> {
     anchors_from(COMPILED_ANCHORS)
 }
@@ -53,6 +76,16 @@ mod tests {
             sanctum_bundle::key_id(&a[0].key),
             "ed25519:GmNzEGh_57SWBOBLNV7kEnhykqoCkcCCMAnbkh0IVHY"
         );
+    }
+
+    #[test]
+    fn the_settings_list_matches_the_anchors_used_for_verification() {
+        let shown: Vec<String> = get_trust_anchors().into_iter().map(|a| a.key_id).collect();
+        let used: Vec<String> = production_anchors()
+            .iter()
+            .map(|a| sanctum_bundle::key_id(&a.key))
+            .collect();
+        assert_eq!(shown, used);
     }
 
     #[test]

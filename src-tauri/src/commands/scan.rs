@@ -228,12 +228,38 @@ pub fn extract_description(html: &str) -> String {
     String::new()
 }
 
-/// Extract a data URI icon from <link rel="icon">.
+/// Icons larger than this are ignored: the data URI is stored in the database and sent to
+/// the UI with every library listing.
+const MAX_ICON_BYTES: usize = 64 * 1024;
+
+/// Extract a data URI icon from `<link rel="icon" href="data:...">`.
+///
+/// Attributes are read with their own quote character, so a value such as
+/// `href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg'..."` is not cut at
+/// the first inner `'`. Attribute order does not matter.
 pub fn extract_icon(html: &str) -> Option<String> {
-    let re = Regex::new(r#"(?i)<link[^>]+rel\s*=\s*["'](?:shortcut )?icon["'][^>]+href\s*=\s*["'](data:[^"']+)["']"#)
+    let tag_re = Regex::new(r#"(?is)<link\b(?:"[^"]*"|'[^']*'|[^>"'])*>"#).expect("valid regex");
+    let attr_re = Regex::new(r#"(?is)([a-z][a-z0-9:_-]*)\s*=\s*(?:"([^"]*)"|'([^']*)')"#)
         .expect("valid regex");
-    if let Some(cap) = re.captures(html) {
-        return Some(cap[1].to_string());
+    for tag in tag_re.find_iter(html) {
+        let (mut rel, mut href) = (None, None);
+        for c in attr_re.captures_iter(tag.as_str()) {
+            let value = c.get(2).or_else(|| c.get(3)).map(|m| m.as_str());
+            match c[1].to_ascii_lowercase().as_str() {
+                "rel" => rel = value,
+                "href" => href = value,
+                _ => {}
+            }
+        }
+        let is_icon =
+            rel.is_some_and(|r| r.split_whitespace().any(|t| t.eq_ignore_ascii_case("icon")));
+        if let (true, Some(h)) = (is_icon, href) {
+            let h = h.trim();
+            let is_data = h.get(..5).is_some_and(|p| p.eq_ignore_ascii_case("data:"));
+            if is_data && h.len() <= MAX_ICON_BYTES {
+                return Some(h.to_string());
+            }
+        }
     }
     None
 }
@@ -467,6 +493,18 @@ mod tests {
 
     // ── Shipped examples ──────────────────────────────────────────────────────
 
+    /// The Shamir example asks for nothing: no storage, no network, no devices. The approval
+    /// screen must stay empty, so any string that widens it (even in a comment) fails CI.
+    /// Its icon must also survive extraction, since it is a data URI with inner quotes.
+    #[test]
+    fn shamir_example_asks_for_nothing() {
+        let html = include_str!("../../../examples/shamir/index.html");
+        let caps = scan_html(html);
+        assert!(caps.is_empty(), "unexpected capabilities: {caps:?}");
+        let icon = extract_icon(html).expect("example has a complete icon");
+        assert!(icon.starts_with("data:image/svg+xml"), "{icon}");
+    }
+
     /// The OTP vault example asks for exactly two things: its own storage and
     /// the YubiKey OATH applet. A regression here changes what users are asked
     /// to approve, so it is pinned.
@@ -484,5 +522,64 @@ mod tests {
             vec!["a0000005272101"]
         );
         assert_eq!(caps.len(), 2, "unexpected capabilities: {caps:?}");
+    }
+
+    // ── Icon extraction ───────────────────────────────────────────────────────
+
+    #[test]
+    fn a_data_uri_icon_with_inner_single_quotes_is_not_truncated() {
+        let html = r#"<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 4 4'%3E%3C/svg%3E">"#;
+        let icon = extract_icon(html).expect("icon");
+        assert!(icon.ends_with("%3C/svg%3E"), "{icon}");
+        assert!(icon.contains("viewBox='0 0 4 4'"));
+    }
+
+    #[test]
+    fn single_quoted_attribute_may_contain_double_quotes() {
+        let html = r#"<link rel='icon' href='data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg"/>'>"#;
+        let icon = extract_icon(html).expect("icon");
+        assert!(icon.ends_with("/>"), "{icon}");
+    }
+
+    #[test]
+    fn attribute_order_and_shortcut_icon_are_accepted() {
+        assert!(
+            extract_icon(r#"<link href="data:image/png;base64,AAAA" rel="shortcut icon">"#)
+                .is_some()
+        );
+        assert!(extract_icon(r#"<LINK REL="ICON" HREF="DATA:image/png;base64,AAAA" />"#).is_some());
+    }
+
+    #[test]
+    fn only_inline_data_icons_are_taken() {
+        assert!(extract_icon(r#"<link rel="icon" href="https://x.test/i.png">"#).is_none());
+        assert!(extract_icon(r#"<link rel="icon" href="/i.png">"#).is_none());
+        assert!(extract_icon(r#"<link rel="stylesheet" href="data:text/css,a{}">"#).is_none());
+        assert!(
+            extract_icon(r#"<link rel="apple-touch-icon" href="data:image/png;base64,AAAA">"#)
+                .is_none()
+        );
+        assert!(extract_icon("<p>no links</p>").is_none());
+    }
+
+    #[test]
+    fn the_icon_link_is_found_among_other_links() {
+        let html = r#"<link rel="preload" href="data:x"><link rel="icon" href="data:image/png;base64,AAAA">"#;
+        assert_eq!(extract_icon(html).unwrap(), "data:image/png;base64,AAAA");
+    }
+
+    #[test]
+    fn an_oversized_icon_is_ignored() {
+        let big = "A".repeat(MAX_ICON_BYTES + 1);
+        let html = format!(r#"<link rel="icon" href="data:image/png;base64,{big}">"#);
+        assert!(extract_icon(&html).is_none());
+    }
+
+    #[test]
+    fn the_otp_vault_example_icon_is_complete() {
+        let html = include_str!("../../../examples/otp-vault/index.html");
+        let icon = extract_icon(html).expect("example has an icon");
+        assert!(icon.len() > 100, "icon was truncated: {icon}");
+        assert!(icon.ends_with("%3E"), "{icon}");
     }
 }

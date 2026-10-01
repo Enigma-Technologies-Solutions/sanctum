@@ -23,6 +23,18 @@ pub fn hash_bytes_hex(data: &[u8]) -> String {
     hex::encode(h.finalize())
 }
 
+/// Take the tool's icon from this version if it declares one. A version without an icon
+/// leaves the existing one alone. Best effort: a failure here must not fail the install.
+async fn refresh_icon(pool: &sqlx::SqlitePool, tool_id: &str, html: &str) {
+    if let Some(icon) = crate::commands::scan::extract_icon(html) {
+        let _ = sqlx::query("UPDATE tools SET icon_data = $1 WHERE id = $2")
+            .bind(icon)
+            .bind(tool_id)
+            .execute(pool)
+            .await;
+    }
+}
+
 #[command]
 pub fn compute_checksum(html: String) -> String {
     hash_bytes(html.as_bytes())
@@ -69,6 +81,8 @@ pub async fn create_version_inner(
             .execute(pool)
             .await
             .map_err(|e| e.to_string())?;
+
+        refresh_icon(pool, tool_id, html).await;
 
         let manifest_row = sqlx::query(
             "SELECT manifest, file_size, quarantined, created_at FROM tool_versions WHERE id = $1",
@@ -149,6 +163,8 @@ pub async fn create_version_inner(
         .execute(pool)
         .await
         .map_err(|e| e.to_string())?;
+
+    refresh_icon(pool, tool_id, html).await;
 
     Ok(VersionRecord {
         id: sha,

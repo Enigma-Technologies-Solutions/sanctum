@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 64 64">
+<title>Sanctum 64px flat</title>
+<rect x="0" y="0" width="64" height="64" fill="#0A0A0A"/>
+<rect x="7" y="7" width="50" height="3" fill="#5E6007"/><rect x="7" y="54" width="50" height="3" fill="#5E6007"/><rect x="7" y="7" width="3" height="50" fill="#5E6007"/><rect x="54" y="7" width="3" height="50" fill="#5E6007"/><rect x="18" y="18" width="28" height="3" fill="#9B9D04"/><rect x="18" y="43" width="28" height="3" fill="#9B9D04"/><rect x="18" y="18" width="3" height="28" fill="#9B9D04"/><rect x="43" y="18" width="3" height="28" fill="#9B9D04"/><rect x="28" y="28" width="8" height="8" fill="#FBFF00"/>
+</svg>

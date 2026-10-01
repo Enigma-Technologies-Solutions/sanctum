@@ -235,6 +235,7 @@ pub fn run() {
             commands::bundle::ingest_bundle_from_path,
             commands::bundle::get_provenance,
             policy::get_policy_status,
+            trust::get_trust_anchors,
             commands::library::list_tools,
             commands::library::get_tool,
             commands::library::update_metadata,

@@ -26,6 +26,8 @@ jobs:
   checksums:
     name: Checksums and provenance
     runs-on: ubuntu-latest
+    # Attest only files whose tests pass and whose generated output matches its sources.
+    needs: shamir
     permissions:
       contents: read
       id-token: write      # Sigstore signing identity for the attestation
@@ -68,3 +70,54 @@ jobs:
             examples/*/index.html
             SHA256SUMS
           if-no-files-found: error
+
+  # The Shamir tool is built from sources, and the built file is what users
+  # install and what the job above attests. These checks keep the two in step
+  # and keep the tool free of capabilities it has no reason to use.
+  shamir:
+    name: Shamir tests, build and capability check
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 22
+
+      # Spelled as a glob because `node --test <directory>` fails on newer Node.
+      - name: Run Shamir tests
+        run: node --test examples/shamir/test/*.test.mjs
+
+      # index.html is generated. If it does not match a fresh build of its
+      # sources, the attested file would not be the code that was reviewed.
+      - name: Check index.html matches its sources
+        run: |
+          set -euo pipefail
+          node examples/shamir/build.mjs --out "$RUNNER_TEMP/shamir-index.html"
+          if ! cmp examples/shamir/index.html "$RUNNER_TEMP/shamir-index.html"; then
+            echo "::error file=examples/shamir/index.html::index.html is out of date. Run 'node examples/shamir/build.mjs' and commit the result."
+            exit 1
+          fi
+
+      # The tool only does arithmetic on text. Any of these strings would mean
+      # it can reach the network, storage, hardware or weak randomness.
+      - name: Check Shamir tool uses no extra capabilities
+        run: |
+          set -euo pipefail
+          file=examples/shamir/index.html
+          bad=0
+          for s in getUserMedia navigator.usb navigator.serial navigator.hid \
+                   navigator.bluetooth navigator.geolocation Notification \
+                   localStorage sessionStorage indexedDB caches.open 'fetch(' \
+                   XMLHttpRequest 'new WebSocket' 'new EventSource' \
+                   sanctum.smartcard 'http://' 'https://' Math.random 'eval(' \
+                   'new Function'; do
+            if grep -nF -e "$s" "$file"; then
+              echo "::error file=$file::Forbidden string found: $s"
+              bad=1
+            fi
+          done
+          exit "$bad"

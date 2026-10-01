@@ -21,23 +21,9 @@ use crate::commands::ingest::{ingest_html_inner, load_tool_record};
 use crate::commands::scan::scan_html;
 use crate::commands::versioning::create_version_inner;
 use crate::db::DbState;
+pub use crate::models::ProvenanceRecord;
 use crate::models::{DetectedCapability, ToolRecord, VersionRecord};
 use crate::AppDataDir;
-
-#[derive(Debug, Clone, Serialize)]
-#[serde(rename_all = "camelCase")]
-pub struct ProvenanceRecord {
-    pub version_id: String,
-    pub app_id: String,
-    pub publisher_key: String,
-    pub publisher_name: Option<String>,
-    /// `verified` (signer anchored) or `unknown_signer`.
-    pub trust: String,
-    pub name: String,
-    pub version: String,
-    pub issued_at: i64,
-    pub installed_at: i64,
-}
 
 #[derive(Debug, Serialize)]
 #[serde(rename_all = "camelCase")]
@@ -328,17 +314,16 @@ pub async fn ingest_bundle_from_path(
 }
 
 /// Provenance for a specific version, if it came from a signed bundle.
-#[command]
-pub async fn get_provenance(
-    db: tauri::State<'_, DbState>,
-    version_id: String,
-) -> Result<Option<ProvenanceRecord>, String> {
-    let row = sqlx::query("SELECT * FROM bundle_provenance WHERE version_id = $1")
-        .bind(&version_id)
-        .fetch_optional(&db.0)
+pub async fn load_provenance(
+    pool: &sqlx::SqlitePool,
+    version_id: &str,
+) -> Option<ProvenanceRecord> {
+    let r = sqlx::query("SELECT * FROM bundle_provenance WHERE version_id = $1")
+        .bind(version_id)
+        .fetch_optional(pool)
         .await
-        .map_err(|e| e.to_string())?;
-    Ok(row.map(|r| ProvenanceRecord {
+        .ok()??;
+    Some(ProvenanceRecord {
         version_id: r.try_get("version_id").unwrap_or_default(),
         app_id: r.try_get("app_id").unwrap_or_default(),
         publisher_key: r.try_get("publisher_key").unwrap_or_default(),
@@ -348,7 +333,15 @@ pub async fn get_provenance(
         version: r.try_get("version").unwrap_or_default(),
         issued_at: r.try_get("issued_at").unwrap_or(0),
         installed_at: r.try_get("installed_at").unwrap_or(0),
-    }))
+    })
+}
+
+#[command]
+pub async fn get_provenance(
+    db: tauri::State<'_, DbState>,
+    version_id: String,
+) -> Result<Option<ProvenanceRecord>, String> {
+    Ok(load_provenance(&db.0, &version_id).await)
 }
 
 #[cfg(test)]

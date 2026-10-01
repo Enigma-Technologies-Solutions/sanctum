@@ -6,10 +6,12 @@ import { open } from "@tauri-apps/plugin-dialog";
 import { type ToolWithVersion, shortSha, formatBytes } from "@/lib/types";
 import { Commands } from "@/lib/commands";
 import { PermissionBadge } from "./PermissionBadge";
+import { PublisherBadge } from "./PublisherBadge";
+import { CardMenu } from "./CardMenu";
 import { Button } from "@/components/ui/button";
 import {
-  Play, Eye, AlertTriangle, Trash2, RefreshCw,
-  Clipboard, FolderOpen, X, Loader2, Wifi, WifiOff,
+  Play, Eye, AlertTriangle, Trash2,
+  Clipboard, FolderOpen, Loader2, Wifi, WifiOff,
 } from "lucide-react";
 
 interface ToolCardProps {
@@ -20,40 +22,25 @@ interface ToolCardProps {
   onUpdated: (toolId: string) => void;
 }
 
-// ── Network status pill ────────────────────────────────────────────────────
-function NetworkStatus({
-  detected,
-  approvals,
-}: {
-  detected: NonNullable<ToolWithVersion["current_version"]>["manifest"]["detected"];
-  approvals: ToolWithVersion["tool"]["approvals"];
-}) {
-  const hasNet = detected.some((c) => typeof c === "object" && "net" in c);
-  if (!hasNet) return null;
+type Detected = NonNullable<ToolWithVersion["current_version"]>["manifest"]["detected"];
 
+// Network chip: only when the tool asks for network access. Shows whether it is approved.
+function NetworkStatus({ detected, approvals }: { detected: Detected; approvals: ToolWithVersion["tool"]["approvals"] }) {
+  if (!detected.some((c) => typeof c === "object" && "net" in c)) return null;
   const on = approvals.some((a) => typeof a === "object" && "net" in a);
-
   return (
-    <span
-      style={{
-        display: "inline-flex", alignItems: "center", gap: "4px",
-        background: on ? "rgba(30,158,98,.10)" : "#F7F8FA",
-        color: on ? "#137A4B" : "#8A9099",
-        border: on ? "none" : "1px solid #E3E7EC",
-        fontFamily: "Inter, system-ui, sans-serif",
-        fontWeight: 500, fontSize: "11px",
-        padding: "2px 8px", borderRadius: "9999px",
-        whiteSpace: "nowrap",
-      }}
-    >
-      {on ? <Wifi className="h-3 w-3" /> : <WifiOff className="h-3 w-3" />}
+    <span className={"cap-chip " + (on ? "" : "cap-chip-quiet")} style={on ? { color: "#137A4B", borderColor: "rgba(30,158,98,.35)" } : undefined}>
+      {on ? <Wifi className="h-3 w-3" aria-hidden="true" /> : <WifiOff className="h-3 w-3" aria-hidden="true" />}
       {on ? "Network on" : "Network off"}
     </span>
   );
 }
 
 export function ToolCard({ item, onRun, onInspect, onDeleted, onUpdated }: ToolCardProps) {
-  const { tool, current_version: cv } = item;
+  const { tool, current_version: cv, provenance } = item;
+  // A stored icon can be unusable (bad data URI). Fall back to the initials tile instead of
+  // the browser's broken-image glyph.
+  const [iconBroken, setIconBroken] = useState(false);
   const isQuarantined = cv?.quarantined === true;
   const detected = cv?.manifest.detected ?? [];
 
@@ -108,92 +95,88 @@ export function ToolCard({ item, onRun, onInspect, onDeleted, onUpdated }: ToolC
   }, [tool.id, onUpdated]);
 
   const closeAllPanels = () => { setShowUpdate(false); setConfirmDelete(false); };
+  const cannotRun = isQuarantined || !cv;
+  const hasCaps = detected.length > 0;
 
   return (
-    <div
-      style={{
-        background: "#FFFFFF",
-        border: isQuarantined ? "1px solid rgba(210,64,46,.35)" : "1px solid #E3E7EC",
-        borderRadius: "10px",
-        boxShadow: "0 1px 2px rgba(16,24,40,.06), 0 1px 3px rgba(16,24,40,.04)",
-        display: "flex",
-        flexDirection: "column",
-        transition: "box-shadow 0.15s, border-color 0.15s",
-        overflow: "hidden",
-      }}
-      onMouseEnter={(e) => {
-        (e.currentTarget as HTMLDivElement).style.boxShadow =
-          "0 4px 8px rgba(16,24,40,.08), 0 2px 4px rgba(16,24,40,.06)";
-      }}
-      onMouseLeave={(e) => {
-        (e.currentTarget as HTMLDivElement).style.boxShadow =
-          "0 1px 2px rgba(16,24,40,.06), 0 1px 3px rgba(16,24,40,.04)";
-      }}
-    >
-      {/* ── Body ─────────────────────────────────────────────────────────── */}
-      <div style={{ padding: "16px", display: "flex", flexDirection: "column", gap: "10px" }}>
+    <div className={"tool-card" + (isQuarantined ? " tool-card-quarantined" : "")}>
+      <div style={{ padding: "18px 18px 16px", display: "flex", flexDirection: "column", gap: 14 }}>
 
-        {/* Header: avatar + name/description */}
-        <div style={{ display: "flex", alignItems: "flex-start", gap: "12px" }}>
-          {tool.icon_data ? (
-            <img src={tool.icon_data} alt="" style={{ width: 36, height: 36, borderRadius: 8, objectFit: "contain", flexShrink: 0 }} />
+        {/* Identity: icon, name + publisher badge, version */}
+        <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+          {tool.icon_data && !iconBroken ? (
+            <img
+              src={tool.icon_data}
+              alt=""
+              onError={() => setIconBroken(true)}
+              style={{ width: 40, height: 40, borderRadius: 9, objectFit: "contain", flexShrink: 0 }}
+            />
           ) : (
             <div style={{
-              width: 36, height: 36, flexShrink: 0,
-              background: "#F7F8FA", border: "1px solid #E3E7EC", borderRadius: 8,
+              width: 40, height: 40, flexShrink: 0,
+              background: "#F7F8FA", border: "1px solid #E3E7EC", borderRadius: 9,
               display: "flex", alignItems: "center", justifyContent: "center",
               fontFamily: "Poppins, system-ui, sans-serif",
-              fontWeight: 700, fontSize: 13, color: "#8A9099", userSelect: "none",
-            }}>
+              fontWeight: 700, fontSize: 13, color: "#6B717A", userSelect: "none",
+            }} aria-hidden="true">
               {tool.name.slice(0, 2).toUpperCase()}
             </div>
           )}
 
           <div style={{ flex: 1, minWidth: 0 }}>
-            <h3 style={{
-              fontFamily: "Poppins, system-ui, sans-serif",
-              fontWeight: 700, fontSize: 14, color: "#0A0A0A",
-              letterSpacing: "-0.01em", lineHeight: 1.3, margin: 0,
-              overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap",
+            <div style={{ display: "flex", alignItems: "center", gap: 4, minWidth: 0 }}>
+              <h3
+                title={tool.name}
+                style={{
+                  fontFamily: "Poppins, system-ui, sans-serif",
+                  fontWeight: 600, fontSize: 15, color: "#0A0A0A",
+                  letterSpacing: "-0.01em", lineHeight: 1.3, margin: 0,
+                  overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap",
+                  minWidth: 0,
+                }}
+              >
+                {tool.name}
+              </h3>
+              <PublisherBadge provenance={provenance} />
+            </div>
+            <div style={{
+              fontFamily: "'Space Mono', ui-monospace, monospace",
+              fontSize: 11, color: "#6B717A", marginTop: 1,
             }}>
-              {tool.name}
-            </h3>
-            {tool.description && (
-              <p style={{
-                fontFamily: "Inter, system-ui, sans-serif",
-                fontSize: 12, color: "#565B62",
-                margin: "2px 0 0", lineHeight: 1.45,
-                overflow: "hidden", display: "-webkit-box",
-                WebkitLineClamp: 2, WebkitBoxOrient: "vertical",
-              }}>
-                {tool.description}
-              </p>
-            )}
+              {cv ? `v${cv.version_num}` : "No version"}
+            </div>
           </div>
         </div>
 
+        {/* Description */}
+        {tool.description && (
+          <p style={{
+            fontFamily: "Inter, system-ui, sans-serif",
+            fontSize: 13, color: "#565B62", margin: 0, lineHeight: 1.5,
+            overflow: "hidden", display: "-webkit-box",
+            WebkitLineClamp: 2, WebkitBoxOrient: "vertical",
+          }}>
+            {tool.description}
+          </p>
+        )}
+
         {/* Quarantine banner */}
         {isQuarantined && (
-          <div style={{
+          <div role="alert" style={{
             display: "flex", alignItems: "center", gap: 6,
             background: "rgba(210,64,46,.08)", border: "1px solid rgba(210,64,46,.2)",
             borderRadius: 6, padding: "6px 10px",
             fontFamily: "Inter, system-ui, sans-serif", fontSize: 12, color: "#B0301F",
           }}>
-            <AlertTriangle style={{ width: 14, height: 14, flexShrink: 0 }} />
+            <AlertTriangle style={{ width: 14, height: 14, flexShrink: 0 }} aria-hidden="true" />
             Quarantined: integrity check failed
           </div>
         )}
 
-        {/* Capabilities: permission badges on one line, network pill below */}
-        <div style={{ display: "flex", flexDirection: "column", gap: 5 }}>
+        {/* Capabilities */}
+        <div style={{ display: "flex", flexWrap: "wrap", gap: 6, alignItems: "center" }}>
           <PermissionBadge detected={detected} mode="compact" />
-          {cv && (
-            <NetworkStatus
-              detected={detected as NonNullable<ToolWithVersion["current_version"]>["manifest"]["detected"]}
-              approvals={tool.approvals}
-            />
-          )}
+          {cv && <NetworkStatus detected={detected as Detected} approvals={tool.approvals} />}
         </div>
 
         {/* Tags */}
@@ -201,38 +184,32 @@ export function ToolCard({ item, onRun, onInspect, onDeleted, onUpdated }: ToolC
           <div style={{ display: "flex", flexWrap: "wrap", gap: 4 }}>
             {tool.tags.map((tag) => (
               <span key={tag} style={{
-                fontFamily: "Inter, system-ui, sans-serif", fontSize: 11, color: "#565B62",
-                background: "#F7F8FA", border: "1px solid #E3E7EC",
-                borderRadius: 4, padding: "2px 7px",
+                fontFamily: "Inter, system-ui, sans-serif", fontSize: 11, color: "#6B717A",
+                border: "1px solid #E3E7EC", borderRadius: 4, padding: "1px 6px",
               }}>{tag}</span>
             ))}
           </div>
         )}
 
-        {/* Metadata (Space Mono — data) */}
-        <div style={{
-          fontFamily: "'Space Mono', ui-monospace, monospace",
-          fontSize: 11, color: "#8A9099",
-          display: "flex", alignItems: "center", gap: 6,
-        }}>
-          {cv ? (
-            <>
-              <span>{shortSha(cv.checksum)}</span>
-              <span style={{ color: "#D0D5DC" }}>·</span>
-              <span>{formatBytes(cv.file_size)}</span>
-              <span style={{ color: "#D0D5DC" }}>·</span>
-              <span>v{cv.version_num}</span>
-            </>
-          ) : (
-            <span style={{ fontStyle: "italic", fontFamily: "Inter, system-ui, sans-serif" }}>No version</span>
-          )}
-        </div>
+        {/* Meta row: hash and size (Space Mono, data) */}
+        {cv && (
+          <div style={{
+            fontFamily: "'Space Mono', ui-monospace, monospace",
+            fontSize: 11, color: "#6B717A",
+            display: "flex", alignItems: "center", gap: 6,
+            marginTop: hasCaps || tool.tags.length > 0 ? 0 : -2,
+          }}>
+            <span title={cv.checksum}>{shortSha(cv.checksum)}</span>
+            <span style={{ color: "#D0D5DC" }} aria-hidden="true">·</span>
+            <span>{formatBytes(cv.file_size)}</span>
+          </div>
+        )}
       </div>
 
-      {/* ── Expandable: Update panel ─────────────────────────────────────── */}
+      {/* Update panel */}
       {showUpdate && (
         <div style={{
-          margin: "0 16px 12px",
+          margin: "0 18px 14px",
           background: "#F7F8FA", border: "1px solid #E3E7EC",
           borderRadius: 8, padding: "10px 12px",
           display: "flex", flexDirection: "column", gap: 6,
@@ -248,6 +225,9 @@ export function ToolCard({ item, onRun, onInspect, onDeleted, onUpdated }: ToolC
             <Button size="sm" variant="ghost" className="gap-1.5" disabled={updating} onClick={handleUpdateFile}>
               <FolderOpen className="h-3 w-3" /> Open File…
             </Button>
+            <Button size="sm" variant="ghost" disabled={updating} onClick={() => { setShowUpdate(false); setUpdateError(null); }}>
+              Cancel
+            </Button>
           </div>
           {updateError && (
             <p style={{ fontFamily: "Inter, system-ui, sans-serif", fontSize: 11, color: "#B0301F", margin: 0 }}>
@@ -257,10 +237,10 @@ export function ToolCard({ item, onRun, onInspect, onDeleted, onUpdated }: ToolC
         </div>
       )}
 
-      {/* ── Expandable: Delete confirm ───────────────────────────────────── */}
+      {/* Delete confirm */}
       {confirmDelete && (
-        <div style={{
-          margin: "0 16px 12px",
+        <div role="alertdialog" aria-label={`Delete ${tool.name}`} style={{
+          margin: "0 18px 14px",
           background: "rgba(210,64,46,.06)", border: "1px solid rgba(210,64,46,.2)",
           borderRadius: 8, padding: "10px 12px",
           display: "flex", flexDirection: "column", gap: 8,
@@ -273,100 +253,44 @@ export function ToolCard({ item, onRun, onInspect, onDeleted, onUpdated }: ToolC
               {deleting ? <Loader2 className="h-3 w-3 animate-spin" /> : <Trash2 className="h-3 w-3" />}
               Delete
             </Button>
-            <Button size="sm" variant="ghost" disabled={deleting} onClick={() => setConfirmDelete(false)}>
+            <Button size="sm" variant="ghost" autoFocus disabled={deleting} onClick={() => setConfirmDelete(false)}>
               Cancel
             </Button>
           </div>
         </div>
       )}
 
-      {/* ── Footer ───────────────────────────────────────────────────────── */}
-      <div style={{ borderTop: "1px solid #E3E7EC" }}>
-
-        {/* Primary row: Inspect + Run — equal halves */}
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr" }}>
+      {/* Actions: Run + Inspect as one joined pair, overflow menu for Update and Delete */}
+      <div style={{
+        marginTop: "auto", borderTop: "1px solid #EEF1F4",
+        padding: "12px 12px 12px 18px",
+        display: "flex", alignItems: "center", gap: 8,
+      }}>
+        <div style={{ display: "flex" }}>
           <button
-            onClick={() => { closeAllPanels(); onInspect(tool.id); }}
-            style={{
-              display: "flex", alignItems: "center", justifyContent: "center", gap: 6,
-              padding: "10px 0",
-              background: "none", border: "none", borderRight: "1px solid #E3E7EC",
-              cursor: "pointer",
-              fontFamily: "Inter, system-ui, sans-serif", fontWeight: 600,
-              fontSize: 13, color: "#565B62",
-              transition: "background 0.12s, color 0.12s",
-            }}
-            onMouseEnter={(e) => { (e.currentTarget as HTMLButtonElement).style.background = "#F7F8FA"; (e.currentTarget as HTMLButtonElement).style.color = "#0A0A0A"; }}
-            onMouseLeave={(e) => { (e.currentTarget as HTMLButtonElement).style.background = "none"; (e.currentTarget as HTMLButtonElement).style.color = "#565B62"; }}
-          >
-            <Eye style={{ width: 14, height: 14 }} />
-            Inspect
-          </button>
-
-          <button
+            type="button"
+            className="card-btn card-btn-primary card-btn-left"
+            disabled={cannotRun}
             onClick={() => { closeAllPanels(); onRun(tool.id); }}
-            disabled={isQuarantined || !cv}
-            style={{
-              display: "flex", alignItems: "center", justifyContent: "center", gap: 6,
-              padding: "10px 0",
-              background: "none", border: "none",
-              cursor: isQuarantined || !cv ? "not-allowed" : "pointer",
-              opacity: isQuarantined || !cv ? 0.4 : 1,
-              fontFamily: "Inter, system-ui, sans-serif", fontWeight: 700,
-              fontSize: 13, color: "#0A0A0A",
-              transition: "background 0.12s",
-            }}
-            onMouseEnter={(e) => {
-              if (!isQuarantined && cv)
-                (e.currentTarget as HTMLButtonElement).style.background = "#F7F8FA";
-            }}
-            onMouseLeave={(e) => { (e.currentTarget as HTMLButtonElement).style.background = "none"; }}
           >
-            <Play style={{ width: 14, height: 14 }} />
+            <Play style={{ width: 13, height: 13 }} aria-hidden="true" />
             Run
           </button>
+          <button
+            type="button"
+            className="card-btn card-btn-right"
+            onClick={() => { closeAllPanels(); onInspect(tool.id); }}
+          >
+            <Eye style={{ width: 14, height: 14 }} aria-hidden="true" />
+            Inspect
+          </button>
         </div>
-
-        {/* Secondary row: Update (left) + Delete icon (right) */}
-        <div style={{
-          display: "flex", alignItems: "center",
-          borderTop: "1px solid #E3E7EC",
-          padding: "0 4px",
-        }}>
-          <button
-            onClick={() => { setConfirmDelete(false); setShowUpdate((v) => !v); setUpdateError(null); }}
-            style={{
-              display: "flex", alignItems: "center", gap: 5, flex: 1,
-              padding: "7px 8px",
-              background: "none", border: "none", cursor: "pointer",
-              fontFamily: "Inter, system-ui, sans-serif", fontWeight: 500,
-              fontSize: 12, color: showUpdate ? "#0A0A0A" : "#8A9099",
-              borderRadius: 6,
-              transition: "color 0.12s, background 0.12s",
-            }}
-            onMouseEnter={(e) => { (e.currentTarget as HTMLButtonElement).style.color = "#0A0A0A"; (e.currentTarget as HTMLButtonElement).style.background = "#F7F8FA"; }}
-            onMouseLeave={(e) => { (e.currentTarget as HTMLButtonElement).style.color = showUpdate ? "#0A0A0A" : "#8A9099"; (e.currentTarget as HTMLButtonElement).style.background = "none"; }}
-          >
-            <RefreshCw style={{ width: 13, height: 13 }} />
-            Update
-          </button>
-
-          <button
-            onClick={() => { setShowUpdate(false); setConfirmDelete((v) => !v); }}
-            title="Delete tool"
-            style={{
-              display: "flex", alignItems: "center", justifyContent: "center",
-              width: 30, height: 30,
-              background: "none", border: "none", cursor: "pointer",
-              borderRadius: 6,
-              color: confirmDelete ? "#B0301F" : "#C4C9D1",
-              transition: "color 0.12s, background 0.12s",
-            }}
-            onMouseEnter={(e) => { (e.currentTarget as HTMLButtonElement).style.color = "#B0301F"; (e.currentTarget as HTMLButtonElement).style.background = "rgba(210,64,46,.06)"; }}
-            onMouseLeave={(e) => { (e.currentTarget as HTMLButtonElement).style.color = confirmDelete ? "#B0301F" : "#C4C9D1"; (e.currentTarget as HTMLButtonElement).style.background = "none"; }}
-          >
-            {confirmDelete ? <X style={{ width: 14, height: 14 }} /> : <Trash2 style={{ width: 14, height: 14 }} />}
-          </button>
+        <div style={{ marginLeft: "auto" }}>
+          <CardMenu
+            toolName={tool.name}
+            onUpdate={() => { setConfirmDelete(false); setUpdateError(null); setShowUpdate(true); }}
+            onDelete={() => { setShowUpdate(false); setConfirmDelete(true); }}
+          />
         </div>
       </div>
     </div>

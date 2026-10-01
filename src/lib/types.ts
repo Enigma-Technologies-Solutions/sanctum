@@ -76,6 +76,8 @@ export interface ToolWithVersion {
   tool: ToolRecord;
   current_version: VersionRecord | null;
   all_versions: VersionRecord[];
+  /** Set when the current version was installed from a signed .sanctum bundle. */
+  provenance: ProvenanceRecord | null;
 }
 
 export interface IngestResult {
@@ -102,6 +104,17 @@ export interface BundleInstall extends IngestResult {
   provenance: ProvenanceRecord;
   warnings: string[];
 }
+
+/** A publisher key this build recognises, from src-tauri/src/trust.rs. */
+export interface TrustAnchorInfo {
+  name: string;
+  keyId: string;
+}
+
+/** What a signature does and does not mean. Shown wherever a publisher badge appears. */
+export const SIGNATURE_MEANING =
+  "A signature says who published this file and that it has not been changed. " +
+  "It does not mean the tool is safe, and it gives the tool no permissions.";
 
 /** Organisation policy state, from the admin-managed policy file. */
 export interface PolicyStatus {

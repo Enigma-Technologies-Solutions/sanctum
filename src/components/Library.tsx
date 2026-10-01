@@ -2,7 +2,7 @@
 // Copyright (C) 2026 Enigma Technologies Solutions
 
 import { useState, useEffect, useCallback } from "react";
-import type { ToolWithVersion, IngestResult, PolicyStatus } from "@/lib/types";
+import type { ToolWithVersion, IngestResult, BundleInstall, PolicyStatus } from "@/lib/types";
 import { Commands } from "@/lib/commands";
 import { ToolCard } from "./ToolCard";
 import { IngestBar } from "./IngestBar";
@@ -72,7 +72,13 @@ export function Library() {
   const handleIngested = useCallback((result: IngestResult) => {
     if (result.isNewTool) {
       setTools((prev) => [
-        { tool: result.tool, current_version: result.version, all_versions: [result.version] },
+        {
+          tool: result.tool,
+          current_version: result.version,
+          all_versions: [result.version],
+          // Only bundle installs carry provenance; a loose file does not.
+          provenance: "provenance" in result ? (result as BundleInstall).provenance : null,
+        },
         ...prev,
       ]);
     } else {
@@ -96,7 +102,7 @@ export function Library() {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center h-full gap-2" style={{ color: "#8A9099" }}>
+      <div className="flex items-center justify-center h-full gap-2" style={{ color: "#6B717A" }}>
         <Loader2 className="h-4 w-4 animate-spin" style={{ color: "#0A0A0A" }} />
         <span style={{ fontFamily: "Inter, system-ui, sans-serif", fontSize: "13px" }}>
           Loading vault…
@@ -137,7 +143,7 @@ export function Library() {
             style={{
               fontFamily: "Inter, system-ui, sans-serif",
               fontSize: "11px", fontWeight: 600,
-              color: "#8A9099", textTransform: "uppercase", letterSpacing: "0.1em",
+              color: "#6B717A", textTransform: "uppercase", letterSpacing: "0.1em",
             }}
           >
             Tool Vault
@@ -147,7 +153,7 @@ export function Library() {
               style={{
                 marginLeft: "auto",
                 fontFamily: "Inter, system-ui, sans-serif",
-                fontSize: "12px", color: "#8A9099",
+                fontSize: "12px", color: "#6B717A",
               }}
             >
               {tools.length} {tools.length === 1 ? "tool" : "tools"}
@@ -164,7 +170,7 @@ export function Library() {
             margin: "0 0 4px",
           }}
         >
-          Ingested Tools
+          Your tools
         </h1>
         {/* Volt accent bar — no radius, stays sharp */}
         <div className="volt-bar" style={{ width: "48px", marginBottom: "16px" }} />
@@ -228,7 +234,7 @@ export function Library() {
                   display: "flex", alignItems: "center", justifyContent: "center",
                 }}
               >
-                <Layers className="h-6 w-6" style={{ color: "#8A9099" }} />
+                <Layers className="h-6 w-6" style={{ color: "#6B717A" }} />
               </div>
               <div style={{ textAlign: "center" }}>
                 <h2
@@ -259,8 +265,8 @@ export function Library() {
             <div
               style={{
                 display: "grid",
-                gridTemplateColumns: "repeat(auto-fill, minmax(300px, 1fr))",
-                gap: "12px",
+                gridTemplateColumns: "repeat(auto-fill, minmax(320px, 1fr))",
+                gap: "16px",
               }}
             >
               {tools.map((item) => (
@@ -298,10 +304,10 @@ export function Library() {
               color: "#0A0A0A", margin: 0, letterSpacing: "-0.01em",
             }}
           >
-            Drop to Ingest
+            Drop to add
           </h2>
           <p style={{ fontFamily: "Inter, system-ui, sans-serif", fontSize: "13px", color: "#565B62", margin: 0 }}>
-            .html files only
+            .html and .sanctum files
           </p>
         </div>
       )}

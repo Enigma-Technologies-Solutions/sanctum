@@ -1,6 +1,6 @@
 # Trusted registry: from a hashed file to an app catalogue an institution can verify
 
-Status: stages 1 to 1b are being built on `feat/registry-signing`; everything after is a
+Status: stages 1 and 2a are built on `feat/registry-signing`; everything after is a
 proposal. Uses the seams that already exist in `signing.rs`, `policy.rs` and `registry.rs`.
 The OTP vault in `examples/otp-vault/` is the first tool to go through it.
 
@@ -18,9 +18,10 @@ These were agreed on 2026-09-30 and every design choice below is checked against
    exact bytes and that they were not altered. It does not say the tool is safe and it does
    not approve anything.
 2. **Everything local stays as is.** The static scan, the per-tool CSP, origin isolation,
-   IPC removal, the integrity check on every launch, quarantine, and per-capability
+   IPC removal, the integrity check each time a tool opens, quarantine, and per-capability
    approval all run on the bytes on this machine, whatever their source.
-3. **"Verified" means publisher identity plus unchanged bytes plus not revoked.** The UI
+3. **"Verified" means publisher identity plus unchanged bytes.** Once revocation exists
+   (stage 3) it will also mean not revoked. The UI
    never says "safe", "trusted tool" or "reviewed" on the strength of a signature.
 4. **The public registry is free.** Enigma signs only its own tools. Third parties sign
    with their own keys. Enigma takes no cut and sells no tools.
@@ -228,7 +229,8 @@ The client runs in Rust on a timer, never in a tool window:
    the local scan still decide.
 3. A revoked checksum is quarantined exactly like a tampered file.
 
-The fetch sends nothing identifying and no telemetry. Like the update check, it is a
+The fetch sends no account or device identifiers and no telemetry. The server still sees
+the requester's IP address. Like the update check, it is a
 network call the privacy copy must name.
 
 For key rotation, threshold signing (two of three YubiKeys for the root) and separate
@@ -299,6 +301,6 @@ a future, explicit capability does so.
   inside a tool is unmitigated by design. First-party catalogue tools should be audited,
   and a signature is not an audit.
 - The scan is regex-based and advisory. The CSP is the control; declared-vs-detected only
-  catches honest mistakes and lazy lies.
+  catches honest mistakes and obvious misstatements.
 - Storage follows the tool id: deleting a tool and adding it again gives an empty origin.
   A vault needs its export path before it is offered as an app.
