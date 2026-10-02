@@ -35,6 +35,19 @@ async fn refresh_icon(pool: &sqlx::SqlitePool, tool_id: &str, html: &str) {
     }
 }
 
+/// Take the tool's description from this version if it declares one. Nothing in the UI edits
+/// descriptions, so a newer version's own text is the right one. An empty one keeps the old.
+async fn refresh_description(pool: &sqlx::SqlitePool, tool_id: &str, html: &str) {
+    let description = crate::commands::scan::extract_description(html);
+    if !description.is_empty() {
+        let _ = sqlx::query("UPDATE tools SET description = $1 WHERE id = $2")
+            .bind(description)
+            .bind(tool_id)
+            .execute(pool)
+            .await;
+    }
+}
+
 #[command]
 pub fn compute_checksum(html: String) -> String {
     hash_bytes(html.as_bytes())
@@ -83,6 +96,7 @@ pub async fn create_version_inner(
             .map_err(|e| e.to_string())?;
 
         refresh_icon(pool, tool_id, html).await;
+        refresh_description(pool, tool_id, html).await;
 
         let manifest_row = sqlx::query(
             "SELECT manifest, file_size, quarantined, created_at FROM tool_versions WHERE id = $1",
@@ -165,6 +179,7 @@ pub async fn create_version_inner(
         .map_err(|e| e.to_string())?;
 
     refresh_icon(pool, tool_id, html).await;
+    refresh_description(pool, tool_id, html).await;
 
     Ok(VersionRecord {
         id: sha,

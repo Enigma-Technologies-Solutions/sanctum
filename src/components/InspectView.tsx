@@ -122,6 +122,26 @@ export function InspectView({ item, onBack, onRun, onRefresh, onDelete }: Inspec
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [deleting, setDeleting] = useState(false);
 
+  // Publisher version per installed version, for versions that came from a signed bundle.
+  const [publisherVersions, setPublisherVersions] = useState<Record<string, string>>({});
+  useEffect(() => {
+    let live = true;
+    Promise.all(
+      all_versions.map(async (v) => {
+        const p = await Commands.getProvenance(v.id).catch(() => null);
+        return [v.id, p?.version] as const;
+      }),
+    ).then((pairs) => {
+      if (!live) return;
+      const next: Record<string, string> = {};
+      for (const [id, ver] of pairs) if (ver) next[id] = ver;
+      setPublisherVersions(next);
+    });
+    return () => { live = false; };
+  }, [all_versions]);
+  const versionLabel = (v: { id: string; version_num: number }) =>
+    publisherVersions[v.id] ? `v${publisherVersions[v.id]}` : `v${v.version_num}`;
+
   // Sync approvals if parent refreshes the tool record
   useEffect(() => {
     setApprovals(tool.approvals ?? []);
@@ -152,12 +172,21 @@ export function InspectView({ item, onBack, onRun, onRefresh, onDelete }: Inspec
   }, [tool.id, onRefresh]);
 
   const handleUpdateFile = useCallback(async () => {
-    const selected = await open({ title: "Select updated HTML", filters: [{ name: "HTML", extensions: ["html", "htm"] }], multiple: false });
+    const selected = await open({ title: "Select updated HTML or signed bundle", filters: [{ name: "HTML or signed bundle", extensions: ["html", "htm", "sanctum"] }], multiple: false });
     if (!selected) return;
     const path = Array.isArray(selected) ? selected[0] : selected;
     setUpdating(true); setUpdateError(null);
     try {
-      await Commands.updateToolFromPath(tool.id, path);
+      const result = path.endsWith(".sanctum")
+        ? await Commands.ingestBundleFromPath(path)
+        : null;
+      if (result) {
+        if (result.tool.id !== tool.id) {
+          throw new Error("This bundle is for a different app, so it was added as its own tool, not as an update.");
+        }
+      } else {
+        await Commands.updateToolFromPath(tool.id, path);
+      }
       setShowUpdate(false); onRefresh();
     } catch (e) { setUpdateError(String(e)); }
     finally { setUpdating(false); }
@@ -603,7 +632,7 @@ export function InspectView({ item, onBack, onRun, onRefresh, onDelete }: Inspec
                         ["SHA-256", cv.checksum, true],
                         ["Size",    formatBytes(cv.file_size), true],
                         ["Ingested",formatDate(cv.created_at), false],
-                        ["Version", `v${cv.version_num}`, true],
+                        ["Version", versionLabel(cv), true],
                         ["Signed",  provenanceLabel(provenance), false],
                       ].map(([label, value, isMono]) => (
                         <>
@@ -653,7 +682,7 @@ export function InspectView({ item, onBack, onRun, onRefresh, onDelete }: Inspec
                       <div style={{ flex: 1, minWidth: 0 }}>
                         <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "4px" }}>
                           <span style={{ fontFamily: "Poppins, system-ui, sans-serif", fontWeight: 600, fontSize: "13px", color: "#0A0A0A" }}>
-                            v{v.version_num}
+                            {versionLabel(v)}
                           </span>
                           {isCurrent && (
                             <span style={{

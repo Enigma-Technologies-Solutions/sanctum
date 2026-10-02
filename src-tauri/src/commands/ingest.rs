@@ -67,16 +67,17 @@ pub async fn ingest_html_inner(
         let new_id = Uuid::new_v4().to_string();
         let now = chrono::Utc::now().timestamp_millis();
 
-        let display_name = source_filename
-            .filter(|f| !f.is_empty() && f != &"clipboard")
-            .map(|f| {
-                std::path::Path::new(f)
-                    .file_stem()
-                    .and_then(|s| s.to_str())
-                    .unwrap_or(&name)
-                    .to_string()
-            })
-            .unwrap_or(name.clone());
+        // A real <title> wins. The file name is only a fallback, because "index.html"
+        // would otherwise name every tool "index".
+        let display_name = if name != "Unnamed Tool" {
+            name.clone()
+        } else {
+            source_filename
+                .filter(|f| !f.is_empty() && f != &"clipboard")
+                .and_then(|f| std::path::Path::new(f).file_stem().and_then(|s| s.to_str()))
+                .map(str::to_string)
+                .unwrap_or_else(|| name.clone())
+        };
 
         sqlx::query(
             "INSERT INTO tools (id, name, description, tags, icon_data, current_ver, created_at, updated_at)

@@ -281,6 +281,11 @@ a future, explicit capability does so.
    the CLI, signs a publisher certificate with the root, and builds `otp-vault-1.0.0.sanctum`.
 3. Users and IT install the bundle and see *Verified, Enigma Technologies Solutions*
    (stage 1).
+   The signed bundles are hosted on the project site: `node scripts/publish-bundles.mjs`
+   copies the newest verified bundle of each example into `web/apps/` and regenerates
+   `web/apps/index.html` (served at `https://sanctum.enigma.sh/apps/`). It refuses any
+   bundle that is not anchored to the compiled-in Enigma root. A user downloads the
+   file and opens it in Sanctum; there is no in-app browsing yet.
 4. Later: add it to `registry/index.json` (stage 3); a customer's policy pins its hash or
    grants the Enigma publisher `storage` and the OATH applet (stage 2).
 

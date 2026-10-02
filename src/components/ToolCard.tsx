@@ -78,15 +78,24 @@ export function ToolCard({ item, onRun, onInspect, onDeleted, onUpdated }: ToolC
 
   const handleUpdateFile = useCallback(async () => {
     const selected = await open({
-      title: "Select updated HTML",
-      filters: [{ name: "HTML", extensions: ["html", "htm"] }],
+      title: "Select updated HTML or signed bundle",
+      filters: [{ name: "HTML or signed bundle", extensions: ["html", "htm", "sanctum"] }],
       multiple: false,
     });
     if (!selected) return;
     const path = Array.isArray(selected) ? selected[0] : selected;
     setUpdating(true); setUpdateError(null);
     try {
-      await Commands.updateToolFromPath(tool.id, path);
+      const result = path.endsWith(".sanctum")
+        ? await Commands.ingestBundleFromPath(path)
+        : null;
+      if (result) {
+        if (result.tool.id !== tool.id) {
+          throw new Error("This bundle is for a different app, so it was added as its own tool, not as an update.");
+        }
+      } else {
+        await Commands.updateToolFromPath(tool.id, path);
+      }
       onUpdated(tool.id);
       setShowUpdate(false);
     } catch (e) {
@@ -143,22 +152,22 @@ export function ToolCard({ item, onRun, onInspect, onDeleted, onUpdated }: ToolC
               fontFamily: "'Space Mono', ui-monospace, monospace",
               fontSize: 11, color: "#6B717A", marginTop: 1,
             }}>
-              {cv ? `v${cv.version_num}` : "No version"}
+              {cv ? (provenance && provenance.versionId === cv.id ? `v${provenance.version}` : `v${cv.version_num}`) : "No version"}
             </div>
           </div>
         </div>
 
         {/* Description */}
-        {tool.description && (
-          <p style={{
-            fontFamily: "Inter, system-ui, sans-serif",
-            fontSize: 13, color: "#565B62", margin: 0, lineHeight: 1.5,
-            overflow: "hidden", display: "-webkit-box",
-            WebkitLineClamp: 2, WebkitBoxOrient: "vertical",
-          }}>
-            {tool.description}
-          </p>
-        )}
+        <p style={{
+          fontFamily: "Inter, system-ui, sans-serif",
+          fontSize: 13, color: tool.description ? "#565B62" : "#8A9099", margin: 0, lineHeight: 1.5,
+          fontStyle: tool.description ? "normal" : "italic",
+          minHeight: 39,
+          overflow: "hidden", display: "-webkit-box",
+          WebkitLineClamp: 2, WebkitBoxOrient: "vertical",
+        }}>
+          {tool.description || "No description"}
+        </p>
 
         {/* Quarantine banner */}
         {isQuarantined && (
