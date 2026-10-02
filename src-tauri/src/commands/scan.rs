@@ -120,7 +120,12 @@ pub fn scan_html(html: &str) -> Vec<DetectedCapability> {
         // Extract hosts from any http(s):// literal in the source
         // Captures: scheme://host+port (stops at /, ", ', whitespace, ))
         let url_re = Regex::new(r"https?://([a-zA-Z0-9\-._~:@!$&'*+,;=%]+)").expect("valid regex");
-        for cap in url_re.captures_iter(html) {
+        // The SVG namespace declaration is an identifier, not an address. Without this a
+        // tool that draws an SVG and also calls fetch() would be shown "www.w3.org" as a host
+        // to approve. Only the exact `xmlns="http://www.w3.org/2000/svg"` attribute is
+        // skipped: a fetch() of that URL, or any other w3.org URL, is still reported.
+        let without_svg_ns = svg_namespace_re().replace_all(html, "");
+        for cap in url_re.captures_iter(&without_svg_ns) {
             if let Some(host_port) = cap.get(1) {
                 let raw = host_port.as_str();
                 // Strip port if present; take only hostname
@@ -194,6 +199,11 @@ pub fn scan_html(html: &str) -> Vec<DetectedCapability> {
     });
 
     detected
+}
+
+fn svg_namespace_re() -> Regex {
+    Regex::new(r#"xmlns\s*=\s*(?:"http://www\.w3\.org/2000/svg"|'http://www\.w3\.org/2000/svg')"#)
+        .expect("valid regex")
 }
 
 /// Extract a human-readable name from the HTML (title tag or synthesised).
@@ -365,6 +375,34 @@ mod tests {
     }
 
     // ── Host extraction ───────────────────────────────────────────────────────
+
+    #[test]
+    fn the_svg_namespace_is_not_a_network_host() {
+        let html = r#"<script>fetch("https://api.example.com/v1");
+            el.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg"></svg>';
+            const i = "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg'/>";</script>"#;
+        assert_eq!(
+            scanned_hosts(html).unwrap(),
+            vec!["api.example.com".to_string()]
+        );
+    }
+
+    #[test]
+    fn other_w3_urls_and_real_requests_to_it_are_still_reported() {
+        let ns_only =
+            r#"<script>fetch(u); x = '<svg xmlns="http://www.w3.org/2000/svg">';</script>"#;
+        assert_eq!(
+            scanned_hosts(ns_only).unwrap(),
+            vec!["(dynamic)".to_string()]
+        );
+        let real = r#"<script>fetch("http://www.w3.org/2000/svg")</script>"#;
+        assert_eq!(scanned_hosts(real).unwrap(), vec!["www.w3.org".to_string()]);
+        let xhtml = r#"<script>fetch(u); x = 'xmlns="http://www.w3.org/1999/xhtml"';</script>"#;
+        assert_eq!(
+            scanned_hosts(xhtml).unwrap(),
+            vec!["www.w3.org".to_string()]
+        );
+    }
 
     #[test]
     fn literal_host_is_extracted() {
