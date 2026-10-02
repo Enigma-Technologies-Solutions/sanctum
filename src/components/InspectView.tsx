@@ -3,8 +3,13 @@
 
 import { useState, useCallback, useEffect } from "react";
 import { open } from "@tauri-apps/plugin-dialog";
-import type { ToolWithVersion, VersionRecord, DetectedCapability } from "@/lib/types";
-import { formatBytes, formatDate, capabilityToPlain } from "@/lib/types";
+import type {
+  ToolWithVersion,
+  VersionRecord,
+  DetectedCapability,
+  ProvenanceRecord,
+} from "@/lib/types";
+import { formatBytes, formatDate, capabilityToPlain, SIGNATURE_MEANING } from "@/lib/types";
 import { Commands } from "@/lib/commands";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
@@ -21,6 +26,13 @@ import {
 import type { LucideIcon } from "lucide-react";
 
 // ── Capability approval helpers ────────────────────────────────────────────
+
+/** What the "Signed" row says. Never "safe": a signature names a publisher and nothing else. */
+function provenanceLabel(p: ProvenanceRecord | null): string {
+  if (!p) return "Unsigned";
+  if (p.trust === "verified") return `Verified publisher: ${p.publisherName ?? p.publisherKey}`;
+  return `Signed by an unknown publisher (${p.publisherKey.slice(0, 16)}…)`;
+}
 
 function capKey(cap: DetectedCapability): string {
   if (typeof cap === "string") return cap;
@@ -93,7 +105,7 @@ interface InspectViewProps {
 }
 
 export function InspectView({ item, onBack, onRun, onRefresh, onDelete }: InspectViewProps) {
-  const { tool, current_version: cv, all_versions } = item;
+  const { tool, current_version: cv, all_versions, provenance } = item;
   const [editingName, setEditingName] = useState(false);
   const [name, setName] = useState(tool.name);
   const [editingDesc, setEditingDesc] = useState(false);
@@ -109,6 +121,26 @@ export function InspectView({ item, onBack, onRun, onRefresh, onDelete }: Inspec
   const [updateError, setUpdateError] = useState<string | null>(null);
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [deleting, setDeleting] = useState(false);
+
+  // Publisher version per installed version, for versions that came from a signed bundle.
+  const [publisherVersions, setPublisherVersions] = useState<Record<string, string>>({});
+  useEffect(() => {
+    let live = true;
+    Promise.all(
+      all_versions.map(async (v) => {
+        const p = await Commands.getProvenance(v.id).catch(() => null);
+        return [v.id, p?.version] as const;
+      }),
+    ).then((pairs) => {
+      if (!live) return;
+      const next: Record<string, string> = {};
+      for (const [id, ver] of pairs) if (ver) next[id] = ver;
+      setPublisherVersions(next);
+    });
+    return () => { live = false; };
+  }, [all_versions]);
+  const versionLabel = (v: { id: string; version_num: number }) =>
+    publisherVersions[v.id] ? `v${publisherVersions[v.id]}` : `v${v.version_num}`;
 
   // Sync approvals if parent refreshes the tool record
   useEffect(() => {
@@ -140,12 +172,21 @@ export function InspectView({ item, onBack, onRun, onRefresh, onDelete }: Inspec
   }, [tool.id, onRefresh]);
 
   const handleUpdateFile = useCallback(async () => {
-    const selected = await open({ title: "Select updated HTML", filters: [{ name: "HTML", extensions: ["html", "htm"] }], multiple: false });
+    const selected = await open({ title: "Select updated HTML or signed bundle", filters: [{ name: "HTML or signed bundle", extensions: ["html", "htm", "sanctum"] }], multiple: false });
     if (!selected) return;
     const path = Array.isArray(selected) ? selected[0] : selected;
     setUpdating(true); setUpdateError(null);
     try {
-      await Commands.updateToolFromPath(tool.id, path);
+      const result = path.endsWith(".sanctum")
+        ? await Commands.ingestBundleFromPath(path)
+        : null;
+      if (result) {
+        if (result.tool.id !== tool.id) {
+          throw new Error("This bundle is for a different app, so it was added as its own tool, not as an update.");
+        }
+      } else {
+        await Commands.updateToolFromPath(tool.id, path);
+      }
       setShowUpdate(false); onRefresh();
     } catch (e) { setUpdateError(String(e)); }
     finally { setUpdating(false); }
@@ -591,20 +632,25 @@ export function InspectView({ item, onBack, onRun, onRefresh, onDelete }: Inspec
                         ["SHA-256", cv.checksum, true],
                         ["Size",    formatBytes(cv.file_size), true],
                         ["Ingested",formatDate(cv.created_at), false],
-                        ["Version", `v${cv.version_num}`, true],
-                        ["Signed",  cv.manifest.signature ? "Yes" : "Unsigned", false],
+                        ["Version", versionLabel(cv), true],
+                        ["Signed",  provenanceLabel(provenance), false],
                       ].map(([label, value, isMono]) => (
                         <>
                           <dt key={`dt-${label}`} style={{ fontFamily: "Inter, system-ui, sans-serif", fontSize: "12px", color: "#8A9099", alignSelf: "baseline" }}>{label}</dt>
                           <dd key={`dd-${label}`} style={{
                             fontFamily: isMono ? "'Space Mono', monospace" : "Inter, system-ui, sans-serif",
                             fontSize: isMono ? "11px" : "13px",
-                            color: label === "Signed" && !cv.manifest.signature ? "#92600D" : "#0A0A0A",
+                            color: label === "Signed" && !provenance ? "#92600D" : "#0A0A0A",
                             wordBreak: "break-all", margin: 0,
                           }}>{value as string}</dd>
                         </>
                       ))}
                     </dl>
+                    {provenance && (
+                      <p style={{ fontFamily: "Inter, system-ui, sans-serif", fontSize: "12px", color: "#8A9099", margin: "10px 0 0", lineHeight: 1.5 }}>
+                        {SIGNATURE_MEANING} Approve only what you want it to do, above.
+                      </p>
+                    )}
                   </div>
                 )}
               </div>
@@ -636,7 +682,7 @@ export function InspectView({ item, onBack, onRun, onRefresh, onDelete }: Inspec
                       <div style={{ flex: 1, minWidth: 0 }}>
                         <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "4px" }}>
                           <span style={{ fontFamily: "Poppins, system-ui, sans-serif", fontWeight: 600, fontSize: "13px", color: "#0A0A0A" }}>
-                            v{v.version_num}
+                            {versionLabel(v)}
                           </span>
                           {isCurrent && (
                             <span style={{

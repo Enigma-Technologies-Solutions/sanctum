@@ -67,6 +67,15 @@ jobs:
       - name: cargo test
         run: cargo test --manifest-path src-tauri/Cargo.toml
 
+      # The bundle crate is a path dependency, so the commands above do not cover it.
+      - name: sanctum-bundle (fmt, clippy, test)
+        run: |
+          set -euo pipefail
+          m=src-tauri/crates/sanctum-bundle/Cargo.toml
+          cargo fmt --manifest-path "$m" -- --check
+          cargo clippy --manifest-path "$m" --all-targets -- -D warnings
+          cargo test --manifest-path "$m"
+
   # ── Full Tauri build matrix ────────────────────────────────────────────────
   # Verifies the app compiles and bundles correctly on all target platforms.
   # Runs in parallel across platforms after `check` passes.

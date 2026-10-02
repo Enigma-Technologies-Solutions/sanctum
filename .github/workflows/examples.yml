@@ -1,0 +1,127 @@
+name: Examples
+
+# Records the SHA-256 of every example tool and, on main, publishes a GitHub
+# artifact attestation for each file: a Sigstore-signed SLSA build provenance
+# statement, logged in the public Rekor transparency log, that ties the file's
+# digest to this repository, commit and workflow.
+#
+# Verify a downloaded copy with:
+#   gh attestation verify index.html --repo Enigma-Technologies-Solutions/sanctum
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'examples/**'
+      - '.github/workflows/examples.yml'
+  pull_request:
+    paths:
+      - 'examples/**'
+      - '.github/workflows/examples.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  checksums:
+    name: Checksums and provenance
+    runs-on: ubuntu-latest
+    # Attest only files whose tests pass and whose generated output matches its sources.
+    needs: shamir
+    permissions:
+      contents: read
+      id-token: write      # Sigstore signing identity for the attestation
+      attestations: write  # store the attestation on this repository
+
+    steps:
+      - uses: actions/checkout@v6
+
+      # A tool that loads a script or stylesheet from another host would run
+      # different code from the file that was hashed. Examples must be one file.
+      - name: Check examples are self-contained
+        run: |
+          set -euo pipefail
+          if grep -nE '<script[^>]+src=|<link[^>]+rel="?stylesheet' examples/*/index.html; then
+            echo "::error::An example loads an external script or stylesheet."
+            exit 1
+          fi
+
+      - name: Compute SHA-256
+        run: |
+          set -euo pipefail
+          sha256sum examples/*/index.html | tee SHA256SUMS
+          {
+            echo '### Example checksums'
+            echo '```'
+            cat SHA256SUMS
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Attest build provenance
+        if: github.event_name != 'pull_request'
+        uses: actions/attest-build-provenance@v4
+        with:
+          subject-path: 'examples/*/index.html'
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: examples
+          path: |
+            examples/*/index.html
+            SHA256SUMS
+          if-no-files-found: error
+
+  # The Shamir tool is built from sources, and the built file is what users
+  # install and what the job above attests. These checks keep the two in step
+  # and keep the tool free of capabilities it has no reason to use.
+  shamir:
+    name: Shamir tests, build and capability check
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 22
+
+      # Spelled as a glob because `node --test <directory>` fails on newer Node.
+      - name: Run Shamir tests
+        run: node --test examples/shamir/test/*.test.mjs
+
+      # index.html is generated. If it does not match a fresh build of its
+      # sources, the attested file would not be the code that was reviewed.
+      - name: Check index.html matches its sources
+        run: |
+          set -euo pipefail
+          node examples/shamir/build.mjs --out "$RUNNER_TEMP/shamir-index.html"
+          if ! cmp examples/shamir/index.html "$RUNNER_TEMP/shamir-index.html"; then
+            echo "::error file=examples/shamir/index.html::index.html is out of date. Run 'node examples/shamir/build.mjs' and commit the result."
+            exit 1
+          fi
+
+      # The tool only does arithmetic on text. Any of these strings would mean
+      # it can reach the network, storage, hardware or weak randomness.
+      - name: Check Shamir tool uses no extra capabilities
+        run: |
+          set -euo pipefail
+          file=examples/shamir/index.html
+          # Sanctum's scanner ignores exactly xmlns="http://www.w3.org/2000/svg" (an XML
+          # name, not an address). Strip the same thing here so the icon can use it.
+          scan=$(mktemp)
+          sed -E "s#xmlns=['\"]http://www\.w3\.org/2000/svg['\"]##g" "$file" > "$scan"
+          bad=0
+          for s in getUserMedia navigator.usb navigator.serial navigator.hid \
+                   navigator.bluetooth navigator.geolocation Notification \
+                   localStorage sessionStorage indexedDB caches.open 'fetch(' \
+                   XMLHttpRequest 'new WebSocket' 'new EventSource' \
+                   sanctum.smartcard 'http://' 'https://' Math.random 'eval(' \
+                   'new Function'; do
+            if grep -nF -e "$s" "$scan"; then
+              echo "::error file=$file::Forbidden string found: $s"
+              bad=1
+            fi
+          done
+          exit "$bad"

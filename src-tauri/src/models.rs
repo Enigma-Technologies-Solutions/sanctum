@@ -159,9 +159,29 @@ pub struct VersionRecord {
     pub created_at: i64,
 }
 
+/// Where a version came from when it was installed from a signed `.sanctum` bundle.
+/// A signature names a publisher; it grants no capability.
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct ProvenanceRecord {
+    pub version_id: String,
+    pub app_id: String,
+    pub publisher_key: String,
+    pub publisher_name: Option<String>,
+    /// `verified` (signer anchored) or `unknown_signer`.
+    pub trust: String,
+    pub name: String,
+    pub version: String,
+    pub issued_at: i64,
+    pub installed_at: i64,
+}
+
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ToolWithVersion {
     pub tool: ToolRecord,
     pub current_version: Option<VersionRecord>,
     pub all_versions: Vec<VersionRecord>,
+    /// Provenance of the current version, when it came from a signed bundle.
+    #[serde(default)]
+    pub provenance: Option<ProvenanceRecord>,
 }

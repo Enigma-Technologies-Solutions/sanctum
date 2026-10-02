@@ -5,6 +5,7 @@ dist/
 
 # Tauri build
 src-tauri/target/
+src-tauri/crates/*/target/
 src-tauri/gen/
 
 # Node
@@ -27,3 +28,9 @@ node_modules/
 .vscode/
 .idea/
 *.swp
+
+# Sanctum bundle signing keys (sanctum-bundle keygen). Name key files *.sanctum-key.
+*.sanctum-key
+
+# Built, signed bundles are release artifacts, not source.
+examples/**/*.sanctum

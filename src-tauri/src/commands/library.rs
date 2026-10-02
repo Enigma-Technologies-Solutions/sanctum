@@ -66,10 +66,16 @@ pub async fn list_tools(db: tauri::State<'_, DbState>) -> Result<Vec<ToolWithVer
             .as_ref()
             .and_then(|cv| version_records.iter().find(|v| &v.id == cv).cloned());
 
+        let provenance = match &current_version {
+            Some(v) => crate::commands::bundle::load_provenance(&db.0, &v.id).await,
+            None => None,
+        };
+
         result.push(ToolWithVersion {
             tool,
             current_version,
             all_versions: version_records,
+            provenance,
         });
     }
     Ok(result)
@@ -99,10 +105,16 @@ pub async fn get_tool(
         .as_ref()
         .and_then(|cv| version_records.iter().find(|v| &v.id == cv).cloned());
 
+    let provenance = match &current_version {
+        Some(v) => crate::commands::bundle::load_provenance(&db.0, &v.id).await,
+        None => None,
+    };
+
     Ok(ToolWithVersion {
         tool,
         current_version,
         all_versions: version_records,
+        provenance,
     })
 }
 

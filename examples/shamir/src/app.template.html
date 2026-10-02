@@ -1,0 +1,1131 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'unsafe-inline'; style-src 'unsafe-inline'; img-src data:; base-uri 'none'; form-action 'none'">
+<meta name="referrer" content="no-referrer">
+<meta name="theme-color" content="#0a0a0a">
+<title>Enigma Shamir for Sanctum</title>
+<meta name="description" content="Split a secret into shares and combine them back. Runs offline and asks for no access.">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32' width='32' height='32'%3E%3Crect width='32' height='32' rx='6' fill='%230A0A0A'/%3E%3Crect x='3' y='3' width='26' height='26' rx='5' fill='none' stroke='%23FBFF00' stroke-width='1.5'/%3E%3Ctext x='16' y='20.5' text-anchor='middle' font-family='Poppins,Helvetica,Arial,sans-serif' font-size='10' font-weight='700' fill='%23FFFFFF' letter-spacing='-0.3'%3Esss%3C/text%3E%3C/svg%3E">
+<style>
+  :root{
+    --ink:#000000; --ink-soft:#0a0a0a; --panel:#111111; --paper:#FFFFFF; --volt:#FBFF00;
+    --ash:#8A8A8A; --ash-soft:#5E5E5E; --line:rgba(255,255,255,.12); --line-strong:rgba(255,255,255,.24); --field:rgba(255,255,255,.5);
+    --danger:#FF5A4E; --ok:#7CFF8A;
+    --display:'Poppins',system-ui,-apple-system,'Segoe UI',Roboto,sans-serif;
+    --body:'Inter',system-ui,-apple-system,'Segoe UI',Roboto,'Helvetica Neue',Arial,sans-serif;
+    --mono:'Space Mono',ui-monospace,SFMono-Regular,Menlo,Consolas,'Liberation Mono',monospace;
+    --gap:clamp(16px,4vw,48px);
+    color-scheme:dark;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;background:#0A0A0A;color:var(--paper)}
+  body{font-family:var(--body);font-size:15px;line-height:1.6;-webkit-font-smoothing:antialiased;min-height:100vh;
+    padding:env(safe-area-inset-top,0) 0 env(safe-area-inset-bottom,0)}
+  [hidden]{display:none!important}
+  a{color:inherit}
+  code{font-family:var(--mono);font-size:.92em}
+  .wrap{max-width:980px;margin:0 auto;padding:0 var(--gap)}
+  .i{width:16px;height:16px;flex:none;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+
+  /* header */
+  header.bar{position:sticky;top:0;z-index:40;background:rgba(0,0,0,.88);backdrop-filter:blur(8px);border-bottom:1px solid var(--line)}
+  .bar-in{display:flex;align-items:center;gap:16px;min-height:60px;padding-block:8px}
+  .mark{display:flex;align-items:center;gap:12px}
+  .ets-badge{display:inline-flex;align-items:center;justify-content:center;width:42px;height:28px;background:var(--paper);border-radius:0}
+  .ets{font-family:var(--body);font-weight:800;font-size:13px;color:#000;letter-spacing:.01em;line-height:1}
+  .wordmark{font-family:var(--mono);font-size:12px;letter-spacing:.16em;text-transform:uppercase}
+  .wordmark b{color:var(--ash);font-weight:400}
+
+  /* hero */
+  .hero{padding:clamp(36px,7vw,80px) 0 clamp(24px,4vw,40px)}
+  .eyebrow{font-family:var(--mono);font-size:11px;letter-spacing:.28em;text-transform:uppercase;color:var(--ash);margin:0 0 18px}
+  h1{font-family:var(--display);font-weight:800;font-size:clamp(38px,8.5vw,88px);line-height:.95;letter-spacing:-.02em;margin:0}
+  .dash{display:inline-block;width:.46em;height:.13em;background:var(--volt);vertical-align:.3em;margin:0 .04em;border-radius:0}
+  .lede{max-width:640px;margin:24px 0 0;font-size:16px}
+  .lede span{color:var(--ash)}
+
+  .banner{border:1px solid var(--line-strong);color:var(--ash);padding:12px 16px;margin:0 0 16px;font-size:13px;display:flex;gap:10px;align-items:flex-start}
+  .banner .i{margin-top:3px}
+  .banner.bad{border-color:var(--danger);color:var(--danger)}
+  .banner.warn{border-color:rgba(251,255,0,.5);color:var(--paper)}
+  .banner.warn .i{color:var(--paper)}
+
+  section.block{padding:clamp(24px,4vw,40px) 0;border-top:1px solid var(--line)}
+  .kicker{font-family:var(--mono);font-size:11px;letter-spacing:.26em;text-transform:uppercase;color:var(--ash);margin:0 0 12px;display:flex;gap:12px;align-items:center}
+  .kicker::before{content:"";width:28px;height:2px;background:var(--volt);border-radius:0}
+  h2{font-family:var(--display);font-weight:700;font-size:clamp(22px,3.4vw,32px);line-height:1.1;letter-spacing:-.015em;margin:0 0 6px}
+  h2:focus{outline:none}
+  h2:focus-visible{outline:2px solid var(--volt);outline-offset:4px}
+  .muted{color:var(--ash)}
+  .small{font-size:13px}
+
+  /* tabs */
+  .tabs{display:flex;border:1px solid var(--field);width:max-content;max-width:100%;margin:0 0 24px}
+  .tabs button{background:transparent;color:var(--ash);border:0;border-radius:0;padding:11px 20px;font-family:var(--mono);font-size:12px;letter-spacing:.14em;text-transform:uppercase;cursor:pointer;display:inline-flex;gap:8px;align-items:center}
+  .tabs button:hover{color:var(--paper)}
+  .tabs button[aria-selected="true"]{background:var(--volt);color:#000}
+  .tabs button + button{border-left:1px solid var(--field)}
+
+  /* cards and forms */
+  .cols{display:grid;grid-template-columns:minmax(0,1.35fr) minmax(0,1fr);gap:24px;align-items:start}
+  @media (max-width:860px){.cols{grid-template-columns:minmax(0,1fr)}}
+  .card{border:1px solid var(--line);background:var(--panel);padding:clamp(16px,3vw,28px);min-width:0;margin:0 0 24px}
+  .cols .card{margin:0}
+  .card h3{font-family:var(--display);font-weight:600;font-size:18px;letter-spacing:-.01em;margin:0 0 14px}
+  label.f{display:block;margin:0 0 14px}
+  .lab{display:block;font-family:var(--mono);font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--ash);margin-bottom:6px}
+  input[type=text],input[type=number],select,textarea{
+    width:100%;background:#000;color:var(--paper);border:1px solid var(--field);border-radius:0;
+    padding:10px 12px;font:inherit;font-size:14px;outline:none}
+  textarea{font-family:var(--mono);font-size:13px;resize:vertical;line-height:1.5;min-height:92px}
+  #secret{min-height:150px}
+  @media (max-width:860px){.seg button{min-height:40px}}
+  input:focus,select:focus,textarea:focus{border-color:var(--volt);box-shadow:0 0 0 1px var(--volt)}
+  input[aria-invalid="true"],textarea[aria-invalid="true"]{border-color:var(--danger)}
+  .masked{-webkit-text-security:disc;text-security:disc}
+  .row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+  .row.end{justify-content:space-between}
+  .pair{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+  @media (max-width:420px){.pair{grid-template-columns:1fr}}
+  button{font-family:var(--body)}
+  button.btn{background:var(--volt);color:#000;border:1px solid var(--volt);border-radius:0;padding:10px 16px;font-weight:700;
+    font-size:12px;letter-spacing:.1em;text-transform:uppercase;cursor:pointer;display:inline-flex;gap:8px;align-items:center;justify-content:center;line-height:1.2}
+  button.btn:hover:not(:disabled){background:#fff;border-color:#fff}
+  button.btn:disabled{opacity:.4;cursor:not-allowed}
+  button.ghost{background:transparent;color:var(--paper);border:1px solid var(--field)}
+  button.btn:disabled,button.ghost:disabled{background:transparent;color:var(--ash);border-color:var(--line-strong);opacity:1}
+  button.ghost:hover:not(:disabled){border-color:var(--volt);color:var(--paper);background:rgba(251,255,0,.08)}
+  button.sm{padding:6px 10px;font-size:11px}
+  button:focus-visible,summary:focus-visible,.tabs button:focus-visible{outline:2px solid var(--volt);outline-offset:2px}
+  .seg{display:inline-flex;border:1px solid var(--field)}
+  .seg button{background:transparent;color:var(--ash);border:0;border-radius:0;padding:0 14px;min-height:34px;font-family:var(--mono);font-size:11px;letter-spacing:.12em;text-transform:uppercase;cursor:pointer}
+  .seg button + button{border-left:1px solid var(--field)}
+  .seg button[aria-pressed="true"]{background:var(--paper);color:#000}
+  details{border:1px solid var(--line);padding:10px 12px;margin:0 0 14px}
+  details summary{padding:6px 0;cursor:pointer;font-family:var(--mono);font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--ash)}
+  details[open] > summary{margin-bottom:12px;color:var(--paper)}
+  details.how{padding:14px 16px}
+  details.how ul{margin:0;padding-left:20px;color:var(--ash);font-size:14px}
+  details.how li{margin:0 0 10px}
+  details.how li b{color:var(--paper);font-weight:600}
+  .hint{font-size:12.5px;color:var(--ash);margin:6px 0 14px}
+  .hint.err,.msg.err{color:var(--danger)}
+  .msg{min-height:1.5em;margin:10px 0 0;font-size:13px}
+  .msg.ok{color:var(--ok)}
+  .count{font-family:var(--mono);font-size:12px;color:var(--ash)}
+  .count.err{color:var(--danger)}
+  .radio{display:flex;gap:10px;align-items:flex-start;margin:0 0 10px;font-size:14px}
+  .radio input{margin-top:5px;accent-color:var(--volt)}
+  .radio small{display:block;color:var(--ash);font-size:12.5px}
+  .sentence{font-size:14px;margin:2px 0 14px}
+  .sentence b{font-family:var(--mono);color:var(--paper);font-weight:700}
+  .softwarn{font-size:12.5px;color:var(--paper);display:flex;gap:8px;align-items:flex-start;margin:0 0 10px}
+  .softwarn .i{color:var(--paper);margin-top:3px}
+
+  /* results */
+  .result.stale .sharelist,.result.stale .sumline{opacity:.4}
+  .sumline{font-size:15px;margin:0 0 16px}
+  .sumline code{color:var(--paper);font-weight:700}
+  ol.sharelist{list-style:none;margin:0 0 16px;padding:0;display:grid;gap:10px}
+  .share{border:1px solid var(--line-strong);background:#000;padding:10px 12px}
+  .share-head{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:6px}
+  .share-n{font-family:var(--mono);font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--ash)}
+  .share-text,.out{font-family:var(--mono);font-size:12.5px;line-height:1.5;overflow-wrap:anywhere;word-break:break-all;user-select:all;-webkit-user-select:all;margin:0;white-space:pre-wrap}
+  .caution{border:1px solid rgba(251,255,0,.5);padding:12px 14px;font-size:13px;margin:16px 0 0;display:flex;gap:10px;align-items:flex-start}
+  .caution .i{color:var(--paper);margin-top:3px}
+  .fallback{margin-top:14px}
+  .okline{display:flex;gap:10px;align-items:flex-start;margin:0 0 6px;font-weight:600}
+  .okline .i{color:var(--ok);width:20px;height:20px;margin-top:2px}
+  .okline.neutral .i{color:var(--ash)}
+  .okline.warn .i{color:var(--paper)}
+  .secretbox{border:1px solid var(--line-strong);background:#000;padding:12px 14px;margin:14px 0 10px;min-height:48px}
+  .secretbox .out{user-select:none;-webkit-user-select:none}
+  .secretbox.shown .out{user-select:all;-webkit-user-select:all}
+  .hash{font-family:var(--mono);font-size:12px;color:var(--paper);overflow-wrap:anywhere;word-break:break-all;margin:0 0 8px}
+
+  /* share list on combine */
+  ul.parsed{list-style:none;margin:12px 0 0;padding:0;display:grid;gap:6px}
+  ul.parsed li{display:flex;gap:10px;align-items:flex-start;font-size:13px;border-left:2px solid var(--line-strong);padding:4px 0 4px 10px}
+  ul.parsed li .i{margin-top:3px}
+  ul.parsed li.ok{border-left-color:var(--ok)}
+  ul.parsed li.ok .i{color:var(--ok)}
+  ul.parsed li.bad{border-left-color:var(--danger)}
+  ul.parsed li.bad .i{color:var(--danger)}
+  ul.parsed li.note{border-left-color:var(--ash-soft);color:var(--ash)}
+  ul.parsed li.note .i{color:var(--ash)}
+  ul.parsed .who{font-family:var(--mono);font-size:12px;letter-spacing:.06em;white-space:nowrap}
+  ul.parsed .sid{font-family:var(--mono);font-size:12px;color:var(--ash)}
+  .status{display:flex;gap:10px;align-items:flex-start;font-size:14px;margin:14px 0}
+  .status .i{margin-top:3px}
+  .status.bad{color:var(--danger)}
+  .status.ready .i{color:var(--ok)}
+  .status.idle{color:var(--ash)}
+
+  .toast{position:fixed;left:50%;bottom:calc(24px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:var(--volt);color:#000;
+    padding:10px 16px;font-family:var(--mono);font-size:12px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;z-index:60;max-width:calc(100vw - 32px)}
+  footer{padding:32px 0 56px;color:var(--ash);font-size:12px;border-top:1px solid var(--line)}
+  footer p{margin:0 0 8px;max-width:760px}
+  .sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}
+  @media (prefers-reduced-motion:no-preference){ .working .i{animation:spin 1s linear infinite} }
+  @keyframes spin{to{transform:rotate(360deg)}}
+</style>
+</head>
+<body>
+
+<!-- Icons: Lucide (ISC licence), inlined. -->
+<svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false">
+  <defs>
+    <symbol id="i-scissors" viewBox="0 0 24 24"><circle cx="6" cy="6" r="3"/><path d="M8.12 8.12 12 12"/><path d="M20 4 8.12 15.88"/><circle cx="6" cy="18" r="3"/><path d="M14.8 14.8 20 20"/></symbol>
+    <symbol id="i-combine" viewBox="0 0 24 24"><path d="M10 18H5a3 3 0 0 1-3-3v-1"/><path d="M14 2a2 2 0 0 1 2 2v4a2 2 0 0 1-2 2"/><path d="M20 2a2 2 0 0 1 2 2v4a2 2 0 0 1-2 2"/><path d="m7 21 3-3-3-3"/><rect x="14" y="14" width="8" height="8" rx="2"/><rect x="2" y="2" width="8" height="8" rx="2"/></symbol>
+    <symbol id="i-copy" viewBox="0 0 24 24"><rect width="14" height="14" x="8" y="8" rx="2" ry="2"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/></symbol>
+    <symbol id="i-eye" viewBox="0 0 24 24"><path d="M2.062 12.348a1 1 0 0 1 0-.696 10.75 10.75 0 0 1 19.876 0 1 1 0 0 1 0 .696 10.75 10.75 0 0 1-19.876 0"/><circle cx="12" cy="12" r="3"/></symbol>
+    <symbol id="i-eye-off" viewBox="0 0 24 24"><path d="M10.733 5.076a10.744 10.744 0 0 1 11.205 6.575 1 1 0 0 1 0 .696 10.747 10.747 0 0 1-1.444 2.49"/><path d="M14.084 14.158a3 3 0 0 1-4.242-4.242"/><path d="M17.479 17.499a10.75 10.75 0 0 1-15.417-5.151 1 1 0 0 1 0-.696 10.75 10.75 0 0 1 4.446-5.143"/><path d="m2 2 20 20"/></symbol>
+    <symbol id="i-dices" viewBox="0 0 24 24"><rect width="12" height="12" x="2" y="10" rx="2" ry="2"/><path d="m17.92 14 3.5-3.5a2.24 2.24 0 0 0 0-3l-5-4.92a2.24 2.24 0 0 0-3 0L10 6"/><path d="M6 18h.01"/><path d="M10 14h.01"/><path d="M15 6h.01"/><path d="M18 9h.01"/></symbol>
+    <symbol id="i-alert" viewBox="0 0 24 24"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3"/><path d="M12 9v4"/><path d="M12 17h.01"/></symbol>
+    <symbol id="i-x" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="m15 9-6 6"/><path d="m9 9 6 6"/></symbol>
+    <symbol id="i-ok" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="m9 12 2 2 4-4"/></symbol>
+    <symbol id="i-trash" viewBox="0 0 24 24"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/><line x1="10" x2="10" y1="11" y2="17"/><line x1="14" x2="14" y1="11" y2="17"/></symbol>
+    <symbol id="i-shield" viewBox="0 0 24 24"><path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"/><path d="m9 12 2 2 4-4"/></symbol>
+    <symbol id="i-info" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/></symbol>
+    <symbol id="i-refresh" viewBox="0 0 24 24"><path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"/><path d="M21 3v5h-5"/><path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"/><path d="M8 16H3v5"/></symbol>
+    <symbol id="i-clip" viewBox="0 0 24 24"><rect width="8" height="4" x="8" y="2" rx="1" ry="1"/><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><path d="m9 14 2 2 4-4"/></symbol>
+  </defs>
+</svg>
+
+<header class="bar">
+  <div class="wrap bar-in">
+    <span class="mark" aria-label="Enigma Technologies Solutions">
+      <span class="ets-badge"><span class="ets">ETS</span></span>
+      <span class="wordmark">Enigma <b>/ Shamir · Sanctum</b></span>
+    </span>
+  </div>
+</header>
+
+<main>
+  <section class="hero">
+    <div class="wrap">
+      <p class="eyebrow">Enigma Technologies Solutions · Secret sharing for Sanctum</p>
+      <h1>split<span class="dash"></span>combine</h1>
+      <p class="lede">Split a secret into shares. Any <em>k</em> of them rebuild it. <span>Fewer than the needed number reveal nothing about the secret's content; the size bucket and the needed number are visible in every share. Everything runs in this window. Nothing is stored or sent.</span></p>
+    </div>
+  </section>
+
+  <div class="wrap">
+    <div class="banner bad" id="noCrypto" role="alert" hidden>
+      <svg class="i" aria-hidden="true"><use href="#i-alert"/></svg>
+      <span>This window has no secure random source, so nothing can be split. Update Sanctum and try again.</span>
+    </div>
+    <div class="banner" id="noCore" role="alert" hidden>
+      <svg class="i" aria-hidden="true"><use href="#i-alert"/></svg>
+      <span>The secret sharing code did not load. This file is incomplete.</span>
+    </div>
+    <div class="banner">
+      <svg class="i" aria-hidden="true"><use href="#i-info"/></svg>
+      <span>Closing this window discards the secret, the shares and any result.</span>
+    </div>
+  </div>
+
+  <section class="block" id="app">
+    <div class="wrap">
+      <div class="tabs" role="tablist" aria-label="Mode">
+        <button type="button" role="tab" id="tabSplit" aria-selected="true" aria-controls="panelSplit"><svg class="i" aria-hidden="true"><use href="#i-scissors"/></svg>Split</button>
+        <button type="button" role="tab" id="tabCombine" aria-selected="false" aria-controls="panelCombine" tabindex="-1"><svg class="i" aria-hidden="true"><use href="#i-combine"/></svg>Combine</button>
+      </div>
+
+      <!-- ================= SPLIT ================= -->
+      <div id="panelSplit" role="tabpanel" aria-labelledby="tabSplit">
+        <p class="kicker">01 · Split</p>
+        <h2>Turn one secret into shares</h2>
+        <p class="muted small" style="margin:0 0 24px;max-width:640px">Enter a secret, choose how many shares to make and how many are needed to rebuild it, then split.</p>
+
+        <div class="cols">
+          <div class="card">
+            <h3>Secret</h3>
+            <div class="row end" style="margin-bottom:10px">
+              <div class="seg" role="group" aria-label="Secret type">
+                <button type="button" id="modeText" aria-pressed="true">Text</button>
+                <button type="button" id="modeHex" aria-pressed="false">Hex</button>
+              </div>
+              <span class="row" style="gap:12px"><span class="count" id="sCount">0 of 1024 bytes</span>
+              <button type="button" class="btn ghost sm" id="sClear"><svg class="i" aria-hidden="true"><use href="#i-trash"/></svg><span>Clear</span></button></span>
+            </div>
+            <label class="f" for="secret"><span class="lab" id="secretLab">Secret (text, UTF-8)</span></label>
+            <textarea id="secret" class="masked" rows="4" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false" maxlength="8192" aria-describedby="sCount sHint sErr" style="margin-top:-8px"></textarea>
+            <p class="hint" id="sHint">Hidden while you type. Line breaks are kept.</p>
+            <p class="hint err" id="sErr" hidden></p>
+            <div class="row">
+              <button type="button" class="btn ghost sm" id="sToggle" aria-pressed="false" aria-label="Show secret"><svg class="i" aria-hidden="true"><use href="#i-eye"/></svg><span aria-hidden="true">Show</span></button>
+              <button type="button" class="btn ghost sm" id="sGen"><svg class="i" aria-hidden="true"><use href="#i-dices"/></svg><span>Generate</span></button>
+              <label class="row" style="gap:6px;flex-wrap:nowrap"><span class="lab" style="margin:0">Length</span>
+                <input type="number" id="genLen" value="32" min="8" max="128" step="1" style="width:76px;padding:6px 8px" aria-describedby="genInfo"></label>
+            </div>
+            <p class="hint" id="genInfo">Generate makes a random secret from 28 easy to read letters and digits. At 32 characters that is 153.8 bits.</p>
+            <details id="sHashBox">
+              <summary>Check value (SHA-256)</summary>
+              <p class="hash" id="sHash" aria-live="polite">Show the secret to see this value.</p>
+              <p class="hint" style="margin:0">Anyone who sees this value can test guesses against it. Do not store it next to the shares.</p>
+            </details>
+          </div>
+
+          <div class="card">
+            <h3>Shares</h3>
+            <div class="pair">
+              <label class="f"><span class="lab">Shares (n)</span>
+                <input type="number" id="nShares" value="5" min="2" max="255" step="1" inputmode="numeric" autocomplete="off" aria-describedby="kSentence"></label>
+              <label class="f"><span class="lab">Needed (k)</span>
+                <input type="number" id="kNeeded" value="3" min="2" max="255" step="1" inputmode="numeric" autocomplete="off" aria-describedby="kSentence"></label>
+            </div>
+            <p class="sentence" id="kSentence" aria-live="polite"></p>
+            <p class="softwarn" id="kWarn" hidden><svg class="i" aria-hidden="true"><use href="#i-alert"/></svg><span></span></p>
+            <label class="f"><span class="lab">Label (optional)</span>
+              <input type="text" id="label" maxlength="32" autocomplete="off" autocapitalize="off" spellcheck="false" aria-describedby="labelHint"></label>
+            <p class="hint" id="labelHint" style="margin-top:-8px">Letters, digits, dot, underscore, hyphen; up to 32. Helps you tell sets apart. It is not secret and not checked.</p>
+          </div>
+          <div class="card" style="grid-column:1/-1">
+            <details style="margin:0" id="optBox">
+              <summary>Options</summary>
+              <fieldset style="border:0;padding:0;margin:0 0 12px">
+                <legend class="lab" style="padding:0">Share format</legend>
+                <label class="radio"><input type="radio" name="fmt" value="ss1" checked><span>Sanctum (recommended)<small>Shares record how many are needed and which set they belong to. A check value catches wrong or missing shares.</small></span></label>
+                <label class="radio"><input type="radio" name="fmt" value="plain"><span>Plain, compatible with ssss-made-easy and shamir-secret-sharing<small>No checks. Wrong or too few shares give a wrong answer without a warning. Use it to exchange shares with those tools.</small></span></label>
+              </fieldset>
+              <label class="f"><span class="lab">Hide secret length</span>
+                <select id="pad">
+                  <option value="0">Off</option>
+                  <option value="16">16 bytes</option>
+                  <option value="32" selected>32 bytes</option>
+                  <option value="64">64 bytes</option>
+                  <option value="128">128 bytes</option>
+                  <option value="256">256 bytes</option>
+                </select></label>
+              <p class="hint" id="padHint" style="margin:0">Rounds the hidden data up to a multiple of this size, so a share does not show the exact length. It hides the length inside that range, not the fact that a secret exists.</p>
+            </details>
+          </div>
+        </div>
+
+        <div class="row" style="margin:24px 0 0">
+          <button type="button" class="btn" id="btnSplit"><svg class="i" aria-hidden="true"><use href="#i-scissors"/></svg><span>Split</span></button>
+        </div>
+        <p class="msg" id="splitMsg" role="status" aria-live="polite"></p>
+
+        <div class="card result" id="splitResult" hidden style="margin-top:16px">
+          <h3 id="splitResultTitle" tabindex="-1">Shares</h3>
+          <p class="sumline" id="splitSummary" aria-live="polite"></p>
+          <p class="msg err" id="splitStale" role="status" hidden>Inputs changed. Split again.</p>
+          <ol class="sharelist" id="shareList"></ol>
+          <div class="row">
+            <button type="button" class="btn ghost" id="btnCopyAll"><svg class="i" aria-hidden="true"><use href="#i-copy"/></svg><span>Copy all (one per line)</span></button>
+            <button type="button" class="btn ghost" id="btnCheck"><svg class="i" aria-hidden="true"><use href="#i-refresh"/></svg><span>Check these shares</span></button>
+            <button type="button" class="btn ghost" id="btnClearClip"><svg class="i" aria-hidden="true"><use href="#i-clip"/></svg><span>Empty clipboard</span></button>
+            <button type="button" class="btn ghost" id="btnWipeSplit"><svg class="i" aria-hidden="true"><use href="#i-trash"/></svg><span>Clear everything</span></button>
+          </div>
+          <p class="msg" id="checkMsg" role="status" aria-live="polite"></p>
+          <div class="caution">
+            <svg class="i" aria-hidden="true"><use href="#i-alert"/></svg>
+            <span id="cautionText"></span>
+          </div>
+          <div class="fallback" id="splitFallback" hidden>
+            <label class="lab" for="splitFallbackText">Copy was blocked. The text is selected; press Ctrl+C or Cmd+C.</label>
+            <textarea id="splitFallbackText" readonly rows="4" spellcheck="false"></textarea>
+          </div>
+        </div>
+      </div>
+
+      <!-- ================= COMBINE ================= -->
+      <div id="panelCombine" role="tabpanel" aria-labelledby="tabCombine" hidden>
+        <p class="kicker">02 · Combine</p>
+        <h2>Rebuild a secret from shares</h2>
+        <p class="muted small" style="margin:0 0 24px;max-width:640px">Paste at least as many shares as were needed. Extra shares are fine.</p>
+
+        <div class="card">
+          <label class="f" for="shares"><span class="lab">Paste shares, one per line</span></label>
+          <textarea id="shares" rows="6" maxlength="1000000" aria-describedby="cStatus" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false" placeholder="ops-ss1-3-0b704569-80f380b5a1c4e7d20b9f3a4d6e18c2f5-c852&#10;ops-ss1-3-0b704569-3be1d09c77f2a4185ce0b6d3912f07a8-51e0" style="margin-top:-8px"></textarea>
+          <ul class="parsed" id="parsedList" aria-label="Pasted shares"></ul>
+          <div class="status idle" id="cStatus" role="status" aria-live="polite">
+            <svg class="i" aria-hidden="true"><use href="#i-info"/></svg><span>Paste at least two shares.</span>
+          </div>
+          <div id="plainThr" hidden>
+            <label class="f" style="max-width:280px"><span class="lab">How many shares were needed (optional)</span>
+              <input type="number" id="cThr" min="2" max="255" step="1" inputmode="numeric" autocomplete="off" aria-describedby="cThrHint cStatus"></label>
+            <p class="hint" id="cThrHint" style="margin-top:-8px">Plain shares do not record this. If you fill it in, extra shares are checked against each other.</p>
+          </div>
+          <div class="row">
+            <button type="button" class="btn" id="btnCombine" disabled><svg class="i" aria-hidden="true"><use href="#i-combine"/></svg><span>Combine</span></button>
+            <button type="button" class="btn ghost" id="btnCClear"><svg class="i" aria-hidden="true"><use href="#i-trash"/></svg><span>Clear</span></button>
+          </div>
+        </div>
+
+        <div class="banner bad" id="combineErr" role="alert" hidden>
+          <svg class="i" aria-hidden="true"><use href="#i-x"/></svg>
+          <span id="combineErrText"></span>
+        </div>
+
+        <div class="card result" id="combineResult" hidden>
+          <h3 id="combineResultTitle" tabindex="-1">Secret</h3>
+          <div id="cVerdict"></div>
+          <div id="cWarnings"></div>
+          <div class="secretbox" id="cBox"><pre class="out" id="cOut" role="group" tabindex="0" aria-label="Rebuilt secret, hidden"></pre></div>
+          <p class="count" id="cMeta" style="margin:0 0 12px"></p>
+          <p class="hint" id="cViewNote" hidden></p>
+          <div class="row">
+            <button type="button" class="btn ghost sm" id="cToggle" aria-pressed="false" aria-label="Show secret"><svg class="i" aria-hidden="true"><use href="#i-eye"/></svg><span aria-hidden="true">Show</span></button>
+            <div class="seg" role="group" aria-label="View as">
+              <button type="button" id="viewText" aria-pressed="true">Text</button>
+              <button type="button" id="viewHex" aria-pressed="false">Hex</button>
+            </div>
+            <button type="button" class="btn ghost sm" id="cCopy"><svg class="i" aria-hidden="true"><use href="#i-copy"/></svg><span>Copy</span></button>
+            <button type="button" class="btn ghost sm" id="cWipe"><svg class="i" aria-hidden="true"><use href="#i-trash"/></svg><span>Clear</span></button>
+          </div>
+          <details id="cHashBox" style="margin-top:16px">
+            <summary>Check value (SHA-256)</summary>
+            <p class="hash" id="cHash" aria-live="polite">Show the secret to see this value.</p>
+            <p class="hint" style="margin:0">Anyone who sees this value can test guesses against it. Do not store it next to the shares.</p>
+          </details>
+          <div class="fallback" id="combineFallback" hidden>
+            <label class="lab" for="combineFallbackText">Copy was blocked. The text is selected; press Ctrl+C or Cmd+C.</label>
+            <textarea id="combineFallbackText" readonly rows="3" spellcheck="false"></textarea>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="block">
+    <div class="wrap">
+      <details class="how">
+        <summary>How this works and what it does not protect</summary>
+        <ul>
+          <li><b>The scheme.</b> Shamir's secret sharing works on each byte of the secret in a field of 256 values. Any <em>k</em> shares rebuild the secret. Fewer than <em>k</em> reveal nothing about it, however much computing power they have, as long as the random numbers were good.</li>
+          <li><b>Randomness.</b> Random numbers come from this window's secure random source. If it is missing, the tool stops instead of using something weaker.</li>
+          <li><b>Two formats.</b> A Sanctum share adds the number of shares needed, a set id, a checksum on the share and a check value hidden inside the secret. The tool can then tell you when a share is mistyped, missing or from another set. These checks are not secret, so they do not prove the secret is the original. A plain share has none of this and matches ssss-made-easy and the shamir-secret-sharing package.</li>
+          <li><b>Not the ssss command line.</b> These shares do not work with the ssss-split and ssss-combine programs.</li>
+          <li><b>What it covers.</b> It protects against lost and mistyped shares. It does not protect against a dishonest share holder, malware, screen capture or another program reading the clipboard. Someone holding enough other shares can invent a share that rebuilds a secret of their choice, so the checks catch accidents, not cheating.</li>
+          <li><b>Length.</b> Every share is about as long as the secret. The length option pads the hidden data so the exact size is not visible.</li>
+          <li><b>Cleanup.</b> Nothing is stored. Clear empties the fields and the bytes this page holds, where it can. The idle timer only hides the secret again after 60 seconds without typing. Browsers may keep copies of text in memory, so treat this as best effort.</li>
+        </ul>
+      </details>
+    </div>
+  </section>
+</main>
+
+<footer>
+  <div class="wrap">
+    <p>Sanctum example tool, released under AGPL-3.0 with the rest of Sanctum. It asks Sanctum for no permissions.</p>
+    <p>The feature set follows ssss-made-easy by Martin Carpella and 0xjjpa (GPL-3.0). The plain format and the field arithmetic match the shamir-secret-sharing package (Apache-2.0, Privy) and HashiCorp Vault's shamir package. This file was written from a specification and contains none of their code. Icons are from Lucide (ISC).</p>
+  </div>
+</footer>
+
+<div class="toast" id="toast" role="status" aria-live="polite" hidden></div>
+
+<script>
+/*__SHAMIR_CORE__*/
+</script>
+<script>
+(function(){
+"use strict";
+var C = globalThis.ShamirCore;
+function $(id){ return document.getElementById(id); }
+
+if(!C){ $("noCore").hidden = false; return; }
+if(!(globalThis.crypto && typeof crypto.getRandomValues === "function")){ $("noCrypto").hidden = false; }
+
+var MAXB = C.LIMITS.MAX_SECRET_BYTES;
+
+/* ---------- small helpers ---------- */
+var toastTimer = null;
+function toast(msg){
+  var t = $("toast"); t.textContent = msg; t.hidden = false;
+  clearTimeout(toastTimer); toastTimer = setTimeout(function(){ t.hidden = true; }, 1800);
+}
+function icon(name){ return '<svg class="i" aria-hidden="true"><use href="#i-' + name + '"></use></svg>'; }
+function setIcon(btn, name, label){
+  btn.querySelector("use").setAttribute("href", "#i-" + name);
+  if(label != null) btn.querySelector("span").textContent = label;
+}
+function el(tag, cls, text){
+  var e = document.createElement(tag);
+  if(cls) e.className = cls;
+  if(text != null) e.textContent = text;
+  return e;
+}
+function plural(n, one, many){ return n + " " + (n === 1 ? one : many); }
+function eqBytes(a, b){
+  if(a.length !== b.length) return false;
+  var d = 0; for(var i = 0; i < a.length; i++) d |= a[i] ^ b[i];
+  return d === 0;
+}
+/* Let the browser paint the busy state first: rAF, then a timeout. The timer is a fallback for hidden windows. */
+function frame(fn){
+  var done = false;
+  function go(){ if(done) return; done = true; fn(); }
+  if(typeof requestAnimationFrame === "function") requestAnimationFrame(function(){ setTimeout(go, 0); });
+  setTimeout(go, 150);
+}
+function selectAll(t){ t.focus(); t.select(); }
+
+/* Copy with a selectable fallback. host: {box, area, msg?} */
+function copyText(text, okMsg, host){
+  function fallback(){
+    host.box.hidden = false; host.area.value = text; selectAll(host.area);
+    var done = false;
+    try { done = document.execCommand("copy"); } catch(e){ done = false; }
+    if(done){ toast(okMsg); host.box.hidden = true; host.area.value = ""; }
+  }
+  if(navigator.clipboard && navigator.clipboard.writeText){
+    navigator.clipboard.writeText(text).then(function(){
+      host.box.hidden = true; host.area.value = ""; toast(okMsg);
+    }, fallback);
+  } else { fallback(); }
+}
+
+/* ---------- typed error copy ---------- */
+function errText(code, d, ctx){
+  d = d || {}; ctx = ctx || {};
+  switch(code){
+    case "SECRET_EMPTY": return "Enter a secret first.";
+    case "SECRET_TOO_LONG": return "The secret is " + d.have + " bytes. The limit is " + d.max + ".";
+    case "BAD_SHARE_COUNT": return "Shares must be a whole number from 2 to 255.";
+    case "BAD_THRESHOLD":
+      if(ctx.onShare) return "This share's needed number is not valid.";
+      return "Needed shares must be a whole number from 2 up to the number of shares" + (d.max ? " (" + d.max + ")." : ".");
+    case "BAD_OPTION":
+      if(d.option === "padTo") return "Hiding the secret length is only available for Sanctum shares.";
+      if(d.option === "threshold") return "How many shares were needed must be a whole number from 2 to 255.";
+      return "Labels use letters, digits, dot, underscore and hyphen, up to 32 characters, and cannot contain the part \"ss1\".";
+    case "RANDOM_UNAVAILABLE": return "This window has no secure random source, so nothing was split.";
+    case "EMPTY_INPUT": return "Nothing to read.";
+    case "BAD_SYNTAX": return "This does not look like a share. A Sanctum share looks like ss1-3-0b704569-...-c852.";
+    case "BAD_HEX": return "The share has a character that is not 0 to 9 or a to f, or an odd number of digits. Check for a missing or extra character.";
+    case "SHARE_TOO_SHORT": return "This share is too short to be complete.";
+    case "X_OUT_OF_RANGE": return "This share has an invalid position (0). It is damaged.";
+    case "BAD_CHECKSUM": return "The end of this share does not match its contents. A character was probably mistyped or lost. Copy it again.";
+    case "NO_SHARES": return "Paste the shares first.";
+    case "MIXED_FORMATS": return "Sanctum shares and plain shares cannot be combined with each other.";
+    case "MIXED_SETS": return "These shares come from different sets." + (ctx.setIds && ctx.setIds.length > 1 ? " Set ids found: " + ctx.setIds.join(", ") + "." : "") + " Use shares that have the same set id.";
+    case "LENGTH_MISMATCH": return "These shares are not the same length, so they are not from one set.";
+    case "DUPLICATE_X": return "Two different shares claim the same position" + (d.x != null ? " (" + d.x + ")" : "") + ". One of them is wrong.";
+    case "TYPO_MINOR_SANCTUM": return "This looks like a Sanctum share but the others are plain shares. Remove it, or remove the others.";
+    case "TYPO_MINOR_PLAIN": return "This looks like a plain share but the others are Sanctum shares. Remove it, or remove the others.";
+    case "NOT_ENOUGH_SHARES":
+      if(d.have != null && d.need != null) return d.have + " of " + d.need + " needed. Add " + (d.need - d.have) + " more.";
+      return "Not enough shares.";
+    case "INCONSISTENT_SHARES":
+      return (d.indices && d.indices.length > 1 ? "Shares " : "Share ") + posList(d.indices, ctx) + (d.indices && d.indices.length > 1 ? " do not agree" : " does not agree") + " with the others. Replace " + (d.indices && d.indices.length > 1 ? "them." : "it.");
+    case "INTEGRITY_FAILED":
+      return "The shares did not rebuild a valid secret. At least one share is wrong, or they belong to different sets." + (ctx.need ? " If you have more than " + ctx.need + " shares, try leaving one out." : "");
+  }
+  return "Something went wrong (" + code + ").";
+}
+function posList(indices, ctx){
+  var toks = ctx.tokens || [];
+  return (indices || []).map(function(i){
+    var t = toks[i];
+    return t && t.share ? t.share.x : "at entry " + (i + 1);
+  }).join(", ");
+}
+function errOf(e, ctx){
+  if(e && e.code) return errText(e.code, e.details, ctx);
+  return "Something went wrong. Nothing was changed.";
+}
+
+/* ---------- masking and idle timer ---------- */
+var splitShown = false, combineShown = false, idleTimer = null;
+var mode = "text";           // split secret entry mode
+var viewMode = "text";       // combine result view
+function applySplitMask(){
+  $("secret").classList.toggle("masked", !splitShown);
+  $("sToggle").setAttribute("aria-pressed", String(splitShown));
+  setIcon($("sToggle"), splitShown ? "eye-off" : "eye", splitShown ? "Hide" : "Show");
+  refreshSplitHash();
+}
+function hideFallbacks(){
+  ["splitFallback", "combineFallback"].forEach(function(id){ $(id).hidden = true; });
+  $("splitFallbackText").value = ""; $("combineFallbackText").value = "";
+}
+function remaskAll(){
+  hideFallbacks();
+  splitShown = false; combineShown = false;
+  applySplitMask(); applyCombineView();
+  $("sHashBox").open = false; $("cHashBox").open = false;
+}
+function bumpIdle(){
+  clearTimeout(idleTimer);
+  idleTimer = setTimeout(function(){ remaskAll(); }, 60000);
+}
+
+/* ---------- tabs ---------- */
+function selectTab(which){
+  var split = which === "split";
+  $("tabSplit").setAttribute("aria-selected", String(split));
+  $("tabCombine").setAttribute("aria-selected", String(!split));
+  $("tabSplit").tabIndex = split ? 0 : -1;
+  $("tabCombine").tabIndex = split ? -1 : 0;
+  $("panelSplit").hidden = !split;
+  $("panelCombine").hidden = split;
+  remaskAll();
+}
+$("tabSplit").addEventListener("click", function(){ selectTab("split"); });
+$("tabCombine").addEventListener("click", function(){ selectTab("combine"); });
+[$("tabSplit"), $("tabCombine")].forEach(function(b){
+  b.addEventListener("keydown", function(ev){
+    var next = null;
+    if(ev.key === "ArrowRight" || ev.key === "ArrowLeft") next = b === $("tabSplit") ? "combine" : "split";
+    else if(ev.key === "Home") next = "split";
+    else if(ev.key === "End") next = "combine";
+    if(next){
+      selectTab(next); (next === "split" ? $("tabSplit") : $("tabCombine")).focus(); ev.preventDefault();
+    }
+  });
+});
+
+/* ================= SPLIT ================= */
+var splitState = "idle";   // idle | working | done | stale
+var clearVer = 0;          // bumped by Clear; deferred results are then dropped
+var inputVer = 0;          // bumped on every Split input; lets deferred work notice edits
+var shareTexts = [];
+var splitK = 0;
+
+function readSecret(){
+  var v = $("secret").value;
+  if(mode === "text") return { bytes: C.utf8Encode(v) };
+  try { return { bytes: C.fromHex(v.replace(/\s+/g, "")) }; }
+  catch(e){ return { err: "Hex needs an even number of digits, using only 0 to 9 and a to f." }; }
+}
+function updateSecretCount(){
+  var s = readSecret(), c = $("sCount"), over = false;
+  var se = $("sErr");
+  if(s.err){
+    c.textContent = "Not valid hex"; c.classList.add("err");
+    se.textContent = s.err; se.hidden = false; $("secret").setAttribute("aria-invalid", "true");
+    return { over: false, bad: true };
+  }
+  var n = s.bytes.length; over = n > MAXB;
+  c.textContent = n + " of " + MAXB + " bytes";
+  c.classList.toggle("err", over);
+  se.hidden = !over; se.textContent = over ? errText("SECRET_TOO_LONG", { have: n, max: MAXB }) : "";
+  $("secret").setAttribute("aria-invalid", String(over));
+  C.wipe(s.bytes);
+  return { over: over, bad: false };
+}
+function refreshSplitHash(){
+  var out = $("sHash");
+  if(!$("sHashBox").open) { return; }
+  if(!splitShown){ out.textContent = "Show the secret to see this value."; return; }
+  var s = readSecret();
+  if(s.err){ out.textContent = "Enter valid hex to see this value."; return; }
+  if(!s.bytes.length){ out.textContent = "Enter a secret to see this value."; return; }
+  out.textContent = C.toHex(C.sha256(s.bytes));
+  C.wipe(s.bytes);
+}
+function setMode(m){
+  if(m === mode) return;
+  mode = m;
+  $("modeText").setAttribute("aria-pressed", String(m === "text"));
+  $("modeHex").setAttribute("aria-pressed", String(m === "hex"));
+  $("secretLab").textContent = m === "text" ? "Secret (text, UTF-8)" : "Secret (hex digits)";
+  $("sHint").textContent = m === "text" ? "Hidden while you type. Line breaks are kept." : "Hidden while you type. Spaces and line breaks between digits are ignored.";
+  $("secret").value = "";
+  onSplitInput();
+}
+$("modeText").addEventListener("click", function(){ setMode("text"); });
+$("modeHex").addEventListener("click", function(){ setMode("hex"); });
+$("sToggle").addEventListener("click", function(){ splitShown = !splitShown; applySplitMask(); bumpIdle(); });
+$("sHashBox").addEventListener("toggle", refreshSplitHash);
+
+function markStale(){
+  if(splitState !== "done") return;
+  splitState = "stale";
+  $("splitResult").classList.add("stale");
+  $("splitStale").hidden = false;
+  ["btnCopyAll", "btnCheck"].forEach(function(id){ $(id).disabled = true; });
+  Array.prototype.forEach.call($("shareList").querySelectorAll("button"), function(b){ b.disabled = true; });
+}
+function fmtValue(){ return document.querySelector('input[name="fmt"]:checked').value; }
+function numVal(id){ var v = $(id).value.trim(); return v === "" ? NaN : Number(v); }
+
+function updateSentence(){
+  var n = numVal("nShares"), k = numVal("kNeeded");
+  var s = $("kSentence"), w = $("kWarn");
+  w.hidden = true;
+  var okN = Number.isInteger(n) && n >= 2 && n <= 255;
+  var okK = Number.isInteger(k) && k >= 2 && okN && k <= n;
+  $("nShares").setAttribute("aria-invalid", String(!okN));
+  $("kNeeded").setAttribute("aria-invalid", String(!okK));
+  if(!okN){ s.textContent = errText("BAD_SHARE_COUNT"); s.className = "sentence hint err"; return; }
+  if(!okK){ s.textContent = errText("BAD_THRESHOLD", { max: n }); s.className = "sentence hint err"; return; }
+  s.className = "sentence";
+  s.innerHTML = "";
+  s.appendChild(document.createTextNode("Any "));
+  s.appendChild(el("b", null, String(k)));
+  s.appendChild(document.createTextNode(" of the "));
+  s.appendChild(el("b", null, String(n)));
+  s.appendChild(document.createTextNode(" shares rebuild the secret. " + (k - 1 === 1 ? "1 share or fewer reveals" : (k - 1) + " or fewer reveal") + " nothing about it."));
+  var warn = null;
+  if(k === n) warn = "Losing one share loses the secret.";
+  else if(n > 50) warn = "Many shares are hard to store safely.";
+  if(warn){ w.hidden = false; w.querySelector("span").textContent = warn; }
+}
+function updateLabelState(){
+  var v = $("label").value, bad = v !== "" && !C.isValidLabel(v);
+  $("label").setAttribute("aria-invalid", String(bad));
+  $("labelHint").classList.toggle("err", bad);
+}
+function updatePadState(){
+  var plain = fmtValue() === "plain";
+  $("pad").disabled = plain;
+  $("padHint").textContent = plain
+    ? "Not available with plain shares, which are exactly as long as the secret plus one byte."
+    : "Rounds the hidden data up to a multiple of this size, so a share does not show the exact length. It hides the length inside that range, not the fact that a secret exists.";
+}
+function updateSplitButton(){
+  var st = updateSecretCount();
+  $("btnSplit").disabled = st.over || splitState === "working";
+}
+function onSplitInput(){
+  inputVer++;
+  updateSplitButton(); updateSentence(); updateLabelState(); updatePadState();
+  refreshSplitHash(); markStale(); bumpIdle();
+  $("splitMsg").textContent = ""; $("splitMsg").className = "msg"; $("splitMsg").setAttribute("role", "status");
+}
+["secret", "nShares", "kNeeded", "label", "pad"].forEach(function(id){ $(id).addEventListener("input", onSplitInput); });
+Array.prototype.forEach.call(document.querySelectorAll('input[name="fmt"]'), function(r){ r.addEventListener("change", onSplitInput); });
+
+$("sGen").addEventListener("click", function(){
+  var len = numVal("genLen");
+  try {
+    var s = C.randomSecret({ length: len });
+    if(mode !== "text") setMode("text");
+    $("secret").value = s;
+    splitShown = true; applySplitMask();
+    $("genInfo").textContent = "Generated " + s.length + " characters, " + C.entropyBits(s.length).toFixed(1) + " bits of randomness.";
+    $("genInfo").classList.remove("err");
+    onSplitInput();
+  } catch(e){
+    $("genInfo").textContent = e && e.code === "BAD_OPTION" ? "Length must be a whole number from 8 to 128."
+      : e && e.code === "RANDOM_UNAVAILABLE" ? "This window has no secure random source, so no secret was generated." : errOf(e);
+    $("genInfo").classList.add("err");
+  }
+});
+$("genLen").addEventListener("input", function(){
+  var n = numVal("genLen");
+  if(Number.isInteger(n) && n >= 8 && n <= 128){
+    $("genInfo").classList.remove("err");
+    $("genInfo").textContent = "Generate makes a random secret from 28 easy to read letters and digits. At " + n + " characters that is " + C.entropyBits(n).toFixed(1) + " bits.";
+  }
+});
+
+function wipeSplitResult(){
+  $("btnCopyAll").disabled = false; $("btnCheck").disabled = false;
+  shareTexts = [];
+  $("shareList").textContent = "";
+  $("splitResult").hidden = true;
+  $("splitResult").classList.remove("stale");
+  $("splitStale").hidden = true;
+  $("splitFallback").hidden = true; $("splitFallbackText").value = "";
+  $("checkMsg").textContent = "";
+  splitState = "idle";
+}
+function clearSplit(){
+  clearVer++; inputVer++;
+  hideFallbacks();
+  $("secret").value = "";
+  $("sHash").textContent = "Show the secret to see this value.";
+  wipeSplitResult();
+  $("splitMsg").textContent = ""; $("splitMsg").className = "msg";
+  splitShown = false; applySplitMask();
+  $("sHashBox").open = false;
+  updateSplitButton();
+}
+$("sClear").addEventListener("click", function(){ clearSplit(); toast("Cleared"); });
+$("btnWipeSplit").addEventListener("click", function(){ clearSplit(); $("secret").focus(); toast("Cleared"); });
+
+function splitOptions(){
+  var o = { format: fmtValue() };
+  var lab = $("label").value.trim();
+  if(lab) o.label = lab;
+  if(o.format === "ss1") o.padTo = Number($("pad").value);
+  return o;
+}
+function showSplitError(text){
+  var m = $("splitMsg"); m.setAttribute("role", "alert"); m.textContent = text; m.className = "msg err";
+}
+function renderShares(res, k){
+  var list = $("shareList"); list.textContent = "";
+  shareTexts = res.shares.map(function(s){ return s.text; });
+  splitK = k;
+  res.shares.forEach(function(s, i){
+    var li = el("li", "share");
+    var head = el("div", "share-head");
+    head.appendChild(el("span", "share-n", "Share " + s.x));
+    var b = el("button", "btn ghost sm");
+    b.type = "button";
+    b.innerHTML = icon("copy") + "<span>Copy</span>";
+    b.setAttribute("aria-label", "Copy share " + s.x);
+    b.addEventListener("click", function(){ copyText(s.text, "Copied share " + s.x, splitHost); });
+    head.appendChild(b);
+    li.appendChild(head);
+    li.appendChild(el("p", "share-text", s.text));
+    list.appendChild(li);
+  });
+  var sum = $("splitSummary"); sum.textContent = "";
+  sum.appendChild(document.createTextNode(plural(res.shares.length, "share", "shares") + ". Any " + k + " rebuild the secret."));
+  if(res.setId){
+    sum.appendChild(document.createTextNode(" Set "));
+    sum.appendChild(el("code", null, res.setId));
+    sum.appendChild(document.createTextNode("."));
+  } else {
+    sum.appendChild(document.createTextNode(" Plain format: these shares carry no checks."));
+  }
+  $("cautionText").textContent = "Put each share somewhere different. Anyone holding " + k + " shares has the secret. Copy all puts every share on the clipboard together. Paste them somewhere temporary, separate them at once, then press Empty clipboard.";
+}
+var splitHost = { box: $("splitFallback"), area: $("splitFallbackText") };
+
+$("btnSplit").addEventListener("click", function(){
+  if(splitState === "working") return;
+  $("splitMsg").textContent = ""; $("splitMsg").className = "msg"; $("splitMsg").setAttribute("role", "status");
+  var s = readSecret();
+  if(s.err){ showSplitError(s.err); return; }
+  var ver = inputVer, cver = clearVer;
+  var n = numVal("nShares"), k = numVal("kNeeded"), opts = splitOptions();
+  splitState = "working";
+  var btn = $("btnSplit"); btn.disabled = true; btn.classList.add("working");
+  setIcon(btn, "refresh", "Splitting...");
+  wipeSplitResult(); splitState = "working";
+  $("splitMsg").textContent = "Working...";
+  frame(function(){
+    var bytes = s.bytes, copy = bytes.slice();
+    try {
+      var res = C.split(bytes, n, k, opts);
+      /* self check: rebuild from the first k shares and compare */
+      var back = C.combine(res.shares.slice(0, k));
+      var good = eqBytes(back.secret, copy);
+      C.wipe(back.secret);
+      if(!good){ throw new Error("selfcheck"); }
+      if(cver !== clearVer){ splitState = "idle"; $("splitMsg").textContent = ""; }
+      else {
+        renderShares(res, k);
+        $("splitResult").hidden = false;
+        splitState = "done";
+        $("splitMsg").textContent = "";
+        if(ver !== inputVer) markStale();
+        else $("splitResultTitle").focus();
+      }
+    } catch(e){
+      wipeSplitResult();
+      showSplitError(e && e.code ? errOf(e) : "The self check failed, so these shares were discarded. Try again.");
+    } finally {
+      C.wipe(bytes); C.wipe(copy);
+      btn.classList.remove("working");
+      setIcon(btn, "scissors", "Split");
+      updateSplitButton();
+    }
+  });
+});
+
+$("btnCopyAll").addEventListener("click", function(){
+  copyText(shareTexts.join("\n"), "Copied " + plural(shareTexts.length, "share", "shares"), splitHost);
+});
+$("btnClearClip").addEventListener("click", function(){
+  if(navigator.clipboard && navigator.clipboard.writeText){
+    navigator.clipboard.writeText("").then(function(){ toast("Clipboard emptied"); },
+      function(){ toast("Clipboard could not be emptied"); });
+  } else { toast("Clipboard could not be emptied"); }
+});
+$("btnCheck").addEventListener("click", function(){
+  var m = $("checkMsg"); m.className = "msg"; m.textContent = "Checking...";
+  var k = splitK;
+  var s = readSecret();
+  frame(function(){
+    try {
+      if(s.err) throw new Error("x");
+      var idx = shareTexts.map(function(_, i){ return i; });
+      var r = new Uint8Array(idx.length); crypto.getRandomValues(r);
+      idx.sort(function(a, b){ return r[a] - r[b]; });
+      var pick = idx.slice(0, k).map(function(i){ return shareTexts[i]; });
+      var res = C.combine(pick);
+      var same = eqBytes(res.secret, s.bytes);
+      C.wipe(res.secret);
+      if(same){ m.textContent = plural(k, "share", "shares") + " rebuilt the secret."; m.className = "msg ok"; }
+      else { m.textContent = "These shares did not rebuild the secret you entered. Do not use them."; m.className = "msg err"; }
+    } catch(e){
+      m.textContent = e && e.code ? errOf(e) : "The check could not run. Split again.";
+      m.className = "msg err";
+    } finally { if(s.bytes) C.wipe(s.bytes); }
+  });
+});
+
+/* ================= COMBINE ================= */
+var combined = null;   // { secret: Uint8Array, text: string|null, res }
+var lastTokens = [];
+
+function plainThreshold(){
+  var v = $("cThr").value.trim();
+  if(v === "") return { value: undefined };
+  var n = Number(v);
+  if(Number.isInteger(n) && n >= 2 && n <= 255) return { value: n };
+  return { bad: true };
+}
+function setStatus(kind, text){
+  var s = $("cStatus");
+  s.className = "status " + kind;
+  s.innerHTML = icon(kind === "ready" ? "ok" : kind === "bad" ? "alert" : "info");
+  s.appendChild(el("span", null, text));
+  $("shares").setAttribute("aria-invalid", String(kind === "bad"));
+}
+
+var ZERO_WIDTH = /[\u200B\u200C\u200D\uFEFF\u2060]/g;
+var ROW_CAP = 300;
+var combineVer = 0;        // bumped on every Combine input
+var lastValid = [];        // tokens that parsed, in input order
+var PRIORITY = ["MIXED_FORMATS", "MIXED_SETS", "LENGTH_MISMATCH", "DUPLICATE_X"];
+
+/* An unparsed entry that looks like a damaged share gets its specific message. */
+function looksLikeShare(raw){
+  return /ss1/i.test(raw) || (raw.length >= 20 && /[0-9a-f]{12}/i.test(raw));
+}
+
+function refreshCombine(){
+  var text = $("shares").value.replace(ZERO_WIDTH, "");
+  var tokens = C.parseShares(text);
+  lastTokens = tokens;
+  var valid = [];
+  for(var q = 0; q < tokens.length; q++) if(tokens[q].share) valid.push(tokens[q]);
+  lastValid = valid;
+  var ignored = tokens.length - valid.length;
+  var list = $("parsedList"); list.textContent = "";
+  var thr = plainThreshold();
+  var btn = $("btnCombine");
+  btn.disabled = true;
+  $("cThr").setAttribute("aria-invalid", String(!!thr.bad));
+  if(!tokens.length){
+    $("plainThr").hidden = true;
+    setStatus("idle", "Paste at least two shares.");
+    return;
+  }
+  var shares = valid.map(function(t){ return t.share; });
+  var st = C.validateShares(shares, thr.value != null ? { threshold: thr.value } : undefined);
+
+  /* the problem code every flagged row and the status line agree on */
+  var top = null, byCode = {};
+  st.problems.forEach(function(p){ byCode[p.code] = p.indices; });
+  for(var pi = 0; pi < PRIORITY.length; pi++) if(byCode[PRIORITY[pi]]){ top = PRIORITY[pi]; break; }
+  var flagged = {}, minorityCode = null;
+  if(top === "MIXED_FORMATS"){
+    var nSs = 0, nPl = 0;
+    shares.forEach(function(sh){ if(sh.format === "ss1") nSs++; else nPl++; });
+    if(nSs !== nPl){
+      var minor = nSs < nPl ? "ss1" : "plain";
+      minorityCode = minor === "ss1" ? "TYPO_MINOR_SANCTUM" : "TYPO_MINOR_PLAIN";
+      shares.forEach(function(sh, i){ if(sh.format === minor) flagged[i] = true; });
+    }
+  } else if(top){
+    byCode[top].forEach(function(i){ flagged[i] = true; });
+  }
+
+  var setIds = [], seenSet = {}, anyPlain = false;
+  shares.forEach(function(sh){
+    if(sh.format === "plain") anyPlain = true;
+    if(sh.setId && !seenSet[sh.setId]){ seenSet[sh.setId] = true; setIds.push(sh.setId); }
+  });
+  var dupX = null;
+  if(top === "DUPLICATE_X"){ var di = byCode.DUPLICATE_X[0]; dupX = shares[di].x; }
+
+  var vi = 0, seen = {};
+  var rendered = Math.min(tokens.length, ROW_CAP);
+  for(var ti = 0; ti < rendered; ti++){
+    var t = tokens[ti];
+    var li = el("li");
+    if(t.share){
+      var sh = t.share, myIdx = vi++;
+      var key = sh.format + "|" + (sh.setId || "") + "|" + C.toHex(sh.body);
+      var dupe = seen[key]; seen[key] = true;
+      var isBad = !dupe && flagged[myIdx];
+      li.className = dupe ? "note" : (isBad ? "bad" : "ok");
+      li.innerHTML = icon(dupe ? "info" : isBad ? "x" : "ok");
+      li.appendChild(el("span", "who", "Share " + sh.x));
+      li.appendChild(document.createTextNode(" "));
+      if(sh.setId){ li.appendChild(el("span", "sid", "set " + sh.setId)); li.appendChild(document.createTextNode(" ")); }
+      var msg = dupe ? "same as a share above, ignored"
+        : isBad ? errText(minorityCode || top, { x: sh.x }, { setIds: setIds })
+        : "ok";
+      li.appendChild(el("span", dupe || isBad ? null : "muted", msg));
+    } else {
+      var likely = looksLikeShare(t.raw);
+      li.className = likely ? "bad" : "note";
+      li.innerHTML = icon(likely ? "x" : "info");
+      li.appendChild(el("span", "who", "Entry " + (t.index + 1)));
+      li.appendChild(document.createTextNode(" "));
+      li.appendChild(el("span", null, likely ? errText(t.error.code, {}, { onShare: true }) + " It is ignored." : "Not a share, ignored"));
+    }
+    list.appendChild(li);
+  }
+  if(tokens.length > rendered){
+    var more = el("li", "note");
+    more.innerHTML = icon("info");
+    more.appendChild(el("span", null, "and " + (tokens.length - rendered) + " more entries not shown"));
+    list.appendChild(more);
+  }
+
+  $("plainThr").hidden = !(anyPlain || st.format === "plain" || st.format === "mixed");
+  var junkNote = ignored ? " " + (ignored === 1 ? "1 entry was not recognised and is ignored." : ignored + " entries were not recognised and are ignored.") : "";
+  var dupNote = st.ignoredDuplicates ? " " + plural(st.ignoredDuplicates, "repeated share", "repeated shares") + " ignored." : "";
+  if(thr.bad){
+    setStatus("bad", errText("BAD_OPTION", { option: "threshold" }));
+    return;
+  }
+  if(st.count === 0){
+    setStatus("idle", "No shares recognised yet." + junkNote);
+    return;
+  }
+  if(top){
+    setStatus("bad", errText(top, { x: dupX }, { setIds: setIds }) + dupNote + junkNote);
+    return;
+  }
+  if(st.format === "plain" && thr.value == null){
+    if(st.count < 2) setStatus("idle", "1 valid share. Paste at least two." + dupNote + junkNote);
+    else { setStatus("ready", plural(st.count, "share", "shares") + " pasted. Plain shares do not say how many are needed, so all of them will be used." + dupNote + junkNote); btn.disabled = false; }
+    return;
+  }
+  if(st.missing > 0){
+    setStatus("idle", st.count + " of " + st.needed + " needed. Add " + st.missing + " more." + dupNote + junkNote);
+    return;
+  }
+  setStatus("ready", st.count + " of " + st.needed + " needed. Ready." + dupNote + junkNote);
+  btn.disabled = false;
+}
+
+function wipeCombined(){
+  if(combined){ C.wipe(combined.secret); combined = null; }
+  $("cOut").textContent = "";
+  $("combineResult").hidden = true;
+  $("cVerdict").textContent = ""; $("cWarnings").textContent = "";
+  $("cHash").textContent = "Show the secret to see this value.";
+  $("combineFallback").hidden = true; $("combineFallbackText").value = "";
+}
+function onSharesInput(){
+  combineVer++;
+  wipeCombined();
+  $("combineErr").hidden = true;
+  refreshCombine();
+  bumpIdle();
+}
+$("shares").addEventListener("input", onSharesInput);
+$("cThr").addEventListener("input", onSharesInput);
+
+$("btnCClear").addEventListener("click", function(){
+  combineVer++;
+  $("shares").value = ""; $("cThr").value = "";
+  wipeCombined(); $("combineErr").hidden = true; refreshCombine();
+  combineShown = false; $("cHashBox").open = false;
+  $("shares").focus(); toast("Cleared");
+});
+$("cWipe").addEventListener("click", function(){
+  combineVer++;
+  wipeCombined(); combineShown = false; $("cHashBox").open = false;
+  $("shares").focus(); toast("Cleared");
+});
+
+$("btnCombine").addEventListener("click", function(){
+  var btn = $("btnCombine");
+  var thr = plainThreshold();
+  if(thr.bad) return;
+  wipeCombined(); $("combineErr").hidden = true;
+  btn.disabled = true; btn.classList.add("working"); setIcon(btn, "refresh", "Combining...");
+  var vtokens = lastValid, ver = combineVer;
+  var inputs = vtokens.map(function(t){ return t.share; });
+  frame(function(){
+    try {
+      var res = C.combine(inputs, thr.value != null ? { threshold: thr.value } : undefined);
+      if(ver !== combineVer){ C.wipe(res.secret); }
+      else showCombined(res, vtokens);
+    } catch(e){
+      if(ver === combineVer){
+        var st = C.validateShares(inputs);
+        $("combineErrText").textContent = errOf(e, { tokens: vtokens, need: st && st.needed ? st.needed : null });
+        $("combineErr").hidden = false;
+      }
+    } finally {
+      btn.classList.remove("working"); setIcon(btn, "combine", "Combine");
+      refreshCombine();
+    }
+  });
+});
+
+function showCombined(res, tokens){
+  var text = C.utf8Decode(res.secret);
+  combined = { secret: res.secret, text: text, res: res };
+  combineShown = false;
+  viewMode = text === null ? "hex" : "text";
+  var v = $("cVerdict"); v.textContent = "";
+  var line = el("p", "okline");
+  if(res.format === "ss1" && res.verified){
+    line.innerHTML = icon("ok");
+    line.appendChild(el("span", null, "The shares belong to one set and agree with each other."));
+    v.appendChild(line);
+    v.appendChild(el("p", "hint", "This does not prove the secret is the original. If you recorded the SHA-256 when you split, compare it below. That is the stronger check."));
+  } else {
+    line.className = "okline neutral";
+    line.innerHTML = icon("info");
+    line.appendChild(el("span", null, "These shares carry no check value. If you have the SHA-256 from when you split, compare it below. That is the stronger check."));
+    v.appendChild(line);
+  }
+  var w = $("cWarnings"); w.textContent = "";
+  (res.warnings || []).forEach(function(wn){
+    if(wn.code !== "EXTRA_SHARE_MISMATCH") return;
+    var xs = wn.inputIndices.map(function(i){ var t = tokens[i]; return t && t.share ? t.share.x : (i + 1); });
+    var p = el("p", "okline warn");
+    p.innerHTML = icon("alert");
+    p.appendChild(el("span", null, (xs.length > 1 ? "Shares " : "Share ") + xs.join(", ") + (xs.length > 1 ? " do not match the others. " : " does not match the others. ") +
+      "The secret was rebuilt from " + plural(res.sharesUsed, "share", "shares") + ". Replace " + (xs.length > 1 ? "those shares." : "that share.")));
+    w.appendChild(p);
+  });
+  var note = $("cViewNote");
+  note.hidden = text !== null;
+  note.textContent = text === null ? "This is not valid text, so it is shown as hex." : "";
+  $("viewText").disabled = text === null;
+  $("combineResult").hidden = false;
+  applyCombineView();
+  $("combineResultTitle").focus();
+}
+function currentView(){
+  if(!combined) return "";
+  return viewMode === "text" && combined.text !== null ? combined.text : C.toHex(combined.secret);
+}
+function applyCombineView(){
+  $("cToggle").setAttribute("aria-pressed", String(combineShown));
+  setIcon($("cToggle"), combineShown ? "eye-off" : "eye", combineShown ? "Hide" : "Show");
+  $("viewText").setAttribute("aria-pressed", String(viewMode === "text"));
+  $("viewHex").setAttribute("aria-pressed", String(viewMode === "hex"));
+  $("cBox").classList.toggle("shown", combineShown);
+  $("cOut").setAttribute("aria-label", combineShown ? "Rebuilt secret" : "Rebuilt secret, hidden");
+  if(!combined){ $("cOut").textContent = ""; return; }
+  var n = combined.secret.length;
+  $("cMeta").textContent = plural(n, "byte", "bytes");
+  $("cOut").textContent = combineShown ? currentView() : new Array(Math.min(n, 40) + 1).join("•");
+  refreshCombineHash();
+}
+function refreshCombineHash(){
+  if(!$("cHashBox").open) return;
+  var out = $("cHash");
+  if(!combined || !combineShown){ out.textContent = "Show the secret to see this value."; return; }
+  out.textContent = C.toHex(C.sha256(combined.secret));
+}
+$("cHashBox").addEventListener("toggle", refreshCombineHash);
+$("cToggle").addEventListener("click", function(){ combineShown = !combineShown; applyCombineView(); bumpIdle(); });
+$("viewText").addEventListener("click", function(){ if(combined && combined.text !== null){ viewMode = "text"; applyCombineView(); } });
+$("viewHex").addEventListener("click", function(){ viewMode = "hex"; applyCombineView(); });
+$("cCopy").addEventListener("click", function(){
+  if(!combined) return;
+  copyText(currentView(), "Copied the secret", { box: $("combineFallback"), area: $("combineFallbackText") });
+});
+
+/* ---------- start ---------- */
+applySplitMask(); applyCombineView();
+updateSplitButton(); updateSentence(); updateLabelState(); updatePadState(); refreshCombine();
+})();
+</script>
+</body>
+</html>

@@ -35,13 +35,17 @@ export function IngestBar({ onIngested }: IngestBarProps) {
     try {
       const selected = await open({
         title: "Open HTML Tool",
-        filters: [{ name: "HTML", extensions: ["html", "htm"] }],
+        filters: [
+          { name: "HTML or signed bundle", extensions: ["html", "htm", "sanctum"] },
+        ],
         multiple: false,
         directory: false,
       });
       if (!selected) { setBusy(false); return; }
       const path = Array.isArray(selected) ? selected[0] : selected;
-      const result = await Commands.ingestFromPath(path);
+      const result = path.endsWith(".sanctum")
+        ? await Commands.ingestBundleFromPath(path)
+        : await Commands.ingestFromPath(path);
       onIngested(result);
     } catch (e) {
       setError(String(e));

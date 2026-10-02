@@ -76,12 +76,54 @@ export interface ToolWithVersion {
   tool: ToolRecord;
   current_version: VersionRecord | null;
   all_versions: VersionRecord[];
+  /** Set when the current version was installed from a signed .sanctum bundle. */
+  provenance: ProvenanceRecord | null;
 }
 
 export interface IngestResult {
   tool: ToolRecord;
   version: VersionRecord;
   isNewTool: boolean;
+}
+
+/** Where a version came from when it was installed from a signed .sanctum bundle. */
+export interface ProvenanceRecord {
+  versionId: string;
+  appId: string;
+  publisherKey: string;
+  publisherName: string | null;
+  /** "verified" (signer is a trust anchor) or "unknown_signer". Neither grants any permission. */
+  trust: "verified" | "unknown_signer";
+  name: string;
+  version: string;
+  issuedAt: number;
+  installedAt: number;
+}
+
+export interface BundleInstall extends IngestResult {
+  provenance: ProvenanceRecord;
+  warnings: string[];
+}
+
+/** A publisher key this build recognises, from src-tauri/src/trust.rs. */
+export interface TrustAnchorInfo {
+  name: string;
+  keyId: string;
+}
+
+/** What a signature does and does not mean. Shown wherever a publisher badge appears. */
+export const SIGNATURE_MEANING =
+  "A signature says who published this file and that it has not been changed. " +
+  "It does not mean the tool is safe, and it gives the tool no permissions.";
+
+/** Organisation policy state, from the admin-managed policy file. */
+export interface PolicyStatus {
+  /** A policy file is present (valid or not). */
+  managed: boolean;
+  /** Number of pinned checksums when pinning is in use. */
+  pinnedCount: number | null;
+  /** Set when the policy cannot be applied. Tools are blocked until it is fixed. */
+  error: string | null;
 }
 
 export interface MetadataUpdate {

@@ -323,6 +323,11 @@ pub async fn open_tool_window(
         ));
     }
 
+    // 2b. Organisation policy (pinned checksums). Checked against `actual_sha`, the hash of
+    //     the bytes we are about to serve, which the integrity check above just confirmed.
+    crate::policy::check_run(&crate::policy::load(), &actual_sha)
+        .map_err(|why| format!("Cannot run '{tool_name}'. {why}"))?;
+
     // 3. Check not already quarantined
     let ver_row = sqlx::query("SELECT quarantined, manifest FROM tool_versions WHERE id = $1")
         .bind(&sha)
@@ -417,6 +422,29 @@ pub async fn open_tool_window(
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    /// `open_tool_window` needs a live Tauri window, so its ordering cannot be run here.
+    /// This pins the two properties that matter: the org policy is consulted, and it is
+    /// consulted with the freshly verified hash, after the integrity check and before the
+    /// window is built. Removing or moving the call fails this test.
+    #[test]
+    fn policy_gate_sits_between_integrity_check_and_window_creation() {
+        let src = include_str!("runner.rs");
+        let body = &src[src
+            .find("pub async fn open_tool_window")
+            .expect("fn exists")..];
+        let integrity = body
+            .find("let actual_sha = hash_bytes_hex")
+            .expect("integrity check");
+        let gate = body
+            .find("crate::policy::check_run(&crate::policy::load(), &actual_sha)")
+            .expect("policy gate must call check_run with the verified hash");
+        let window = body.find("WebviewWindowBuilder").expect("window creation");
+        assert!(
+            integrity < gate && gate < window,
+            "policy gate is out of order"
+        );
+    }
     use crate::models::NetCapability;
 
     // ── Helpers ───────────────────────────────────────────────────────────────

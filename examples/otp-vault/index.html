@@ -1,0 +1,1428 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="referrer" content="no-referrer">
+<meta name="theme-color" content="#0a0a0a">
+<title>Enigma OTP Vault for Sanctum</title>
+<meta name="description" content="Time-based one-time codes (TOTP) kept in Sanctum storage and optionally on a smart card.">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32' width='32' height='32'%3E%3Crect width='32' height='32' rx='6' fill='%230A0A0A'/%3E%3Crect x='3' y='3' width='26' height='26' rx='5' fill='none' stroke='%23FBFF00' stroke-width='1.5'/%3E%3Ctext x='16' y='20.5' text-anchor='middle' font-family='Poppins,Helvetica,Arial,sans-serif' font-size='10' font-weight='700' fill='%23FFFFFF' letter-spacing='-0.3'%3Eotp%3C/text%3E%3C/svg%3E">
+<style>
+  :root{
+    --ink:#000000; --ink-soft:#0a0a0a; --panel:#111111; --paper:#FFFFFF; --volt:#FBFF00;
+    --ash:#8A8A8A; --ash-soft:#5E5E5E; --line:rgba(255,255,255,.12); --line-strong:rgba(255,255,255,.24);
+    --danger:#FF5A4E; --ok:#7CFF8A;
+    --display:'Poppins',system-ui,-apple-system,'Segoe UI',Roboto,sans-serif;
+    --mono:'Space Mono',ui-monospace,SFMono-Regular,Menlo,Consolas,'Liberation Mono',monospace;
+    --emoji:'Apple Color Emoji','Segoe UI Emoji','Noto Color Emoji',sans-serif;
+    --gap:clamp(16px,4vw,48px);
+    color-scheme:dark;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;background:var(--ink);color:var(--paper)}
+  body{font-family:var(--mono);font-size:14px;line-height:1.6;-webkit-font-smoothing:antialiased;min-height:100vh;
+    padding:env(safe-area-inset-top,0) 0 env(safe-area-inset-bottom,0)}
+  body::before{content:"";position:fixed;inset:0;pointer-events:none;z-index:50;
+    background-image:repeating-linear-gradient(0deg,rgba(255,255,255,.018) 0 1px,transparent 1px 3px);opacity:.6}
+  [hidden]{display:none!important}
+  a{color:inherit}
+  .wrap{max-width:980px;margin:0 auto;padding:0 var(--gap)}
+
+  /* header */
+  header.bar{position:sticky;top:0;z-index:40;background:rgba(0,0,0,.86);backdrop-filter:blur(8px);border-bottom:1px solid var(--line)}
+  .bar-in{display:flex;align-items:center;gap:16px;min-height:64px;flex-wrap:wrap;padding-block:8px}
+  .mark{display:flex;align-items:center;gap:12px;text-decoration:none}
+  .ets-badge{display:inline-flex;align-items:center;justify-content:center;width:42px;height:28px;background:var(--paper)}
+  .ets{font-family:'Inter','Helvetica Neue',Arial,sans-serif;font-weight:800;font-size:13px;color:#000;letter-spacing:.01em;line-height:1}
+  .wordmark{font-size:12px;letter-spacing:.18em;text-transform:uppercase}
+  .wordmark b{color:var(--ash);font-weight:400}
+  .bar-right{margin-left:auto;display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+  .who{font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--ash)}
+  .fp-mini{font-family:var(--emoji);font-size:18px;letter-spacing:2px;border:1px solid var(--line);padding:2px 8px;white-space:nowrap}
+
+  /* hero */
+  .hero{padding:clamp(40px,8vw,88px) 0 clamp(28px,5vw,48px);border-bottom:1px solid var(--line)}
+  .eyebrow{font-size:11px;letter-spacing:.3em;text-transform:uppercase;color:var(--ash);margin:0 0 18px}
+  h1{font-family:var(--display);font-weight:800;font-size:clamp(40px,9vw,96px);line-height:.92;letter-spacing:-.02em;margin:0}
+  .dash{display:inline-block;width:.46em;height:.13em;background:var(--volt);vertical-align:.3em;margin:0 .04em}
+  .dot{display:inline-block;width:.2em;height:.2em;background:var(--volt);vertical-align:.02em;margin-left:.05em}
+  .lede{max-width:600px;margin:24px 0 0;color:var(--paper)}
+  .lede span{color:var(--ash)}
+
+  section.block{padding:clamp(28px,5vw,56px) 0;border-bottom:1px solid var(--line)}
+  .kicker{font-size:11px;letter-spacing:.28em;text-transform:uppercase;color:var(--ash);margin:0 0 12px;display:flex;gap:12px;align-items:center}
+  .kicker::before{content:"";width:28px;height:2px;background:var(--volt)}
+  h2{font-family:var(--display);font-weight:700;font-size:clamp(24px,4vw,40px);line-height:1.05;letter-spacing:-.02em;margin:0 0 6px}
+  .muted{color:var(--ash)}
+  .small{font-size:12px}
+
+  /* tabs */
+  .tabs{display:flex;gap:0;border:1px solid var(--line-strong);width:max-content;max-width:100%;margin:0 0 24px}
+  .tabs button{background:transparent;color:var(--ash);border:0;padding:10px 18px;font:inherit;font-size:12px;letter-spacing:.14em;text-transform:uppercase;cursor:pointer}
+  .tabs button[aria-selected="true"]{background:var(--volt);color:#000}
+
+  /* forms */
+  .grid2{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:24px;align-items:start}
+  .card{border:1px solid var(--line);background:var(--ink-soft);padding:clamp(16px,3vw,28px)}
+  label.f{display:block;margin:0 0 14px}
+  label.f > span{display:block;font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:var(--ash);margin-bottom:6px}
+  input[type=text],input[type=password],input[type=search],input[type=number],select{
+    width:100%;background:#000;color:var(--paper);border:1px solid var(--line-strong);border-radius:0;
+    padding:11px 12px;font:inherit;font-size:14px;outline:none}
+  input:focus,select:focus{border-color:var(--volt);box-shadow:0 0 0 1px var(--volt)}
+  input.secret{letter-spacing:.08em;text-transform:uppercase}
+  .row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+  .row > *{flex:1 1 auto}
+  button.btn{background:var(--volt);color:#000;border:1px solid var(--volt);border-radius:0;padding:11px 18px;font:inherit;font-weight:700;
+    font-size:12px;letter-spacing:.14em;text-transform:uppercase;cursor:pointer}
+  button.btn:disabled{opacity:.4;cursor:not-allowed}
+  button.ghost{background:transparent;color:var(--paper);border:1px solid var(--line-strong)}
+  button.ghost:hover:not(:disabled){border-color:var(--volt);color:var(--volt)}
+  button.danger{background:transparent;color:var(--danger);border:1px solid rgba(255,90,78,.5)}
+  button.danger.armed{background:var(--danger);color:#000}
+  button.sm{padding:6px 10px;font-size:11px}
+  details{border:1px solid var(--line);padding:10px 12px;margin:0 0 14px}
+  details summary{cursor:pointer;font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:var(--ash)}
+  details[open] summary{margin-bottom:12px}
+  .adv{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+  @media (max-width:520px){.adv{grid-template-columns:1fr}}
+  .msg{min-height:1.6em;margin:10px 0 0;font-size:12px}
+  .msg.err{color:var(--danger)}
+  .msg.ok{color:var(--ok)}
+  .hint{font-size:12px;color:var(--ash);margin:-6px 0 14px}
+  .meter{height:4px;background:var(--line);margin:-8px 0 14px}
+  .meter i{display:block;height:100%;width:0;background:var(--danger);transition:width .2s,background .2s}
+
+  /* fingerprint */
+  .fp{border:1px solid var(--line-strong);background:#000;padding:18px}
+  .fp-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin:12px 0}
+  .fp-grid div{aspect-ratio:1;display:flex;align-items:center;justify-content:center;font-family:var(--emoji);font-size:clamp(26px,6vw,40px);
+    background:var(--ink-soft);border:1px solid var(--line)}
+  .fp-grid.empty div{color:var(--ash-soft);font-family:var(--mono);font-size:18px}
+  .fp-grid.busy div{animation:pulse 1s infinite alternate}
+  @keyframes pulse{from{opacity:.35}to{opacity:1}}
+  .fp-hex{font-size:11px;color:var(--ash);word-break:break-all;letter-spacing:.06em}
+  .fp-label{font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:var(--ash)}
+  .check{display:flex;gap:10px;align-items:flex-start;margin:12px 0 0;font-size:12px}
+  .check input{margin-top:3px;accent-color:var(--volt)}
+
+  /* entries */
+  .toolbar{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin:0 0 16px}
+  .toolbar input{flex:1 1 220px;width:auto}
+  .list{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:12px}
+  .entry{background:var(--ink-soft);border:1px solid var(--line);padding:18px;display:flex;flex-direction:column;gap:10px;min-width:0}
+  .entry-head{display:flex;justify-content:space-between;gap:10px;align-items:baseline}
+  .issuer{font-family:var(--display);font-weight:700;font-size:18px;line-height:1.2;overflow-wrap:anywhere}
+  .acct{font-size:12px;color:var(--ash);overflow-wrap:anywhere}
+  .code{font-size:clamp(30px,7vw,38px);font-weight:700;letter-spacing:.08em;cursor:pointer;background:none;border:0;color:var(--paper);
+    padding:0;text-align:left;font-family:var(--mono);line-height:1.1}
+  .code:hover,.code:focus-visible{color:var(--volt);outline:none}
+  .code.warn{color:var(--danger)}
+  .next{font-size:11px;color:var(--ash)}
+  .bar-t{height:3px;background:var(--line);position:relative;overflow:hidden}
+  .bar-t i{position:absolute;inset:0 auto 0 0;background:var(--volt)}
+  .meta{font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:var(--ash-soft)}
+  .entry-actions{display:flex;gap:6px;flex-wrap:wrap}
+  .empty-state{border:1px dashed var(--line-strong);padding:32px;text-align:center;color:var(--ash)}
+  .toast{position:fixed;left:50%;bottom:calc(24px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:var(--volt);color:#000;
+    padding:10px 16px;font-size:12px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;z-index:60;max-width:calc(100vw - 32px)}
+  .banner{border:1px solid var(--danger);color:var(--danger);padding:14px 16px;margin:24px 0 0;font-size:13px}
+  .banner.info{border-color:var(--line-strong);color:var(--ash)}
+  footer{padding:32px 0 48px;color:var(--ash);font-size:11px;letter-spacing:.06em}
+  footer p{margin:0 0 8px;max-width:760px}
+  .sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}
+  ul.plain{margin:8px 0 0;padding-left:18px;color:var(--ash);font-size:12px}
+  textarea{width:100%;background:#000;color:var(--paper);border:1px solid var(--line-strong);border-radius:0;padding:10px 12px;font:inherit;font-size:12px;resize:vertical;outline:none}
+  textarea:focus{border-color:var(--volt);box-shadow:0 0 0 1px var(--volt)}
+  #exportText{margin-top:12px}
+  .store-pick{border:1px solid var(--line);padding:10px 12px;margin:0 0 14px}
+  .store-pick .check{margin:6px 0 0}
+  .toolbar select{flex:1 1 220px;width:auto}
+  .tag-hw{font-size:10px;letter-spacing:.14em;text-transform:uppercase;background:var(--volt);color:#000;padding:2px 6px}
+  .code.touch{font-size:14px;letter-spacing:.12em;text-transform:uppercase;color:var(--volt)}
+  ul.plain li{margin:0 0 6px}
+</style>
+</head>
+<body>
+
+<header class="bar">
+  <div class="wrap bar-in">
+    <span class="mark" aria-label="Enigma Technologies Solutions">
+      <span class="ets-badge"><span class="ets">ETS</span></span>
+      <span class="wordmark">Enigma <b>/ OTP Vault · Sanctum</b></span>
+    </span>
+    <div class="bar-right" id="barSession" hidden>
+      <span class="who" id="whoName"></span>
+      <span class="fp-mini" id="fpMini" title="Vault fingerprint"></span>
+      <span class="who" id="lockIn" title="Auto-lock countdown"></span>
+      <button class="btn ghost sm" id="btnLock" type="button">Lock</button>
+    </div>
+  </div>
+</header>
+
+<main>
+  <section class="hero">
+    <div class="wrap">
+      <p class="eyebrow">Enigma Technologies Solutions · TOTP for Sanctum · RFC 6238</p>
+      <h1>one<span class="dash"></span>time<br>codes<span class="dot"></span></h1>
+      <p class="lede">Two-factor codes, generated inside Sanctum. <span>Your username and password never leave this window. They derive an AES-256 key that encrypts every secret before it is written to this tool's own storage. The tool asks for no network access. With a YubiKey and smart card access approved, secrets can live on the key instead, and codes are computed by the key.</span></p>
+      <div class="banner" id="noCrypto" hidden>
+        This page needs the Web Crypto API. Sanctum provides it to every tool; in a browser, open the file over https://, http://localhost or file://.
+      </div>
+      <div class="banner" id="noStorage" hidden>
+        Local storage is blocked in this browser (private mode or site data disabled). The vault will work for this window only and will be lost when it closes. Copy a backup to keep it.
+      </div>
+      <div class="banner info" id="originNote">
+        Sanctum gives this tool its own storage, tied to the tool's identity in your library. Adding a new version of the tool keeps the vault. Deleting the tool from Sanctum and adding it again starts with empty storage, so copy a backup first.
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ GATE: unlock / create ============ -->
+  <section class="block" id="gate">
+    <div class="wrap">
+      <p class="kicker">01 · Access</p>
+      <h2 id="gateTitle">Unlock your vault</h2>
+      <p class="muted small" style="margin:0 0 24px;max-width:640px" id="gateLede">Enter the username and password you chose when the vault was created. The fingerprint below is computed from what you type. If it matches the one you remember, the combination is right.</p>
+
+      <div class="tabs" role="tablist">
+        <button type="button" role="tab" id="tabUnlock" aria-selected="true">Unlock</button>
+        <button type="button" role="tab" id="tabCreate" aria-selected="false">Create vault</button>
+      </div>
+
+      <div class="grid2">
+        <form class="card" id="gateForm" autocomplete="off" novalidate>
+          <label class="f"><span>Username</span>
+            <input type="text" id="gUser" autocomplete="username" autocapitalize="off" spellcheck="false" required>
+          </label>
+          <p class="hint">Case-insensitive. Only used locally, together with the password, to derive the key.</p>
+          <label class="f"><span>Password</span>
+            <input type="password" id="gPass" autocomplete="current-password" required>
+          </label>
+          <div class="meter" id="meterWrap" hidden><i id="meter"></i></div>
+          <label class="f" id="confirmWrap" hidden><span>Confirm password</span>
+            <input type="password" id="gPass2" autocomplete="new-password">
+          </label>
+          <div id="createNotes" hidden>
+            <ul class="plain">
+              <li>There is no recovery. Forgetting the password means the stored secrets cannot be decrypted.</li>
+              <li>Use at least 12 characters. A passphrase of four or more random words works well.</li>
+              <li>The same username and password always produce the same fingerprint and key, on any device.</li>
+            </ul>
+            <label class="check"><input type="checkbox" id="ackFp"> <span>I have noted the fingerprint shown for this username and password.</span></label>
+          </div>
+          <div class="row" style="margin-top:16px">
+            <button class="btn ghost" type="button" id="btnPreview">Show fingerprint</button>
+            <button class="btn" type="submit" id="btnGate">Unlock</button>
+          </div>
+          <p class="msg" id="gateMsg" role="status" aria-live="polite"></p>
+        </form>
+
+        <div class="fp" aria-live="polite">
+          <div class="fp-label">Vault fingerprint</div>
+          <div class="fp-grid empty" id="fpGrid"></div>
+          <div class="fp-hex" id="fpHex">Not computed yet.</div>
+          <p class="small muted" style="margin:12px 0 0">A one-way value derived from the same master key as the encryption key. It reveals nothing about the password or the key; it only gives you a picture to recognise. Different input, different picture.</p>
+        </div>
+      </div>
+
+      <div class="card" style="margin-top:24px">
+        <p class="kicker" style="margin-bottom:8px">Backups</p>
+        <p class="small muted" style="margin:0 0 12px">Restore an encrypted backup made with Copy backup. Paste it below or choose a saved .json file, then unlock it with the original username and password.</p>
+        <label class="f"><span>Backup text</span>
+          <textarea id="importText" rows="3" spellcheck="false" placeholder='{"format":"ets-otp-vault/v1-backup", ...}'></textarea>
+        </label>
+        <div class="row">
+          <input type="file" id="importFile" accept="application/json,.json,.txt" class="sr">
+          <button class="btn ghost" type="button" id="btnImportText" style="flex:0 0 auto">Restore pasted backup</button>
+          <button class="btn ghost" type="button" id="btnImport" style="flex:0 0 auto">Choose file</button>
+          <span class="small muted" id="vaultCount"></span>
+        </div>
+        <p class="msg" id="importMsg" role="status" aria-live="polite"></p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ VAULT ============ -->
+  <section class="block" id="vault" hidden>
+    <div class="wrap">
+      <p class="kicker">02 · Add a key</p>
+      <h2>New authenticator key</h2>
+      <p class="muted small" style="margin:0 0 20px;max-width:640px">Paste the setup key a website shows next to its QR code (for example <code>aaaa bbbb cccc dddd eeee ffff gggg hhhh</code>) or a full <code>otpauth://totp/...</code> link. Spaces and case do not matter.</p>
+
+      <form class="card" id="addForm" autocomplete="off" novalidate>
+        <div class="grid2" style="gap:0 20px">
+          <label class="f"><span>Service</span>
+            <input type="text" id="aIssuer" list="issuers" placeholder="GitHub" maxlength="80">
+          </label>
+          <label class="f"><span>Account</span>
+            <input type="text" id="aAccount" placeholder="you@example.com" maxlength="120">
+          </label>
+        </div>
+        <label class="f"><span>Setup key or otpauth:// link</span>
+          <input type="text" id="aSecret" class="secret" placeholder="aaaa bbbb cccc dddd eeee ffff gggg hhhh" spellcheck="false" autocapitalize="characters">
+        </label>
+        <details>
+          <summary>Advanced (most sites use the defaults)</summary>
+          <div class="adv">
+            <label class="f"><span>Digits</span>
+              <select id="aDigits"><option>6</option><option>7</option><option>8</option></select>
+            </label>
+            <label class="f"><span>Period (s)</span>
+              <input type="number" id="aPeriod" value="30" min="10" max="300" step="1">
+            </label>
+            <label class="f"><span>Algorithm</span>
+              <select id="aAlgo"><option value="SHA-1">SHA-1</option><option value="SHA-256">SHA-256</option><option value="SHA-512">SHA-512</option></select>
+            </label>
+          </div>
+        </details>
+        <div class="store-pick" id="storePick" hidden>
+          <span class="fp-label">Store on</span>
+          <label class="check"><input type="radio" name="aStore" value="vault" checked> <span>This vault (encrypted in Sanctum storage)</span></label>
+          <label class="check"><input type="radio" name="aStore" value="card"> <span>YubiKey <b id="storeCardName"></b> (secret written to the key, never readable again)</span></label>
+          <label class="check" id="touchWrap"><input type="checkbox" id="aTouch"> <span>Require a touch on the key for each code</span></label>
+        </div>
+        <div class="row">
+          <span class="small muted" id="aPreview"></span>
+          <button class="btn" type="submit" style="flex:0 0 auto">Save key</button>
+        </div>
+        <p class="msg" id="addMsg" role="status" aria-live="polite"></p>
+        <datalist id="issuers"></datalist>
+      </form>
+    </div>
+  </section>
+
+  <section class="block" id="codes" hidden>
+    <div class="wrap">
+      <p class="kicker">03 · Codes</p>
+      <h2>Your one-time codes</h2>
+      <p class="muted small" style="margin:0 0 20px">Click a code to copy it. Codes turn red in the last five seconds of their window.</p>
+      <div class="toolbar">
+        <input type="search" id="filter" placeholder="Filter by service or account" aria-label="Filter">
+        <span class="small muted" id="entryCount"></span>
+      </div>
+      <div class="list" id="list"></div>
+      <div class="empty-state" id="empty" hidden>No keys yet. Add one above.</div>
+    </div>
+  </section>
+
+  <!-- ============ HARDWARE (Sanctum smart card bridge) ============ -->
+  <section class="block" id="hw" hidden>
+    <div class="wrap">
+      <p class="kicker">04 · YubiKey</p>
+      <h2>Codes computed by your key</h2>
+      <p class="muted small" style="margin:0 0 20px;max-width:680px">The YubiKey OATH applet keeps each secret inside the key and returns only the code. Nothing about these accounts is stored in this tool. This needs Sanctum's smart card access, approved for the <b>OATH (TOTP/HOTP)</b> applet only.</p>
+      <div class="banner info" id="hwUnavailable" hidden>
+        Smart card access is not available to this tool. In Sanctum, open this tool's permissions and approve <b>talk to your smart card: OATH (TOTP/HOTP) [a0000005272101]</b>, then reopen the window. Outside Sanctum this section stays off.
+      </div>
+      <div id="hwPanel" hidden>
+        <div class="toolbar">
+          <select id="hwReader" aria-label="Reader"></select>
+          <button class="btn ghost" type="button" id="hwRefreshReaders" style="flex:0 0 auto">Find keys</button>
+          <button class="btn" type="button" id="hwConnect" style="flex:0 0 auto">Connect</button>
+          <button class="btn ghost" type="button" id="hwDisconnect" style="flex:0 0 auto" hidden>Disconnect</button>
+        </div>
+        <form class="card" id="hwPwForm" autocomplete="off" hidden>
+          <p class="small" style="margin:0 0 12px">This key's OATH applet is protected by a password.</p>
+          <label class="f"><span>OATH password</span><input type="password" id="hwPw"></label>
+          <button class="btn" type="submit">Unlock key</button>
+        </form>
+        <p class="msg" id="hwMsg" role="status" aria-live="polite"></p>
+        <div class="list" id="hwList"></div>
+        <div class="empty-state" id="hwEmpty" hidden>No accounts on this key yet. Add one above and choose YubiKey.</div>
+      </div>
+    </div>
+  </section>
+
+  <section class="block" id="settings" hidden>
+    <div class="wrap">
+      <p class="kicker">05 · Vault</p>
+      <h2>Backup and password</h2>
+      <div class="grid2" style="margin-top:20px">
+        <div class="card">
+          <p class="small" style="margin:0 0 12px">Copy the encrypted vault to the clipboard as JSON, then paste it into a file or a password manager note. It stays encrypted; you need the same username and password to open it. Accounts stored on a YubiKey are not part of the backup.</p>
+          <button class="btn ghost" type="button" id="btnExport">Copy backup</button>
+          <textarea id="exportText" rows="4" readonly hidden aria-label="Backup text"></textarea>
+          <p class="msg" id="exportMsg"></p>
+        </div>
+        <form class="card" id="pwForm" autocomplete="off" novalidate>
+          <p class="small" style="margin:0 0 12px">Change the password. Everything is re-encrypted under a new key and the fingerprint changes.</p>
+          <label class="f"><span>New password</span><input type="password" id="pNew" autocomplete="new-password"></label>
+          <label class="f"><span>Confirm new password</span><input type="password" id="pNew2" autocomplete="new-password"></label>
+          <div class="fp-grid empty" id="pwFp" hidden></div>
+          <button class="btn ghost" type="submit" id="btnPw">Change password</button>
+          <p class="msg" id="pwMsg" role="status" aria-live="polite"></p>
+        </form>
+        <div class="card">
+          <p class="small" style="margin:0 0 12px">Remove this vault from this tool's storage. This cannot be undone without a backup.</p>
+          <button class="btn danger" type="button" id="btnWipe">Delete vault</button>
+        </div>
+      </div>
+    </div>
+  </section>
+</main>
+
+<footer>
+  <div class="wrap">
+    <p>Key derivation: PBKDF2-SHA-256, 600,000 iterations, salt bound to the username, then HKDF-SHA-256 into an AES-256-GCM key and a separate fingerprint value. Codes: TOTP per RFC 6238. Storage: this tool's own localStorage origin in Sanctum, one encrypted record per vault. YubiKey accounts use the OATH applet through <code>window.sanctum.smartcard</code>.</p>
+    <p>Anyone with access to this user account's Sanctum data can copy the encrypted record and try passwords offline, so choose a long one. The vault locks after 5 minutes without activity.</p>
+    <p>© Enigma Technologies Solutions Ltd</p>
+  </div>
+</footer>
+
+<div class="toast" id="toast" hidden></div>
+
+<!-- ======================================================================
+     Core: crypto, fingerprint, TOTP. No DOM access, so it can be tested
+     outside a browser.
+     ====================================================================== -->
+<script id="ets-core">
+"use strict";
+const ETSCore = (() => {
+  const APP = "ets-otp-vault/v1";
+  const ITERATIONS = 600000;
+  const te = new TextEncoder();
+  const td = new TextDecoder();
+  const subtle = globalThis.crypto && globalThis.crypto.subtle;
+
+  // 256 emoji, one per byte value. Order is part of the format: never reorder.
+  const EMOJI = Array.from("🐶🐱🐭🐰🦊🐻🐨🐯🦁🐷🐸🐔🐧🐦🦆🦅🦉🐺🐗🐴🐝🐛🐌🐞🐜🦂🐢🐍🦖🦕🦑🦐🦞🐡🐠🐟🐳🐋🦈🐅🐆🦍🐘🦛🐪🐫🦒🐃🐂🐄🐖🐏🦙🐐🦌🐩🐈🐓🦚🦜🦩🐇🦝🦡🦦🦥🐀🦔🍏🍐🍊🍌🍉🍇🍈🍒🍑🍍🥥🍅🍆🥑🥬🥒🌽🧄🧅🥔🥐🥯🥖🥨🧀🍳🧈🥞🥓🥩🍗🌭🍔🍕🥪🥙🌮🌯🥗🥫🍝🍲🍛🍣🥟🦪🍤🍚🍘🍥🥮🍢🍧🍨🍦🧁🍰🎂🍭🍬🍿🍩🍪🥜🍯🥛☕🍵🧃🍶🍺🥂🍷🥃🍹🧉🍾🌵🎄🌲🌴🌱🍀🎍🎋🍂🍁🍄🌾💐🌹🥀🌺🌼🌻🌞🌛🌜🌚🌙🌎💫⭐🌟⚡🔥🌈🌊💧☔⚽🏀⚾🥎🎾🏉🥏🎱🏸🏒🏏🥅⛳🏹🎣🥊🎽🛹🛼🥌🎿🎮🎲🧩🎨🧵🧶🎹🥁🎺🎸🪕🚗🚕🚙🚓🚑🚒🚚🚜🚲🛴🚨🛸🚁⛵🛶⚓🚢🏰🗼⛪🕌🔔🔒💡🔦📱💻💎🔮🎁🎀🧲🧪⏰⌛📚📎🔭🧸🪀🪄🎩👓🧢👠🧤");
+
+  const toHex = (b) => Array.from(b, (x) => x.toString(16).padStart(2, "0")).join("");
+  const toB64 = (b) => { let s = ""; for (const x of b) s += String.fromCharCode(x); return btoa(s); };
+  const fromB64 = (s) => Uint8Array.from(atob(s), (c) => c.charCodeAt(0));
+  const normUser = (u) => String(u).normalize("NFKC").trim().toLowerCase();
+  const normPass = (p) => String(p).normalize("NFKC");
+  const sha256 = async (bytes) => new Uint8Array(await subtle.digest("SHA-256", bytes));
+
+  // Storage id for a username. Keeps usernames out of localStorage keys.
+  async function vaultId(username) {
+    return toHex(await sha256(te.encode(APP + "|id|" + normUser(username)))).slice(0, 32);
+  }
+
+  // username + password -> { key: AES-GCM CryptoKey (non-extractable), fingerprint: 32 bytes }
+  async function deriveVaultKeys(username, password, iterations = ITERATIONS) {
+    const salt = await sha256(te.encode(APP + "|salt|" + normUser(username)));
+    const pw = await subtle.importKey("raw", te.encode(normPass(password)), "PBKDF2", false, ["deriveBits"]);
+    const master = await subtle.deriveBits({ name: "PBKDF2", hash: "SHA-256", salt, iterations }, pw, 256);
+    const ikm = await subtle.importKey("raw", master, "HKDF", false, ["deriveKey", "deriveBits"]);
+    const zero = new Uint8Array(32);
+    const key = await subtle.deriveKey(
+      { name: "HKDF", hash: "SHA-256", salt: zero, info: te.encode(APP + "|aes-gcm") },
+      ikm, { name: "AES-GCM", length: 256 }, false, ["encrypt", "decrypt"]);
+    const fingerprint = new Uint8Array(await subtle.deriveBits(
+      { name: "HKDF", hash: "SHA-256", salt: zero, info: te.encode(APP + "|fingerprint") }, ikm, 256));
+    return { key, fingerprint };
+  }
+
+  const fingerprintEmoji = (fp, n = 8) => Array.from(fp.slice(0, n), (b) => EMOJI[b]);
+  const fingerprintHex = (fp, n = 8) => toHex(fp.slice(0, n)).match(/.{4}/g).join(" ");
+
+  async function seal(key, id, obj) {
+    const iv = crypto.getRandomValues(new Uint8Array(12));
+    const ct = new Uint8Array(await subtle.encrypt(
+      { name: "AES-GCM", iv, additionalData: te.encode(APP + "|" + id) }, key, te.encode(JSON.stringify(obj))));
+    return { iv: toB64(iv), ct: toB64(ct) };
+  }
+
+  // Throws if the key is wrong or the record was altered.
+  async function open(key, id, box) {
+    const pt = await subtle.decrypt(
+      { name: "AES-GCM", iv: fromB64(box.iv), additionalData: te.encode(APP + "|" + id) }, key, fromB64(box.ct));
+    return JSON.parse(td.decode(pt));
+  }
+
+  // ---------- TOTP ----------
+  const B32 = "ABCDEFGHIJKLMNOPQRSTUVWXYZ234567";
+
+  function cleanBase32(s) {
+    return String(s).toUpperCase().replace(/[\s\-_.]/g, "").replace(/=+$/, "");
+  }
+
+  function base32Decode(input) {
+    const s = cleanBase32(input);
+    if (!s) throw new Error("The key is empty.");
+    const bad = s.match(/[^A-Z2-7]/);
+    if (bad) throw new Error('"' + bad[0] + '" is not a valid key character. Keys use A to Z and 2 to 7.');
+    let bits = 0, value = 0;
+    const out = [];
+    for (const c of s) {
+      value = (value << 5) | B32.indexOf(c);
+      bits += 5;
+      if (bits >= 8) { out.push((value >>> (bits - 8)) & 0xff); bits -= 8; }
+    }
+    if (out.length < 10) throw new Error("The key is too short (at least 16 characters expected).");
+    return new Uint8Array(out);
+  }
+
+  function base32Encode(bytes) {
+    let bits = 0, value = 0, out = "";
+    for (const b of bytes) {
+      value = (value << 8) | b; bits += 8;
+      while (bits >= 5) { out += B32[(value >>> (bits - 5)) & 31]; bits -= 5; }
+    }
+    if (bits > 0) out += B32[(value << (5 - bits)) & 31];
+    return out;
+  }
+
+  const ALGOS = { "SHA1": "SHA-1", "SHA-1": "SHA-1", "SHA256": "SHA-256", "SHA-256": "SHA-256", "SHA512": "SHA-512", "SHA-512": "SHA-512" };
+
+  async function hotp(secret, counter, digits = 6, algorithm = "SHA-1") {
+    const key = await subtle.importKey("raw", secret, { name: "HMAC", hash: algorithm }, false, ["sign"]);
+    const msg = new Uint8Array(8);
+    let c = counter;
+    for (let i = 7; i >= 0; i--) { msg[i] = c % 256; c = Math.floor(c / 256); }
+    const h = new Uint8Array(await subtle.sign("HMAC", key, msg));
+    const o = h[h.length - 1] & 0x0f;
+    const bin = ((h[o] & 0x7f) << 24) | (h[o + 1] << 16) | (h[o + 2] << 8) | h[o + 3];
+    return String(bin % 10 ** digits).padStart(digits, "0");
+  }
+
+  async function totp(secret, { digits = 6, period = 30, algorithm = "SHA-1" } = {}, nowMs = Date.now()) {
+    const counter = Math.floor(nowMs / 1000 / period);
+    return hotp(secret, counter, digits, algorithm);
+  }
+
+  // Accepts a bare base32 key or an otpauth://totp/ URI. Returns normalised entry fields.
+  function parseKeyInput(text) {
+    const t = String(text).trim();
+    if (/^otpauth:\/\//i.test(t)) {
+      const u = new URL(t);
+      if (u.host.toLowerCase() !== "totp") throw new Error("Only time-based (totp) links are supported.");
+      const label = decodeURIComponent(u.pathname.replace(/^\//, ""));
+      const p = u.searchParams;
+      let issuer = p.get("issuer") || "";
+      let account = label;
+      const i = label.indexOf(":");
+      if (i >= 0) { if (!issuer) issuer = label.slice(0, i).trim(); account = label.slice(i + 1).trim(); }
+      const algorithm = ALGOS[(p.get("algorithm") || "SHA1").toUpperCase()];
+      if (!algorithm) throw new Error("Unsupported algorithm in link.");
+      const digits = parseInt(p.get("digits") || "6", 10);
+      const period = parseInt(p.get("period") || "30", 10);
+      const secret = cleanBase32(p.get("secret") || "");
+      base32Decode(secret);
+      return { issuer, account, secret, digits, period, algorithm, fromUri: true };
+    }
+    const secret = cleanBase32(t);
+    base32Decode(secret);
+    return { secret, fromUri: false };
+  }
+
+  function validateParams({ digits, period, algorithm }) {
+    if (![6, 7, 8].includes(digits)) throw new Error("Digits must be 6, 7 or 8.");
+    if (!(Number.isInteger(period) && period >= 10 && period <= 300)) throw new Error("Period must be 10 to 300 seconds.");
+    if (!["SHA-1", "SHA-256", "SHA-512"].includes(algorithm)) throw new Error("Unsupported algorithm.");
+  }
+
+  // ---------- YubiKey OATH applet ----------
+  // Wire format follows Yubico's OATH protocol as implemented in yubikit
+  // (yubikit/oath.py). Every function here builds or parses bytes; talking to
+  // the card is the app's job, through window.sanctum.smartcard.
+  const OATH_AID = "a0000005272101";
+  const OT = { NAME: 0x71, NAME_LIST: 0x72, KEY: 0x73, CHALLENGE: 0x74, RESPONSE: 0x75,
+    TRUNCATED: 0x76, HOTP: 0x77, PROPERTY: 0x78, VERSION: 0x79, TOUCH: 0x7c };
+  const OATH_ALGO = { "SHA-1": 0x01, "SHA-256": 0x02, "SHA-512": 0x03 };
+  const OATH_TOTP = 0x20;
+  const fromHex = (h) => new Uint8Array((String(h).match(/../g) || []).map((x) => parseInt(x, 16)));
+
+  function tlv(tag, value) {
+    const v = Array.from(value);
+    const n = v.length;
+    const len = n < 0x80 ? [n] : n < 0x100 ? [0x81, n] : [0x82, n >> 8, n & 0xff];
+    return [tag, ...len, ...v];
+  }
+
+  function parseTlv(bytes) {
+    const out = [];
+    let i = 0;
+    while (i < bytes.length) {
+      const tag = bytes[i++];
+      let n = bytes[i++];
+      if (n === 0x81) n = bytes[i++];
+      else if (n === 0x82) { n = (bytes[i] << 8) | bytes[i + 1]; i += 2; }
+      if (n === undefined || i + n > bytes.length) throw new Error("Malformed response from the key.");
+      out.push({ tag, value: bytes.slice(i, i + n) });
+      i += n;
+    }
+    return out;
+  }
+
+  function oathApdu(ins, p1, p2, data) {
+    const d = data || [];
+    if (d.length > 255) throw new Error("Command is too long for the key.");
+    return toHex([0x00, ins, p1, p2, ...(d.length ? [d.length, ...d] : [])]);
+  }
+
+  function timeStep(nowMs, period) {
+    let c = Math.floor(nowMs / 1000 / period);
+    const b = new Uint8Array(8);
+    for (let i = 7; i >= 0; i--) { b[i] = c % 256; c = Math.floor(c / 256); }
+    return b;
+  }
+
+  // "30/" prefix is omitted for the default period, like yubikit's _format_cred_id.
+  function oathCredId({ issuer = "", account = "", period = 30 }) {
+    const name = (account || issuer).trim();
+    const iss = account ? issuer.trim() : "";
+    if (!name) throw new Error("Give the account a name.");
+    const id = te.encode((period !== 30 ? period + "/" : "") + (iss ? iss + ":" : "") + name);
+    if (id.length > 64) throw new Error("Service and account together are too long for the key (64 bytes).");
+    return id;
+  }
+
+  function parseCredId(bytes, totp = true) {
+    const s = td.decode(bytes);
+    if (totp) {
+      const m = /^((\d+)\/)?(([^:]+):)?(.+)$/.exec(s);
+      if (m) return { issuer: m[4] || "", account: m[5], period: m[2] ? parseInt(m[2], 10) : 30 };
+      return { issuer: "", account: s, period: 30 };
+    }
+    const i = s.indexOf(":");
+    return i > 0 ? { issuer: s.slice(0, i), account: s.slice(i + 1), period: 0 } : { issuer: "", account: s, period: 0 };
+  }
+
+  function truncatedCode(v) {
+    const digits = v[0];
+    const bin = ((v[1] << 24) | (v[2] << 16) | (v[3] << 8) | v[4]) & 0x7fffffff;
+    return String(bin % 10 ** digits).padStart(digits, "0");
+  }
+
+  function parseSelect(bytes) {
+    const t = Object.fromEntries(parseTlv(bytes).map((x) => [x.tag, x.value]));
+    const v = t[OT.VERSION];
+    return { version: v ? Array.from(v).join(".") : "", salt: t[OT.NAME] || null, challenge: t[OT.CHALLENGE] || null };
+  }
+
+  async function oathPut(entry, secret, touch = false) {
+    const algo = OATH_ALGO[entry.algorithm];
+    if (!algo) throw new Error("Unsupported algorithm for the key.");
+    let key = secret;
+    const block = entry.algorithm === "SHA-512" ? 128 : 64;
+    if (key.length > block) key = new Uint8Array(await subtle.digest(entry.algorithm, key));
+    const padded = new Uint8Array(Math.max(14, key.length));
+    padded.set(key);
+    const data = [...tlv(OT.NAME, oathCredId(entry)), ...tlv(OT.KEY, [OATH_TOTP | algo, entry.digits, ...padded])];
+    if (touch) data.push(OT.PROPERTY, 0x02);
+    return oathApdu(0x01, 0, 0, data);
+  }
+
+  const oathDelete = (id) => oathApdu(0x02, 0, 0, tlv(OT.NAME, id));
+  const oathList = () => oathApdu(0xa1, 0, 0);
+  const oathCalculateAll = (nowMs) => oathApdu(0xa4, 0, 1, tlv(OT.CHALLENGE, timeStep(nowMs, 30)));
+  const oathCalculate = (id, nowMs, period) =>
+    oathApdu(0xa2, 0, 1, [...tlv(OT.NAME, id), ...tlv(OT.CHALLENGE, timeStep(nowMs, period))]);
+
+  // CALCULATE ALL answers NAME followed by one of TRUNCATED, HOTP or TOUCH per credential.
+  function parseCalculateAll(bytes) {
+    const items = parseTlv(bytes);
+    const out = [];
+    for (let i = 0; i + 1 < items.length; i += 2) {
+      if (items[i].tag !== OT.NAME) throw new Error("Unexpected response layout from the key.");
+      const id = items[i].value, r = items[i + 1];
+      const hotp = r.tag === OT.HOTP;
+      const c = { id, ...parseCredId(id, !hotp), type: hotp ? "hotp" : "totp", touch: r.tag === OT.TOUCH, code: null };
+      if (r.tag === OT.TRUNCATED && r.value.length === 5) c.code = truncatedCode(r.value);
+      out.push(c);
+    }
+    return out;
+  }
+
+  // LIST answers one NAME_LIST per credential: [type | algorithm, ...name]. It
+  // does not say which credentials need a touch; CALCULATE ALL does.
+  function parseList(bytes) {
+    return parseTlv(bytes).filter((x) => x.tag === OT.NAME_LIST).map((x) => {
+      const id = x.value.slice(1), hotp = (x.value[0] & 0xf0) === 0x10;
+      return { id, ...parseCredId(id, !hotp), type: hotp ? "hotp" : "totp", touch: null, code: null };
+    });
+  }
+
+  function parseCalculate(bytes) {
+    const t = parseTlv(bytes).find((x) => x.tag === OT.TRUNCATED);
+    if (!t || t.value.length !== 5) throw new Error("The key did not return a code.");
+    return truncatedCode(t.value);
+  }
+
+  // Password-protected applet: prove knowledge of the password, and check the key's answer.
+  async function oathValidate(password, salt, challenge) {
+    const pw = await subtle.importKey("raw", te.encode(password), "PBKDF2", false, ["deriveBits"]);
+    const raw = await subtle.deriveBits({ name: "PBKDF2", hash: "SHA-1", salt, iterations: 1000 }, pw, 128);
+    const k = await subtle.importKey("raw", raw, { name: "HMAC", hash: "SHA-1" }, false, ["sign"]);
+    const response = new Uint8Array(await subtle.sign("HMAC", k, challenge));
+    const mine = crypto.getRandomValues(new Uint8Array(8));
+    const expected = new Uint8Array(await subtle.sign("HMAC", k, mine));
+    return { apdu: oathApdu(0xa3, 0, 0, [...tlv(OT.RESPONSE, response), ...tlv(OT.CHALLENGE, mine)]), expected };
+  }
+
+  function oathCheckValidate(bytes, expected) {
+    const t = parseTlv(bytes).find((x) => x.tag === OT.RESPONSE);
+    if (!t || t.value.length !== expected.length) return false;
+    let d = 0;
+    for (let i = 0; i < expected.length; i++) d |= t.value[i] ^ expected[i];
+    return d === 0;
+  }
+
+  const oath = { AID: OATH_AID, tlv, parseTlv, timeStep, credId: oathCredId, parseCredId, parseSelect, put: oathPut,
+    del: oathDelete, list: oathList, parseList, calculateAll: oathCalculateAll, calculate: oathCalculate, parseCalculateAll, parseCalculate,
+    validate: oathValidate, checkValidate: oathCheckValidate };
+
+  return { APP, ITERATIONS, EMOJI, vaultId, deriveVaultKeys, fingerprintEmoji, fingerprintHex, seal, open,
+    base32Decode, base32Encode, cleanBase32, hotp, totp, parseKeyInput, validateParams, toHex, fromHex, oath };
+})();
+if (typeof module !== "undefined") module.exports = ETSCore;
+</script>
+
+<!-- ======================================================================
+     App: storage + UI
+     ====================================================================== -->
+<script>
+"use strict";
+(() => {
+  const C = ETSCore;
+  const $ = (id) => document.getElementById(id);
+  const PREFIX = "ets-otp-vault:v1:";
+  const AUTOLOCK_MS = 5 * 60 * 1000;
+  const POPULAR = ["Google", "Microsoft", "GitHub", "GitLab", "Amazon Web Services", "Amazon", "Apple", "Meta", "Facebook", "Instagram",
+    "X", "LinkedIn", "Discord", "Slack", "Dropbox", "Cloudflare", "Coinbase", "Binance", "Kraken", "PayPal", "Stripe", "Proton",
+    "Bitwarden", "1Password", "DigitalOcean", "Heroku", "Vercel", "Netlify", "Replit", "npm", "Docker Hub", "Atlassian", "Reddit",
+    "Twitch", "Steam", "Epic Games", "Nintendo", "Okta", "Zoom", "Salesforce", "Shopify", "Namecheap", "GoDaddy", "Hetzner", "OVHcloud"];
+
+  // ---------- storage (falls back to memory if localStorage is blocked) ----------
+  const mem = new Map();
+  let storageOk = true;
+  try { const k = PREFIX + "probe"; localStorage.setItem(k, "1"); localStorage.removeItem(k); } catch { storageOk = false; }
+  const store = {
+    get(id) { try { const v = storageOk ? localStorage.getItem(PREFIX + id) : mem.get(id); return v ? JSON.parse(v) : null; } catch { return null; } },
+    set(id, rec) { const v = JSON.stringify(rec); if (storageOk) localStorage.setItem(PREFIX + id, v); else mem.set(id, v); },
+    del(id) { if (storageOk) localStorage.removeItem(PREFIX + id); else mem.delete(id); },
+    count() {
+      if (!storageOk) return mem.size;
+      let n = 0;
+      for (let i = 0; i < localStorage.length; i++) { const k = localStorage.key(i); if (k && k.startsWith(PREFIX) && k !== PREFIX + "probe") n++; }
+      return n;
+    },
+  };
+
+  // ---------- session state ----------
+  let session = null; // { id, user, key, fingerprint, data: { entries: [], created } }
+  const secretCache = new Map(); // entry id -> Uint8Array
+  let mode = "unlock";
+  let lastActivity = Date.now();
+  let lastCounterSig = "";
+
+  if (!C.EMOJI || C.EMOJI.length !== 256) throw new Error("emoji table corrupted");
+  if (!globalThis.crypto || !crypto.subtle) {
+    $("noCrypto").hidden = false;
+    $("gate").hidden = true;
+    return;
+  }
+  if (!storageOk) $("noStorage").hidden = false;
+
+  // ---------- helpers ----------
+  function toast(text) {
+    const t = $("toast");
+    t.textContent = text; t.hidden = false;
+    clearTimeout(toast._t); toast._t = setTimeout(() => (t.hidden = true), 1600);
+  }
+  function msg(el, text, kind) { el.textContent = text || ""; el.className = "msg" + (kind ? " " + kind : ""); }
+  function setBusy(btns, busy) { btns.forEach((b) => (b.disabled = busy)); }
+  function renderFp(grid, hexEl, fp, state) {
+    grid.innerHTML = "";
+    grid.classList.toggle("empty", !fp);
+    grid.classList.toggle("busy", state === "busy");
+    const cells = fp ? C.fingerprintEmoji(fp) : Array(8).fill(state === "busy" ? "·" : "?");
+    for (const e of cells) { const d = document.createElement("div"); d.textContent = e; grid.appendChild(d); }
+    if (hexEl) hexEl.textContent = fp ? C.fingerprintHex(fp) : state === "busy" ? "Deriving key (about one second)..." : "Not computed yet.";
+  }
+  function pwScore(p) {
+    let s = 0;
+    if (p.length >= 8) s++; if (p.length >= 12) s++; if (p.length >= 16) s++; if (p.length >= 24) s++;
+    if (/[a-z]/.test(p) && /[A-Z]/.test(p)) s++; if (/\d/.test(p)) s++; if (/[^A-Za-z0-9]/.test(p)) s++;
+    return Math.min(s, 6);
+  }
+  const uid = () => C.toHex(crypto.getRandomValues(new Uint8Array(8)));
+  const fmtCode = (c) => (c.length === 6 ? c.slice(0, 3) + " " + c.slice(3) : c.length === 8 ? c.slice(0, 4) + " " + c.slice(4) : c);
+
+  // ---------- gate ----------
+  const gUser = $("gUser"), gPass = $("gPass"), gPass2 = $("gPass2");
+  const btnGate = $("btnGate"), btnPreview = $("btnPreview"), gateMsg = $("gateMsg");
+  let preview = null; // { user, pass, fp } for the values last previewed
+
+  function setMode(m) {
+    mode = m;
+    $("tabUnlock").setAttribute("aria-selected", m === "unlock");
+    $("tabCreate").setAttribute("aria-selected", m === "create");
+    $("confirmWrap").hidden = m !== "create";
+    $("createNotes").hidden = m !== "create";
+    $("meterWrap").hidden = m !== "create";
+    gPass.autocomplete = m === "create" ? "new-password" : "current-password";
+    btnGate.textContent = m === "create" ? "Create vault" : "Unlock";
+    $("gateTitle").textContent = m === "create" ? "Create a vault" : "Unlock your vault";
+    $("gateLede").textContent = m === "create"
+      ? "Choose a username and password. They never leave this page. Press Show fingerprint and note the eight emoji: you will see the same ones every time you enter this combination."
+      : "Enter the username and password you chose when the vault was created. The fingerprint below is computed from what you type. If it matches the one you remember, the combination is right.";
+    msg(gateMsg, "");
+    updateGateState();
+  }
+  $("tabUnlock").onclick = () => setMode("unlock");
+  $("tabCreate").onclick = () => setMode("create");
+
+  function previewValid() { return preview && preview.user === gUser.value && preview.pass === gPass.value; }
+  function updateGateState() {
+    if (!previewValid()) { renderFp($("fpGrid"), $("fpHex"), null); $("ackFp").checked = false; }
+    if (mode === "create") {
+      const sc = pwScore(gPass.value);
+      const m = $("meter");
+      m.style.width = (sc / 6) * 100 + "%";
+      m.style.background = sc <= 2 ? "var(--danger)" : sc <= 4 ? "var(--volt)" : "var(--ok)";
+      btnGate.disabled = !(previewValid() && $("ackFp").checked);
+    } else btnGate.disabled = false;
+  }
+  [gUser, gPass, gPass2].forEach((el) => el.addEventListener("input", updateGateState));
+  $("ackFp").addEventListener("change", updateGateState);
+
+  async function derive(user, pass) {
+    renderFp($("fpGrid"), $("fpHex"), null, "busy");
+    await new Promise((r) => setTimeout(r, 30)); // let the busy state paint
+    const k = await C.deriveVaultKeys(user, pass);
+    preview = { user, pass, keys: k };
+    renderFp($("fpGrid"), $("fpHex"), k.fingerprint);
+    return k;
+  }
+
+  function checkGateInputs() {
+    if (!gUser.value.trim()) return "Enter a username.";
+    if (!gPass.value) return "Enter a password.";
+    if (mode === "create") {
+      if (gPass.value.length < 10) return "Use at least 10 characters for the password.";
+      if (gPass.value !== gPass2.value) return "The two passwords do not match.";
+    }
+    return "";
+  }
+
+  btnPreview.onclick = async () => {
+    const err = checkGateInputs();
+    if (err) return msg(gateMsg, err, "err");
+    msg(gateMsg, "");
+    setBusy([btnPreview, btnGate], true);
+    try {
+      await derive(gUser.value, gPass.value);
+      if (mode === "create") {
+        const exists = store.get(await C.vaultId(gUser.value));
+        msg(gateMsg, exists ? "A vault for this username already exists in this browser. Use Unlock instead." : "Note these eight emoji, then confirm below.", exists ? "err" : "ok");
+      }
+    } catch (e) { msg(gateMsg, "Key derivation failed: " + e.message, "err"); }
+    setBusy([btnPreview, btnGate], false);
+    updateGateState();
+  };
+
+  $("gateForm").addEventListener("submit", async (ev) => {
+    ev.preventDefault();
+    const err = checkGateInputs();
+    if (err) return msg(gateMsg, err, "err");
+    setBusy([btnPreview, btnGate], true);
+    msg(gateMsg, "Deriving key...");
+    try {
+      const user = gUser.value, pass = gPass.value;
+      const id = await C.vaultId(user);
+      const rec = store.get(id);
+      const k = previewValid() ? preview.keys : await derive(user, pass);
+      if (mode === "create") {
+        if (rec) throw new Error("A vault for this username already exists in this browser. Use Unlock instead.");
+        const keys = k;
+        const data = { entries: [], created: new Date().toISOString() };
+        store.set(id, { format: C.APP, kdf: { name: "PBKDF2-SHA-256", iterations: C.ITERATIONS }, box: await C.seal(keys.key, id, data) });
+        startSession(id, user, keys, data);
+      } else {
+        if (!rec) throw new Error("No vault for this username in this browser. Check the fingerprint above, create a vault, or import a backup.");
+        let data;
+        try { data = await C.open(k.key, id, rec.box); }
+        catch { throw new Error("Wrong password for this username. Compare the fingerprint above with the one you remember."); }
+        startSession(id, user, k, data);
+      }
+    } catch (e) {
+      msg(gateMsg, e.message, "err");
+    } finally {
+      setBusy([btnPreview, btnGate], false);
+      if (!session) updateGateState();
+    }
+  });
+
+  // ---------- import (gate) ----------
+  function importBackup(text) {
+    try {
+      let j;
+      try { j = JSON.parse(text); } catch { throw new Error("This is not an Enigma OTP Vault backup."); }
+      if (!j || j.format !== C.APP + "-backup" || !/^[0-9a-f]{32}$/.test(j.id || "") || !j.record || !j.record.box || !j.record.box.iv || !j.record.box.ct)
+        throw new Error("This is not an Enigma OTP Vault backup.");
+      const existing = store.get(j.id);
+      if (existing && JSON.stringify(existing) !== JSON.stringify(j.record) && !importArmed) {
+        importArmed = true;
+        setTimeout(() => (importArmed = false), 8000);
+        return msg($("importMsg"), "A different vault for the same username already exists here. Restore again within 8 seconds to replace it.", "err");
+      }
+      importArmed = false;
+      store.set(j.id, j.record);
+      $("importText").value = "";
+      msg($("importMsg"), "Backup restored. Unlock it with its username and password.", "ok");
+      refreshCount();
+      setMode("unlock");
+    } catch (e) { msg($("importMsg"), e.message, "err"); }
+  }
+  $("btnImport").onclick = () => $("importFile").click();
+  $("importFile").addEventListener("change", async (ev) => {
+    const f = ev.target.files[0];
+    ev.target.value = "";
+    if (f) importBackup(await f.text());
+  });
+  $("btnImportText").onclick = () => importBackup($("importText").value.trim());
+  let importArmed = false;
+  function refreshCount() {
+    const n = store.count();
+    $("vaultCount").textContent = n ? n + (n === 1 ? " vault" : " vaults") + " stored in this tool" : "No vaults stored in this tool yet";
+    if (!n && mode === "unlock" && !session) setMode("create");
+  }
+
+  // ---------- session ----------
+  function startSession(id, user, keys, data) {
+    session = { id, user: user.trim(), key: keys.key, fingerprint: keys.fingerprint, data };
+    if (!Array.isArray(session.data.entries)) session.data.entries = [];
+    gPass.value = gPass2.value = ""; preview = null;
+    msg(gateMsg, "");
+    $("gate").hidden = true;
+    ["vault", "codes", "settings", "barSession"].forEach((x) => ($(x).hidden = false));
+    $("whoName").textContent = session.user;
+    $("fpMini").textContent = C.fingerprintEmoji(keys.fingerprint).join("");
+    lastActivity = Date.now();
+    renderList();
+    tick();
+    HW.onSessionStart();
+    $("aSecret").focus();
+  }
+
+  function lock(reason) {
+    session = null;
+    HW.disconnect();
+    secretCache.clear();
+    $("list").innerHTML = "";
+    ["vault", "codes", "settings", "barSession"].forEach((x) => ($(x).hidden = true));
+    $("gate").hidden = false;
+    $("addForm").reset(); $("pwForm").reset();
+    $("pwFp").hidden = true;
+    setMode("unlock");
+    refreshCount();
+    if (reason) msg(gateMsg, reason, "ok");
+    gPass.focus();
+  }
+  $("btnLock").onclick = () => lock("Vault locked.");
+
+  async function persist() {
+    const rec = store.get(session.id) || { format: C.APP, kdf: { name: "PBKDF2-SHA-256", iterations: C.ITERATIONS } };
+    rec.box = await C.seal(session.key, session.id, session.data);
+    store.set(session.id, rec);
+  }
+
+  ["pointerdown", "keydown", "scroll", "touchstart"].forEach((e) => addEventListener(e, () => (lastActivity = Date.now()), { passive: true }));
+
+  // ---------- add key ----------
+  $("issuers").innerHTML = POPULAR.map((p) => "<option value=\"" + p + "\">").join("");
+  const aSecret = $("aSecret");
+  aSecret.addEventListener("input", () => {
+    const v = aSecret.value.trim();
+    const pv = $("aPreview");
+    if (!v) return (pv.textContent = "");
+    try {
+      const p = C.parseKeyInput(v);
+      if (p.fromUri) {
+        if (p.issuer) $("aIssuer").value = p.issuer;
+        if (p.account) $("aAccount").value = p.account;
+        $("aDigits").value = String(p.digits); $("aPeriod").value = String(p.period); $("aAlgo").value = p.algorithm;
+        aSecret.value = p.secret.match(/.{1,4}/g).join(" ").toLowerCase();
+        pv.textContent = "Link read. Fields filled in.";
+      } else pv.textContent = "Key looks valid (" + p.secret.length + " characters).";
+      pv.style.color = "var(--ok)";
+    } catch (e) { pv.textContent = e.message; pv.style.color = "var(--danger)"; }
+  });
+
+  $("addForm").addEventListener("submit", async (ev) => {
+    ev.preventDefault();
+    const m = $("addMsg");
+    try {
+      const p = C.parseKeyInput(aSecret.value);
+      const entry = {
+        id: uid(),
+        issuer: $("aIssuer").value.trim().slice(0, 80),
+        account: $("aAccount").value.trim().slice(0, 120),
+        secret: p.secret,
+        digits: parseInt($("aDigits").value, 10),
+        period: parseInt($("aPeriod").value, 10),
+        algorithm: $("aAlgo").value,
+        added: new Date().toISOString(),
+      };
+      if (!entry.issuer && !entry.account) throw new Error("Give the key a service name or account so you can tell it apart.");
+      C.validateParams(entry);
+      if (HW.storeTarget() === "card") {
+        await HW.put(entry, C.base32Decode(entry.secret), $("aTouch").checked);
+        $("addForm").reset(); $("aPreview").textContent = "";
+        HW.syncStorePick();
+        msg(m, "Written to the YubiKey. The secret is not kept anywhere in this tool.", "ok");
+        setTimeout(() => msg(m, ""), 3500);
+        return;
+      }
+      if (session.data.entries.some((e) => e.secret === entry.secret)) throw new Error("This key is already in the vault.");
+      await C.totp(C.base32Decode(entry.secret), entry); // proves the parameters work before saving
+      session.data.entries.push(entry);
+      await persist();
+      $("addForm").reset(); $("aPreview").textContent = "";
+      msg(m, "Saved and encrypted.", "ok");
+      setTimeout(() => msg(m, ""), 2500);
+      lastCounterSig = "";
+      renderList(); tick();
+    } catch (e) { msg(m, e.message, "err"); }
+  });
+
+  // ---------- list ----------
+  function secretOf(e) {
+    let s = secretCache.get(e.id);
+    if (!s) { s = C.base32Decode(e.secret); secretCache.set(e.id, s); }
+    return s;
+  }
+
+  function renderList() {
+    const list = $("list");
+    list.innerHTML = "";
+    const q = $("filter").value.trim().toLowerCase();
+    const all = session.data.entries;
+    const shown = all.filter((e) => !q || (e.issuer + " " + e.account).toLowerCase().includes(q));
+    $("empty").hidden = all.length > 0;
+    $("entryCount").textContent = all.length ? shown.length + " of " + all.length : "";
+    for (const e of shown) {
+      const el = document.createElement("article");
+      el.className = "entry"; el.dataset.id = e.id;
+      el.innerHTML =
+        '<div class="entry-head"><div><div class="issuer"></div><div class="acct"></div></div><span class="meta"></span></div>' +
+        '<button class="code" type="button" title="Copy code">------</button>' +
+        '<div class="bar-t"><i></i></div>' +
+        '<div class="row" style="justify-content:space-between"><span class="next"></span>' +
+        '<span class="entry-actions"><button class="btn ghost sm" data-act="rename" type="button">Rename</button>' +
+        '<button class="btn danger sm" data-act="del" type="button">Delete</button></span></div>';
+      el.querySelector(".issuer").textContent = e.issuer || e.account;
+      el.querySelector(".acct").textContent = e.issuer ? e.account : "";
+      el.querySelector(".meta").textContent = [e.algorithm !== "SHA-1" ? e.algorithm : "", e.digits !== 6 ? e.digits + "d" : "", e.period !== 30 ? e.period + "s" : ""].filter(Boolean).join(" · ");
+      list.appendChild(el);
+    }
+    lastCounterSig = "";
+  }
+  $("filter").addEventListener("input", () => { renderList(); tick(); });
+
+  $("list").addEventListener("click", async (ev) => {
+    const card = ev.target.closest(".entry");
+    if (!card || !session) return;
+    const e = session.data.entries.find((x) => x.id === card.dataset.id);
+    if (!e) return;
+    if (ev.target.closest(".code")) {
+      const code = await C.totp(secretOf(e), e);
+      try { await navigator.clipboard.writeText(code); toast("Copied " + fmtCode(code)); }
+      catch { toast("Copy blocked. Code: " + fmtCode(code)); }
+      return;
+    }
+    const act = ev.target.dataset.act;
+    if (act === "del") {
+      const b = ev.target;
+      if (!b.classList.contains("armed")) {
+        b.classList.add("armed"); b.textContent = "Confirm";
+        setTimeout(() => { if (b.isConnected) { b.classList.remove("armed"); b.textContent = "Delete"; } }, 4000);
+        return;
+      }
+      session.data.entries = session.data.entries.filter((x) => x.id !== e.id);
+      secretCache.delete(e.id);
+      await persist(); renderList(); tick(); toast("Key deleted");
+    }
+    if (act === "rename") {
+      const head = card.querySelector(".entry-head");
+      if (head.querySelector("form")) return;
+      const f = document.createElement("form");
+      f.style.cssText = "display:grid;gap:6px;width:100%";
+      f.innerHTML = '<input type="text" name="i" maxlength="80" placeholder="Service"><input type="text" name="a" maxlength="120" placeholder="Account">' +
+        '<div class="row"><button class="btn sm" type="submit">Save</button><button class="btn ghost sm" type="button" data-cancel>Cancel</button></div>';
+      f.i.value = e.issuer; f.a.value = e.account;
+      head.innerHTML = ""; head.appendChild(f); f.i.focus();
+      f.querySelector("[data-cancel]").onclick = () => renderList() || tick();
+      f.onsubmit = async (se) => {
+        se.preventDefault();
+        if (!f.i.value.trim() && !f.a.value.trim()) return;
+        e.issuer = f.i.value.trim(); e.account = f.a.value.trim();
+        await persist(); renderList(); tick();
+      };
+    }
+  });
+
+  // ---------- ticking codes ----------
+  async function tick() {
+    if (!session) return;
+    const now = Date.now();
+    const cards = $("list").querySelectorAll(".entry");
+    const sig = session.data.entries.map((e) => e.id + ":" + Math.floor(now / 1000 / e.period)).join("|") + "#" + cards.length;
+    const refresh = sig !== lastCounterSig;
+    lastCounterSig = sig;
+    for (const card of cards) {
+      const e = session.data.entries.find((x) => x.id === card.dataset.id);
+      if (!e) continue;
+      const secs = now / 1000;
+      const left = e.period - (secs % e.period);
+      const bar = card.querySelector(".bar-t i");
+      bar.style.width = (left / e.period) * 100 + "%";
+      const codeEl = card.querySelector(".code");
+      codeEl.classList.toggle("warn", left <= 5);
+      if (refresh) {
+        const s = secretOf(e);
+        const [cur, nxt] = await Promise.all([C.totp(s, e, now), C.totp(s, e, now + e.period * 1000)]);
+        if (!session) return;
+        codeEl.textContent = fmtCode(cur);
+        codeEl.setAttribute("aria-label", "Code " + cur.split("").join(" ") + ", click to copy");
+        card.dataset.next = fmtCode(nxt);
+      }
+      card.querySelector(".next").textContent = Math.ceil(left) + "s · next " + (card.dataset.next || "");
+    }
+  }
+
+  setInterval(() => {
+    if (!session) return;
+    const idle = Date.now() - lastActivity;
+    if (idle >= AUTOLOCK_MS) return lock("Locked after 5 minutes without activity.");
+    const rem = Math.ceil((AUTOLOCK_MS - idle) / 1000);
+    $("lockIn").textContent = rem <= 60 ? "locks in " + rem + "s" : "";
+    tick();
+    HW.tick();
+  }, 250);
+
+  // ---------- export / password / wipe ----------
+  // Sanctum tool windows cannot start downloads (every navigation off the
+  // tool's own origin is refused, blob: included), so the backup travels
+  // through the clipboard, with a read-only text box as the fallback.
+  $("btnExport").onclick = async () => {
+    await persist();
+    const payload = { format: C.APP + "-backup", exported: new Date().toISOString(), id: session.id, record: store.get(session.id) };
+    const text = JSON.stringify(payload);
+    const box = $("exportText");
+    box.value = text; box.hidden = false;
+    try {
+      await navigator.clipboard.writeText(text);
+      msg($("exportMsg"), "Encrypted backup copied. Paste it somewhere safe.", "ok");
+    } catch {
+      box.focus(); box.select();
+      msg($("exportMsg"), "Clipboard blocked. The backup is selected below; copy it by hand.", "err");
+    }
+  };
+
+  $("pwForm").addEventListener("submit", async (ev) => {
+    ev.preventDefault();
+    const m = $("pwMsg"), a = $("pNew").value, b = $("pNew2").value;
+    if (a.length < 10) return msg(m, "Use at least 10 characters.", "err");
+    if (a !== b) return msg(m, "The two passwords do not match.", "err");
+    const btn = $("btnPw");
+    if (btn.dataset.stage !== "confirm") {
+      btn.disabled = true; msg(m, "Deriving new key...");
+      const grid = $("pwFp"); grid.hidden = false; renderFp(grid, null, null, "busy");
+      try {
+        const k = await C.deriveVaultKeys(session.user, a);
+        renderFp(grid, null, k.fingerprint);
+        pending = { pass: a, keys: k };
+        btn.dataset.stage = "confirm"; btn.textContent = "Confirm new password";
+        msg(m, "This is the new fingerprint. Note it, then confirm.", "ok");
+      } catch (e) { msg(m, e.message, "err"); }
+      btn.disabled = false;
+      return;
+    }
+    if (!pending || pending.pass !== a) { btn.dataset.stage = ""; btn.textContent = "Change password"; return msg(m, "Password changed after preview. Press again.", "err"); }
+    session.key = pending.keys.key; session.fingerprint = pending.keys.fingerprint;
+    await persist();
+    pending = null; $("pwForm").reset(); $("pwFp").hidden = true;
+    btn.dataset.stage = ""; btn.textContent = "Change password";
+    $("fpMini").textContent = C.fingerprintEmoji(session.fingerprint).join("");
+    msg(m, "Password changed. Export a fresh backup; older backups still use the old password.", "ok");
+  });
+  let pending = null;
+  ["pNew", "pNew2"].forEach((id) => $(id).addEventListener("input", () => {
+    const btn = $("btnPw"); btn.dataset.stage = ""; btn.textContent = "Change password"; $("pwFp").hidden = true; pending = null;
+  }));
+
+  $("btnWipe").onclick = (ev) => {
+    const b = ev.currentTarget;
+    if (!b.classList.contains("armed")) {
+      b.classList.add("armed"); b.textContent = "Click again to delete";
+      setTimeout(() => { b.classList.remove("armed"); b.textContent = "Delete vault"; }, 5000);
+      return;
+    }
+    store.del(session.id);
+    b.classList.remove("armed"); b.textContent = "Delete vault";
+    lock("Vault deleted from this tool.");
+  };
+
+  // ---------- YubiKey through Sanctum's smart card bridge ----------
+  // window.sanctum exists only when the user approved smart card access for
+  // this tool. Sanctum checks every call in Rust: only the approved OATH
+  // applet can be selected, and SELECT cannot be sent on the raw channel.
+  const HW = (() => {
+    const bridge = window.sanctum && window.sanctum.smartcard;
+    const O = C.oath;
+    let session = null, reader = "", creds = [], loading = false, lastSig = "", pending = null;
+    // CALCULATE ALL is INS A4 under CLA 00, the same bytes as SELECT, and
+    // Sanctum's broker refuses A4 on the raw channel whatever the applet.
+    // When that happens, fall back to LIST and compute each code on request.
+    let listMode = false;
+    const el = (id) => $(id);
+
+    const SW_TEXT = {
+      0x6982: "The key refused: it is locked with an OATH password, or a touch was not given in time.",
+      0x6984: "That account is not on the key.",
+      0x6a80: "The key rejected the data.",
+      0x6a84: "The key is full.",
+      0x6d00: "The key does not support this command.",
+    };
+    const swError = (sw) => new Error(SW_TEXT[sw] || "The key answered with status " + sw.toString(16).padStart(4, "0") + ".");
+
+    async function send(apduHex) {
+      let r = await session.transmit(apduHex);
+      let data = r.data || "", sw = r.sw;
+      // OATH continues long answers with SEND REMAINING (A5), not GET RESPONSE.
+      // Sanctum's broker answers 61xx itself with GET RESPONSE, which the OATH
+      // applet refuses with 6D00. Handle 61xx here in case a broker passes it through.
+      for (let i = 0; (sw >> 8) === 0x61 && i < 32; i++) {
+        r = await session.transmit("00a50000");
+        data += r.data || ""; sw = r.sw;
+      }
+      if (sw === 0x6d00 && data)
+        throw new Error("The key has more accounts than fit in one reply, and this Sanctum version cannot fetch the rest for the OATH applet.");
+      if (sw !== 0x9000) throw swError(sw);
+      return C.fromHex(data);
+    }
+
+    function setMsg(t, kind) { msg(el("hwMsg"), t, kind); }
+
+    async function refreshReaders() {
+      const sel = el("hwReader");
+      try {
+        const readers = await bridge.listReaders();
+        sel.innerHTML = "";
+        for (const r of readers) {
+          const o = document.createElement("option");
+          o.value = r.name;
+          o.textContent = r.name + (r.card_present ? "" : " (no card)");
+          sel.appendChild(o);
+        }
+        const withCard = readers.find((r) => r.card_present);
+        if (withCard) sel.value = withCard.name;
+        el("hwConnect").disabled = !readers.length;
+        setMsg(readers.length ? "" : "No smart card readers found. Insert your YubiKey and press Find keys.");
+      } catch (e) { setMsg(e.message, "err"); }
+    }
+
+    async function connect() {
+      disconnect();
+      reader = el("hwReader").value;
+      if (!reader) return setMsg("Choose a reader first.", "err");
+      el("hwConnect").disabled = true;
+      setMsg("Connecting...");
+      try {
+        session = await bridge.open(reader);
+        const sel = await session.select(O.AID);
+        if (!sel.ok) throw new Error("This card has no OATH applet.");
+        const info = O.parseSelect(C.fromHex(sel.data));
+        el("hwConnect").hidden = true; el("hwDisconnect").hidden = false;
+        if (info.challenge) {
+          pending = info;
+          el("hwPwForm").hidden = false; el("hwPw").focus();
+          setMsg("OATH applet " + info.version + ". Enter its password to continue.");
+          return;
+        }
+        setMsg("Connected to OATH applet " + info.version + ".", "ok");
+        await load();
+      } catch (e) {
+        setMsg(e.message, "err");
+        disconnect(true);
+      } finally { el("hwConnect").disabled = false; syncStorePick(); }
+    }
+
+    async function unlockApplet(ev) {
+      ev.preventDefault();
+      if (!session || !pending) return;
+      try {
+        const v = await O.validate(el("hwPw").value, pending.salt, pending.challenge);
+        const resp = await send(v.apdu);
+        if (!O.checkValidate(resp, v.expected)) throw new Error("The key's answer did not match. Disconnect and try again.");
+        pending = null;
+        el("hwPwForm").hidden = true; el("hwPw").value = "";
+        setMsg("Key unlocked.", "ok");
+        await load();
+      } catch (e) { setMsg(e.message === SW_TEXT[0x6a80] ? "Wrong OATH password." : e.message, "err"); }
+      syncStorePick();
+    }
+
+    function disconnect(keepMsg) {
+      if (session) { const s = session; session = null; s.close().catch(() => {}); }
+      creds = []; pending = null; lastSig = ""; listMode = false;
+      el("hwList").innerHTML = ""; el("hwEmpty").hidden = true;
+      el("hwPwForm").hidden = true; el("hwConnect").hidden = false; el("hwDisconnect").hidden = true;
+      if (!keepMsg) setMsg("");
+      syncStorePick();
+    }
+
+    const ready = () => !!session && !pending;
+
+    async function load() {
+      if (!ready() || loading) return;
+      loading = true;
+      try {
+        const now = Date.now();
+        let list = null;
+        if (!listMode) {
+          try { list = O.parseCalculateAll(await send(O.calculateAll(now))); }
+          catch (e) {
+            if (!/SELECT is not allowed|not allowed on the raw channel/i.test(e.message)) throw e;
+            listMode = true;
+          }
+        }
+        if (listMode) {
+          const old = new Map(creds.map((c) => [C.toHex(c.id), c]));
+          list = O.parseList(await send(O.list()));
+          // keep codes fetched on request until their window ends
+          for (const c of list) {
+            const o = old.get(C.toHex(c.id));
+            if (o && o.code && o.step === Math.floor(now / 1000 / c.period)) { c.code = o.code; c.step = o.step; }
+          }
+        } else {
+          // CALCULATE ALL uses a 30 s challenge; recompute other periods one by one.
+          for (const c of list) {
+            if (c.type === "totp" && !c.touch && c.period !== 30)
+              c.code = O.parseCalculate(await send(O.calculate(c.id, now, c.period)));
+          }
+        }
+        creds = list;
+        render();
+      } catch (e) {
+        setMsg(e.message, "err");
+        if (/card|reader|session/i.test(e.message)) disconnect(true);
+      } finally { loading = false; }
+    }
+
+    function render() {
+      const list = el("hwList");
+      list.innerHTML = "";
+      el("hwEmpty").hidden = creds.length > 0;
+      creds.forEach((c, i) => {
+        const card = document.createElement("article");
+        card.className = "entry"; card.dataset.i = i;
+        card.innerHTML =
+          '<div class="entry-head"><div><div class="issuer"></div><div class="acct"></div></div><span class="tag-hw">YubiKey</span></div>' +
+          '<button class="code" type="button"></button><div class="bar-t"><i></i></div>' +
+          '<div class="row" style="justify-content:space-between"><span class="next"></span>' +
+          '<span class="entry-actions"><button class="btn danger sm" data-act="del" type="button">Delete from key</button></span></div>';
+        card.querySelector(".issuer").textContent = c.issuer || c.account;
+        card.querySelector(".acct").textContent = c.issuer ? c.account : "";
+        const code = card.querySelector(".code");
+        if (c.type === "hotp") { code.textContent = "HOTP not supported"; code.classList.add("touch"); code.disabled = true; }
+        else if (!c.code) {
+          code.textContent = c.touch === false ? "Get code" : "Get code (touch if it blinks)";
+          code.classList.add("touch"); code.title = "Ask the key for a code";
+        }
+        else { code.textContent = fmtCode(c.code); code.title = "Copy code"; }
+        list.appendChild(card);
+      });
+      tick();
+    }
+
+    function tick() {
+      if (!ready()) return;
+      const now = Date.now();
+      const sig = creds.map((c) => (c.type === "totp" ? Math.floor(now / 1000 / c.period) : 0)).join(",");
+      if (lastSig && sig !== lastSig) { lastSig = sig; load(); return; }
+      lastSig = sig;
+      el("hwList").querySelectorAll(".entry").forEach((card) => {
+        const c = creds[card.dataset.i];
+        if (!c || c.type !== "totp") return;
+        const left = c.period - ((now / 1000) % c.period);
+        card.querySelector(".bar-t i").style.width = (c.code ? (left / c.period) * 100 : 0) + "%";
+        card.querySelector(".code").classList.toggle("warn", !!c.code && left <= 5);
+        card.querySelector(".next").textContent = c.code ? Math.ceil(left) + "s" : c.touch ? "touch required" : listMode ? "on request" : "";
+      });
+    }
+
+    async function onListClick(ev) {
+      const card = ev.target.closest(".entry");
+      if (!card || !ready()) return;
+      const c = creds[card.dataset.i];
+      if (!c) return;
+      if (ev.target.closest(".code") && c.type === "totp") {
+        try {
+          if (!c.code) {
+            setMsg(c.touch === false ? "" : "If your YubiKey blinks, touch it now.");
+            const now = Date.now();
+            c.code = O.parseCalculate(await send(O.calculate(c.id, now, c.period)));
+            c.step = Math.floor(now / 1000 / c.period);
+            setMsg("");
+            render();
+          }
+          try { await navigator.clipboard.writeText(c.code); toast("Copied " + fmtCode(c.code)); }
+          catch { toast("Copy blocked. Code: " + fmtCode(c.code)); }
+        } catch (e) { setMsg(e.message, "err"); }
+        return;
+      }
+      if (ev.target.dataset.act === "del") {
+        const b = ev.target;
+        if (!b.classList.contains("armed")) {
+          b.classList.add("armed"); b.textContent = "Confirm: this cannot be undone";
+          setTimeout(() => { if (b.isConnected) { b.classList.remove("armed"); b.textContent = "Delete from key"; } }, 4000);
+          return;
+        }
+        try { await send(O.del(c.id)); toast("Deleted from key"); await load(); }
+        catch (e) { setMsg(e.message, "err"); }
+      }
+    }
+
+    async function put(entry, secret, touch) {
+      if (!ready()) throw new Error("Connect your YubiKey first.");
+      const key = C.toHex(O.credId(entry));
+      if (creds.some((c) => C.toHex(c.id) === key)) throw new Error("An account with this name is already on the key.");
+      await send(await O.put(entry, secret, touch));
+      await load();
+    }
+
+    function storeTarget() {
+      const r = document.querySelector('input[name="aStore"]:checked');
+      return ready() && r ? r.value : "vault";
+    }
+
+    function syncStorePick() {
+      el("storePick").hidden = !ready();
+      el("storeCardName").textContent = ready() ? "(" + reader + ")" : "";
+      if (!ready()) document.querySelector('input[name="aStore"][value="vault"]').checked = true;
+      el("touchWrap").hidden = storeTarget() !== "card";
+    }
+
+    function onSessionStart() {
+      el("hw").hidden = false;
+      if (!bridge) { el("hwUnavailable").hidden = false; el("hwPanel").hidden = true; return; }
+      el("hwUnavailable").hidden = true; el("hwPanel").hidden = false;
+      refreshReaders();
+    }
+
+    el("hwRefreshReaders").onclick = refreshReaders;
+    el("hwConnect").onclick = connect;
+    el("hwDisconnect").onclick = () => { disconnect(); setMsg("Disconnected."); };
+    el("hwPwForm").addEventListener("submit", unlockApplet);
+    el("hwList").addEventListener("click", onListClick);
+    document.querySelectorAll('input[name="aStore"]').forEach((r) => r.addEventListener("change", syncStorePick));
+    addEventListener("pagehide", () => { if (session) session.close().catch(() => {}); });
+
+    return { onSessionStart, disconnect: () => { disconnect(); el("hw").hidden = true; }, tick, put, storeTarget, syncStorePick };
+  })();
+
+  // ---------- init ----------
+  setMode("unlock");
+  refreshCount();
+  renderFp($("fpGrid"), $("fpHex"), null);
+})();
+</script>
+</body>
+</html>

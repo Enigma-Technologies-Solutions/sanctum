@@ -2,6 +2,7 @@
 // Copyright (C) 2026 Enigma Technologies Solutions
 
 pub mod approvals;
+pub mod bundle;
 pub mod ingest;
 pub mod library;
 pub mod runner;
