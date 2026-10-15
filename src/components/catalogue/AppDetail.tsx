@@ -31,7 +31,7 @@ function CopyValue({ label, value }: { label: string; value: string }) {
   const [state, setState] = useState<"idle" | "done" | "failed">("idle");
   return (
     <div style={{ display: "flex", alignItems: "center", gap: 8, fontFamily: font, fontSize: 12 }}>
-      <span style={{ color: "#565B62", minWidth: 56 }}>{label}</span>
+      <span style={{ color: "var(--app-ink-2)", minWidth: 56 }}>{label}</span>
       <span style={{ fontFamily: mono, fontSize: 11, wordBreak: "break-all" }}>{value}</span>
       <button
         type="button"
@@ -45,7 +45,7 @@ function CopyValue({ label, value }: { label: string; value: string }) {
           }
           setTimeout(() => setState("idle"), 1800);
         }}
-        style={{ display: "inline-flex", alignItems: "center", gap: 4, padding: "2px 8px", background: "#FFFFFF", border: "1px solid #E3E7EC", borderRadius: 6, fontFamily: font, fontSize: 11, cursor: "pointer" }}
+        style={{ display: "inline-flex", alignItems: "center", gap: 4, padding: "2px 8px", background: "var(--app-bg)", border: "1px solid var(--app-border)", borderRadius: 6, fontFamily: font, fontSize: 11, cursor: "pointer" }}
       >
         {state === "done" ? <Check size={11} aria-hidden="true" /> : <Copy size={11} aria-hidden="true" />}
         {state === "done" ? "Copied" : state === "failed" ? "Copy failed" : "Copy"}
@@ -105,20 +105,20 @@ export function AppDetail({ registry, app, busy, paused, onBack, onInstall }: Pr
       </Button>
 
       <header style={{ display: "flex", gap: 14, alignItems: "flex-start" }}>
-        <span aria-hidden="true" style={{ display: "inline-flex", width: 56, height: 56, alignItems: "center", justifyContent: "center", background: "#F7F8FA", border: "1px solid #E3E7EC", borderRadius: 12, overflow: "hidden", flexShrink: 0 }}>
+        <span aria-hidden="true" style={{ display: "inline-flex", width: 56, height: 56, alignItems: "center", justifyContent: "center", background: "var(--app-surface)", border: "1px solid var(--app-border)", borderRadius: 12, overflow: "hidden", flexShrink: 0 }}>
           {detail?.icon ? <img src={detail.icon} alt="" width={56} height={56} /> : <Package size={24} />}
         </span>
         <div>
           <h1 id={titleId} style={{ margin: 0, fontFamily: "Poppins, system-ui, sans-serif", fontSize: 24, fontWeight: 700, letterSpacing: "-0.01em" }}>
-            {app.name} <span style={{ fontFamily: mono, fontSize: 12, fontWeight: 400, color: "#565B62" }}>v{app.latest}</span>
+            {app.name} <span style={{ fontFamily: mono, fontSize: 12, fontWeight: 400, color: "var(--app-ink-2)" }}>v{app.latest}</span>
           </h1>
-          <div style={{ display: "flex", alignItems: "center", gap: 6, marginTop: 4, fontFamily: font, fontSize: 13, color: "#565B62" }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 6, marginTop: 4, fontFamily: font, fontSize: 13, color: "var(--app-ink-2)" }}>
             <BadgeCheck size={14} aria-hidden="true" />
             <span>
               {registry.trust === "pinned" ? "From a key you pinned" : `Published by ${app.publisherName}`} · listed in {registry.name}
             </span>
           </div>
-          <p style={{ margin: "8px 0 0", fontFamily: font, fontSize: 14, color: "#3A4048", maxWidth: "62ch" }}>{app.summary}</p>
+          <p style={{ margin: "8px 0 0", fontFamily: font, fontSize: 14, color: "var(--app-ink-1)", maxWidth: "62ch" }}>{app.summary}</p>
         </div>
       </header>
 
@@ -128,7 +128,7 @@ export function AppDetail({ registry, app, busy, paused, onBack, onInstall }: Pr
             <Button variant="outline" disabled aria-describedby="detail-reason">
               {action.label}
             </Button>
-            <span id="detail-reason" style={{ fontFamily: font, fontSize: 12, color: "#565B62" }}>{action.reason}</span>
+            <span id="detail-reason" style={{ fontFamily: font, fontSize: 12, color: "var(--app-ink-2)" }}>{action.reason}</span>
           </>
         ) : (
           <Button disabled={busy || paused} aria-busy={busy} onClick={() => onInstall(app)}>
@@ -140,32 +140,32 @@ export function AppDetail({ registry, app, busy, paused, onBack, onInstall }: Pr
 
       <Section id="asks-for" title="What it asks for">
         {scope.length === 0 ? (
-          <p style={{ margin: 0, fontFamily: font, fontSize: 13, color: "#3A4048" }}>
+          <p style={{ margin: 0, fontFamily: font, fontSize: 13, color: "var(--app-ink-1)" }}>
             It asks for no special access.
           </p>
         ) : (
-          <ul style={{ margin: 0, paddingLeft: 20, listStyle: "disc", fontFamily: font, fontSize: 13, color: "#3A4048", display: "grid", gap: 4 }}>
+          <ul style={{ margin: 0, paddingLeft: 20, listStyle: "disc", fontFamily: font, fontSize: 13, color: "var(--app-ink-1)", display: "grid", gap: 4 }}>
             {scope.map((c, i) => (
               <li key={i}>{capabilityToPlain(c)}</li>
             ))}
           </ul>
         )}
-        <p style={{ margin: "10px 0 0", fontFamily: font, fontSize: 12, color: "#565B62", maxWidth: "62ch" }}>
+        <p style={{ margin: "10px 0 0", fontFamily: font, fontSize: 12, color: "var(--app-ink-2)", maxWidth: "62ch" }}>
           {REGISTRY_MEANING}
         </p>
       </Section>
 
       {loading && (
-        <div role="status" style={{ display: "flex", alignItems: "center", gap: 8, marginTop: 28, fontFamily: font, fontSize: 13, color: "#565B62" }}>
+        <div role="status" style={{ display: "flex", alignItems: "center", gap: 8, marginTop: 28, fontFamily: font, fontSize: 13, color: "var(--app-ink-2)" }}>
           <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" />
           Loading details from the registry…
         </div>
       )}
 
       {error && (
-        <div role="alert" style={{ marginTop: 28, padding: "10px 12px", border: "1px solid rgba(210,64,46,.25)", background: "rgba(210,64,46,.06)", borderRadius: 8, fontFamily: font, fontSize: 13, color: "#B0301F" }}>
+        <div role="alert" style={{ marginTop: 28, padding: "10px 12px", border: "1px solid rgba(210,64,46,.25)", background: "rgba(210,64,46,.06)", borderRadius: 8, fontFamily: font, fontSize: 13, color: "var(--danger-ink)" }}>
           <div>Could not load the details. {error.message}</div>
-          {errorHint(error.code) && <div style={{ marginTop: 4, color: "#565B62" }}>{errorHint(error.code)}</div>}
+          {errorHint(error.code) && <div style={{ marginTop: 4, color: "var(--app-ink-2)" }}>{errorHint(error.code)}</div>}
           <Button variant="outline" size="sm" style={{ marginTop: 8 }} onClick={() => load()}>
             <RefreshCw className="h-3.5 w-3.5" aria-hidden="true" />
             Try again
@@ -176,12 +176,12 @@ export function AppDetail({ registry, app, busy, paused, onBack, onInstall }: Pr
       {detail && (
         <>
           <Section id="about" title="About">
-            <p style={{ margin: 0, fontFamily: font, fontSize: 14, color: "#3A4048", maxWidth: "68ch", lineHeight: 1.6 }}>{detail.description}</p>
+            <p style={{ margin: 0, fontFamily: font, fontSize: 14, color: "var(--app-ink-1)", maxWidth: "68ch", lineHeight: 1.6 }}>{detail.description}</p>
             <div style={{ display: "grid", gap: 6, marginTop: 12 }}>
-              {detail.license && <div style={{ fontFamily: font, fontSize: 12, color: "#565B62" }}>Licence: {detail.license}</div>}
+              {detail.license && <div style={{ fontFamily: font, fontSize: 12, color: "var(--app-ink-2)" }}>Licence: {detail.license}</div>}
               {detail.homepage && <CopyValue label="Website" value={detail.homepage} />}
               {detail.source && <CopyValue label="Source" value={detail.source} />}
-              <div style={{ fontFamily: font, fontSize: 11, color: "#6B717A" }}>Sanctum does not open links itself. Copy one into your browser.</div>
+              <div style={{ fontFamily: font, fontSize: 11, color: "var(--app-mute)" }}>Sanctum does not open links itself. Copy one into your browser.</div>
             </div>
           </Section>
 
@@ -191,13 +191,13 @@ export function AppDetail({ registry, app, busy, paused, onBack, onInstall }: Pr
                 {detail.screenshots.map((s, i) => (
                   <figure key={i} style={{ margin: 0 }}>
                     {s.dataUrl ? (
-                      <img src={s.dataUrl} alt={s.alt} width={s.width} height={s.height} style={{ maxWidth: "100%", height: "auto", border: "1px solid #E3E7EC", borderRadius: 8 }} />
+                      <img src={s.dataUrl} alt={s.alt} width={s.width} height={s.height} style={{ maxWidth: "100%", height: "auto", border: "1px solid var(--app-border)", borderRadius: 8 }} />
                     ) : (
-                      <div role="img" aria-label={`${s.alt} (unavailable)`} style={{ padding: 16, border: "1px dashed #E3E7EC", borderRadius: 8, fontFamily: font, fontSize: 12, color: "#565B62" }}>
+                      <div role="img" aria-label={`${s.alt} (unavailable)`} style={{ padding: 16, border: "1px dashed var(--app-border)", borderRadius: 8, fontFamily: font, fontSize: 12, color: "var(--app-ink-2)" }}>
                         This screenshot could not be verified, so it is not shown. {s.error}
                       </div>
                     )}
-                    <figcaption style={{ marginTop: 4, fontFamily: font, fontSize: 12, color: "#565B62" }}>{s.alt}</figcaption>
+                    <figcaption style={{ marginTop: 4, fontFamily: font, fontSize: 12, color: "var(--app-ink-2)" }}>{s.alt}</figcaption>
                   </figure>
                 ))}
               </div>
@@ -209,12 +209,12 @@ export function AppDetail({ registry, app, busy, paused, onBack, onInstall }: Pr
               {detail.changelog.map((c) => (
                 <div key={c.version}>
                   <h3 style={{ margin: "0 0 6px", fontFamily: font, fontSize: 14, fontWeight: 600 }}>
-                    {c.version} <span style={{ fontFamily: mono, fontSize: 11, fontWeight: 400, color: "#565B62" }}>{c.date}</span>
+                    {c.version} <span style={{ fontFamily: mono, fontSize: 11, fontWeight: 400, color: "var(--app-ink-2)" }}>{c.date}</span>
                   </h3>
-                  <ul style={{ margin: 0, paddingLeft: 20, listStyle: "disc", fontFamily: font, fontSize: 13, color: "#3A4048", display: "grid", gap: 3 }}>
+                  <ul style={{ margin: 0, paddingLeft: 20, listStyle: "disc", fontFamily: font, fontSize: 13, color: "var(--app-ink-1)", display: "grid", gap: 3 }}>
                     {c.changes.map((x, i) => (
                       <li key={i}>
-                        <strong style={{ color: "#0A0A0A", fontWeight: 600 }}>{CHANGE_LABEL[x.type]}.</strong> {x.text}
+                        <strong style={{ color: "var(--app-ink)", fontWeight: 600 }}>{CHANGE_LABEL[x.type]}.</strong> {x.text}
                       </li>
                     ))}
                   </ul>
@@ -230,7 +230,7 @@ export function AppDetail({ registry, app, busy, paused, onBack, onInstall }: Pr
           )}
           {detail.manualError && (
             <Section id="manual" title="Manual">
-              <p role="note" style={{ margin: 0, fontFamily: font, fontSize: 13, color: "#565B62" }}>
+              <p role="note" style={{ margin: 0, fontFamily: font, fontSize: 13, color: "var(--app-ink-2)" }}>
                 The manual could not be verified, so it is not shown. {detail.manualError}
               </p>
             </Section>
@@ -243,9 +243,9 @@ export function AppDetail({ registry, app, busy, paused, onBack, onInstall }: Pr
           {app.versions.map((v) => (
             <li key={v.version} style={{ display: "flex", gap: 10, alignItems: "baseline" }}>
               <span style={{ fontFamily: mono, fontSize: 12 }}>{v.version}</span>
-              <span style={{ color: "#565B62" }}>{formatDate(v.publishedAt)}</span>
+              <span style={{ color: "var(--app-ink-2)" }}>{formatDate(v.publishedAt)}</span>
               {v.version === app.installedVersion && <span>Installed</span>}
-              {v.revoked && <span style={{ color: "#B0301F" }}>Withdrawn by the registry</span>}
+              {v.revoked && <span style={{ color: "var(--danger-ink)" }}>Withdrawn by the registry</span>}
             </li>
           ))}
         </ul>

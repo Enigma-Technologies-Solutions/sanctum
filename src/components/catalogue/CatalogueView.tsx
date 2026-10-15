@@ -43,7 +43,7 @@ function Banner({ tone, children }: { tone: "warn" | "error"; children: React.Re
         borderRadius: 8,
         fontFamily: font,
         fontSize: 12.5,
-        color: warn ? "#5A4A10" : "#B0301F",
+        color: warn ? "#5A4A10" : "var(--danger-ink)",
       }}
     >
       <AlertTriangle size={14} aria-hidden="true" style={{ marginTop: 2, flexShrink: 0 }} />
@@ -208,7 +208,7 @@ export function CatalogueView({ onLibraryChanged, onOpenVault }: Props) {
   // ── Loading ───────────────────────────────────────────────────────────────
   if (registries === null) {
     return (
-      <div role="status" style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 8, height: "100%", fontFamily: font, fontSize: 13, color: "#6B717A" }}>
+      <div role="status" style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 8, height: "100%", fontFamily: font, fontSize: 13, color: "var(--app-mute)" }}>
         <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" />
         Loading catalogue…
       </div>
@@ -236,10 +236,10 @@ export function CatalogueView({ onLibraryChanged, onOpenVault }: Props) {
 
   return (
     <div style={{ height: "100%", overflowY: "auto" }}>
-      <div style={{ padding: "20px 24px 16px", borderBottom: "1px solid #E3E7EC" }}>
+      <div style={{ padding: "20px 24px 16px", borderBottom: "1px solid var(--app-border)" }}>
         <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 12 }}>
           <div className="volt-bar" style={{ width: 32 }} />
-          <span style={{ fontFamily: font, fontSize: 11, fontWeight: 600, color: "#6B717A", textTransform: "uppercase", letterSpacing: "0.1em" }}>
+          <span style={{ fontFamily: font, fontSize: 11, fontWeight: 600, color: "var(--app-mute)", textTransform: "uppercase", letterSpacing: "0.1em" }}>
             Catalogue
           </span>
         </div>
@@ -247,7 +247,7 @@ export function CatalogueView({ onLibraryChanged, onOpenVault }: Props) {
           Find tools
         </h1>
         <div className="volt-bar" style={{ width: 48, marginBottom: 12 }} />
-        <p style={{ margin: 0, fontFamily: font, fontSize: 12.5, color: "#565B62", maxWidth: "70ch" }}>{REGISTRY_MEANING}</p>
+        <p style={{ margin: 0, fontFamily: font, fontSize: 12.5, color: "var(--app-ink-2)", maxWidth: "70ch" }}>{REGISTRY_MEANING}</p>
       </div>
 
       <div style={{ padding: "16px 24px 40px", display: "grid", gap: 14 }}>
@@ -258,18 +258,18 @@ export function CatalogueView({ onLibraryChanged, onOpenVault }: Props) {
         {registries.length === 0 ? (
           <section
             aria-labelledby="empty-title"
-            style={{ padding: 24, border: "1px solid #E3E7EC", borderRadius: 10, background: "#FFFFFF" }}
+            style={{ padding: 24, border: "1px solid var(--app-border)", borderRadius: 10, background: "var(--app-bg)" }}
           >
             <Store size={22} aria-hidden="true" />
             <h2 id="empty-title" style={{ margin: "10px 0 6px", fontFamily: "Poppins, system-ui, sans-serif", fontSize: 17, fontWeight: 700 }}>
               No registry yet
             </h2>
-            <p style={{ margin: "0 0 16px", fontFamily: font, fontSize: 13, color: "#3A4048", maxWidth: "62ch" }}>
+            <p style={{ margin: "0 0 16px", fontFamily: font, fontSize: 13, color: "var(--app-ink-1)", maxWidth: "62ch" }}>
               Add the Enigma registry to browse tools signed by Enigma Technologies Solutions. You will
               see what each tool asks for before you install it, and nothing runs with access until you
               approve it.
             </p>
-            {loadError && <div role="alert" style={{ marginBottom: 12, fontFamily: font, fontSize: 12, color: "#B0301F" }}>{loadError}</div>}
+            {loadError && <div role="alert" style={{ marginBottom: 12, fontFamily: font, fontSize: 12, color: "var(--danger-ink)" }}>{loadError}</div>}
             <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
               <Button variant="volt" onClick={() => void addEnigma()} disabled={addingEnigma} aria-busy={addingEnigma}>
                 {addingEnigma && <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" />}
@@ -299,10 +299,10 @@ export function CatalogueView({ onLibraryChanged, onOpenVault }: Props) {
                     }}
                     style={{
                       padding: "6px 12px",
-                      border: "1px solid #E3E7EC",
+                      border: "1px solid var(--app-border)",
                       borderRadius: 6,
-                      background: r.id === selectedId ? "#0A0A0A" : "#FFFFFF",
-                      color: r.id === selectedId ? "#FFFFFF" : "#0A0A0A",
+                      background: r.id === selectedId ? "var(--app-ink)" : "var(--app-bg)",
+                      color: r.id === selectedId ? "var(--app-bg)" : "var(--app-ink)",
                       fontFamily: font,
                       fontSize: 12.5,
                       fontWeight: 600,
@@ -322,7 +322,7 @@ export function CatalogueView({ onLibraryChanged, onOpenVault }: Props) {
                     <h2 id="registry-name" style={{ margin: 0, fontFamily: "Poppins, system-ui, sans-serif", fontSize: 16, fontWeight: 700 }}>
                       {selected.name}
                     </h2>
-                    <div style={{ display: "flex", alignItems: "center", gap: 6, fontFamily: font, fontSize: 12, color: "#565B62", marginTop: 2 }}>
+                    <div style={{ display: "flex", alignItems: "center", gap: 6, fontFamily: font, fontSize: 12, color: "var(--app-ink-2)", marginTop: 2 }}>
                       <BadgeCheck size={13} aria-hidden="true" />
                       <span>{trustLabel(selected)}</span>
                       <span aria-hidden="true">·</span>
@@ -373,7 +373,7 @@ export function CatalogueView({ onLibraryChanged, onOpenVault }: Props) {
                       <Download className="h-3.5 w-3.5" aria-hidden="true" />
                       Install all ({installable.length})
                     </Button>
-                    <span style={{ fontFamily: font, fontSize: 12, color: "#565B62" }}>
+                    <span style={{ fontFamily: font, fontSize: 12, color: "var(--app-ink-2)" }}>
                       Installing adds tools with no access. You approve each permission afterwards.
                     </span>
                   </div>
@@ -401,7 +401,7 @@ export function CatalogueView({ onLibraryChanged, onOpenVault }: Props) {
                   </div>
                 ))}
                 {catalogue.apps.length === 0 && (
-                  <p style={{ fontFamily: font, fontSize: 13, color: "#565B62" }}>This registry does not list any tools yet.</p>
+                  <p style={{ fontFamily: font, fontSize: 13, color: "var(--app-ink-2)" }}>This registry does not list any tools yet.</p>
                 )}
               </div>
             )}
@@ -416,7 +416,7 @@ export function CatalogueView({ onLibraryChanged, onOpenVault }: Props) {
           <DialogTitle style={{ fontFamily: "Poppins, system-ui, sans-serif", fontSize: 18, fontWeight: 700, margin: "0 0 6px" }}>
             Remove {selected?.name}?
           </DialogTitle>
-          <DialogDescription style={{ fontFamily: font, fontSize: 13, color: "#565B62", margin: "0 0 16px" }}>
+          <DialogDescription style={{ fontFamily: font, fontSize: 13, color: "var(--app-ink-2)", margin: "0 0 16px" }}>
             Sanctum forgets this registry and its catalogue. Tools you already installed from it stay in
             your vault, with their approvals. You can add the registry again later.
           </DialogDescription>
@@ -432,7 +432,7 @@ export function CatalogueView({ onLibraryChanged, onOpenVault }: Props) {
           <DialogTitle style={{ fontFamily: "Poppins, system-ui, sans-serif", fontSize: 18, fontWeight: 700, margin: "0 0 6px" }}>
             Install {installable.length} {installable.length === 1 ? "tool" : "tools"}?
           </DialogTitle>
-          <DialogDescription style={{ fontFamily: font, fontSize: 13, color: "#565B62", margin: "0 0 12px" }}>
+          <DialogDescription style={{ fontFamily: font, fontSize: 13, color: "var(--app-ink-2)", margin: "0 0 12px" }}>
             Each is checked against the registry's signed list before it is added. None of them gets any
             access: you approve each permission yourself, tool by tool, in Tool Vault.
           </DialogDescription>
@@ -465,16 +465,16 @@ function NoticeView({ notice, onOpenVault }: { notice: Notice; onOpenVault: () =
         flexWrap: "wrap",
         padding: "10px 12px",
         borderRadius: 8,
-        border: `1px solid ${error ? "rgba(210,64,46,.25)" : "#E3E7EC"}`,
-        background: error ? "rgba(210,64,46,.06)" : notice.kind === "success" ? "rgba(30,158,98,.08)" : "#F7F8FA",
+        border: `1px solid ${error ? "rgba(210,64,46,.25)" : "var(--app-border)"}`,
+        background: error ? "rgba(210,64,46,.06)" : notice.kind === "success" ? "rgba(30,158,98,.08)" : "var(--app-surface)",
         fontFamily: font,
         fontSize: 13,
-        color: error ? "#B0301F" : "#0A0A0A",
+        color: error ? "var(--danger-ink)" : "var(--app-ink)",
       }}
     >
       <div style={{ flex: 1, minWidth: 200 }}>
         <div>{notice.text}</div>
-        {notice.hint && <div style={{ marginTop: 3, color: "#565B62", fontSize: 12 }}>{notice.hint}</div>}
+        {notice.hint && <div style={{ marginTop: 3, color: "var(--app-ink-2)", fontSize: 12 }}>{notice.hint}</div>}
       </div>
       {notice.kind === "success" && notice.text.startsWith("Installed ") && (
         <Button variant="outline" size="sm" onClick={onOpenVault}>
@@ -488,7 +488,7 @@ function NoticeView({ notice, onOpenVault }: { notice: Notice; onOpenVault: () =
 function BatchResults({ items, onOpenVault }: { items: RegistryBatchItem[]; onOpenVault: () => void }) {
   const done = items.filter((i) => i.state === "installed").length;
   return (
-    <section aria-labelledby="batch-title" style={{ padding: 14, border: "1px solid #E3E7EC", borderRadius: 10, background: "#F7F8FA" }}>
+    <section aria-labelledby="batch-title" style={{ padding: 14, border: "1px solid var(--app-border)", borderRadius: 10, background: "var(--app-surface)" }}>
       <h3 id="batch-title" style={{ margin: "0 0 6px", fontFamily: font, fontSize: 14, fontWeight: 600 }}>
         {done} installed, none approved
       </h3>

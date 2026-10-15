@@ -103,8 +103,8 @@ export function Library({ refreshKey = 0 }: { refreshKey?: number }) {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center h-full gap-2" style={{ color: "#6B717A" }}>
-        <Loader2 className="h-4 w-4 animate-spin" style={{ color: "#0A0A0A" }} />
+      <div className="flex items-center justify-center h-full gap-2" style={{ color: "var(--app-mute)" }}>
+        <Loader2 className="h-4 w-4 animate-spin" style={{ color: "var(--app-ink)" }} />
         <span style={{ fontFamily: "Inter, system-ui, sans-serif", fontSize: "13px" }}>
           Loading vault…
         </span>
@@ -127,14 +127,14 @@ export function Library({ refreshKey = 0 }: { refreshKey?: number }) {
   return (
     <div
       className={`flex flex-col h-full relative ${dragOver ? "drag-over" : ""}`}
-      style={{ background: "#FFFFFF" }}
+      style={{ background: "var(--app-bg)" }}
     >
       {/* Toolbar */}
       <div
         style={{
           padding: "20px 24px 16px",
-          borderBottom: "1px solid #E3E7EC",
-          background: "#FFFFFF",
+          borderBottom: "1px solid var(--app-border)",
+          background: "var(--app-bg)",
         }}
       >
         {/* Section kicker */}
@@ -145,7 +145,7 @@ export function Library({ refreshKey = 0 }: { refreshKey?: number }) {
               style={{
                 marginLeft: "auto",
                 fontFamily: "Inter, system-ui, sans-serif",
-                fontSize: "12px", color: "#6B717A",
+                fontSize: "12px", color: "var(--app-mute)",
               }}
             >
               {tools.length} {tools.length === 1 ? "tool" : "tools"}
@@ -158,7 +158,7 @@ export function Library({ refreshKey = 0 }: { refreshKey?: number }) {
           style={{
             fontFamily: "Poppins, system-ui, sans-serif",
             fontWeight: 700, fontSize: "20px",
-            color: "#0A0A0A", letterSpacing: "-0.01em",
+            color: "var(--app-ink)", letterSpacing: "-0.01em",
             margin: "0 0 4px",
           }}
         >
@@ -173,13 +173,13 @@ export function Library({ refreshKey = 0 }: { refreshKey?: number }) {
           <div
             style={{
               marginTop: "10px",
-              background: policy.error ? "rgba(210,64,46,.08)" : "#F7F8FA",
-              border: `1px solid ${policy.error ? "rgba(210,64,46,.2)" : "#E3E6EA"}`,
+              background: policy.error ? "rgba(210,64,46,.08)" : "var(--app-surface)",
+              border: `1px solid ${policy.error ? "rgba(210,64,46,.2)" : "var(--app-border)"}`,
               borderRadius: "6px",
               padding: "8px 12px",
               fontFamily: "Inter, system-ui, sans-serif",
               fontSize: "12px",
-              color: policy.error ? "#B0301F" : "#3A4048",
+              color: policy.error ? "var(--danger-ink)" : "var(--app-ink-1)",
             }}
           >
             {policy.error
@@ -200,7 +200,7 @@ export function Library({ refreshKey = 0 }: { refreshKey?: number }) {
               borderRadius: "6px",
               padding: "8px 12px",
               fontFamily: "Inter, system-ui, sans-serif",
-              fontSize: "12px", color: "#B0301F",
+              fontSize: "12px", color: "var(--danger-ink)",
             }}
           >
             {runError}
@@ -209,7 +209,7 @@ export function Library({ refreshKey = 0 }: { refreshKey?: number }) {
       </div>
 
       {/* Tool grid */}
-      <ScrollArea className="flex-1" style={{ background: "#F7F8FA" }}>
+      <ScrollArea className="flex-1" style={{ background: "var(--app-surface)" }}>
         <div style={{ padding: "20px 24px 24px" }}>
           {tools.length === 0 ? (
             <div
@@ -222,18 +222,18 @@ export function Library({ refreshKey = 0 }: { refreshKey?: number }) {
               <div
                 style={{
                   width: "48px", height: "48px",
-                  background: "#EEF1F4", borderRadius: "12px",
+                  background: "var(--app-raised)", borderRadius: "12px",
                   display: "flex", alignItems: "center", justifyContent: "center",
                 }}
               >
-                <Layers className="h-6 w-6" style={{ color: "#6B717A" }} />
+                <Layers className="h-6 w-6" style={{ color: "var(--app-mute)" }} />
               </div>
               <div style={{ textAlign: "center" }}>
                 <h2
                   style={{
                     fontFamily: "Poppins, system-ui, sans-serif",
                     fontWeight: 600, fontSize: "16px",
-                    color: "#0A0A0A", margin: "0 0 6px",
+                    color: "var(--app-ink)", margin: "0 0 6px",
                     letterSpacing: "-0.01em",
                   }}
                 >
@@ -242,7 +242,7 @@ export function Library({ refreshKey = 0 }: { refreshKey?: number }) {
                 <p
                   style={{
                     fontFamily: "Inter, system-ui, sans-serif",
-                    fontSize: "13px", color: "#565B62",
+                    fontSize: "13px", color: "var(--app-ink-2)",
                     maxWidth: "320px", margin: 0, lineHeight: 1.5,
                   }}
                 >
@@ -282,7 +282,7 @@ export function Library({ refreshKey = 0 }: { refreshKey?: number }) {
           style={{
             position: "absolute", inset: 0,
             background: "rgba(247,248,250,.92)",
-            border: "2px solid #0A0A0A",
+            border: "2px solid var(--app-ink)",
             display: "flex", flexDirection: "column",
             alignItems: "center", justifyContent: "center",
             gap: "8px",
@@ -293,12 +293,12 @@ export function Library({ refreshKey = 0 }: { refreshKey?: number }) {
             style={{
               fontFamily: "Poppins, system-ui, sans-serif",
               fontWeight: 700, fontSize: "18px",
-              color: "#0A0A0A", margin: 0, letterSpacing: "-0.01em",
+              color: "var(--app-ink)", margin: 0, letterSpacing: "-0.01em",
             }}
           >
             Drop to add
           </h2>
-          <p style={{ fontFamily: "Inter, system-ui, sans-serif", fontSize: "13px", color: "#565B62", margin: 0 }}>
+          <p style={{ fontFamily: "Inter, system-ui, sans-serif", fontSize: "13px", color: "var(--app-ink-2)", margin: 0 }}>
             .html and .sanctum files
           </p>
         </div>

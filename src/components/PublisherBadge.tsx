@@ -38,8 +38,8 @@ export function PublisherBadge({ provenance }: { provenance: ProvenanceRecord | 
       </TooltipTrigger>
       <TooltipContent side="bottom" align="start" className="max-w-[280px] px-3 py-2 leading-snug">
         <div className="font-semibold">{heading}</div>
-        {detail && <div className="mt-0.5 text-white/80">{detail}</div>}
-        <div className="mt-1 text-white/70">{SIGNATURE_MEANING}</div>
+        {detail && <div className="mt-0.5 text-[var(--on-ink)] opacity-80">{detail}</div>}
+        <div className="mt-1 text-[var(--on-ink)] opacity-70">{SIGNATURE_MEANING}</div>
       </TooltipContent>
     </Tooltip>
   );

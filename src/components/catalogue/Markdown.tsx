@@ -39,12 +39,12 @@ function CopyLink({ href, label }: { href: string; label: string }) {
         gap: 4,
         marginLeft: 6,
         padding: "0 6px",
-        background: "#F7F8FA",
-        border: "1px solid #E3E7EC",
+        background: "var(--app-surface)",
+        border: "1px solid var(--app-border)",
         borderRadius: 4,
         fontFamily: font,
         fontSize: 11,
-        color: "#0A0A0A",
+        color: "var(--app-ink)",
         cursor: "pointer",
         verticalAlign: "baseline",
       }}
@@ -62,19 +62,19 @@ function renderInline(nodes: Inline[]): ReactNode[] {
         return n.text;
       case "code":
         return (
-          <code key={i} style={{ fontFamily: mono, fontSize: "0.9em", background: "#F7F8FA", border: "1px solid #E3E7EC", borderRadius: 4, padding: "0 4px" }}>
+          <code key={i} style={{ fontFamily: mono, fontSize: "0.9em", background: "var(--app-surface)", border: "1px solid var(--app-border)", borderRadius: 4, padding: "0 4px" }}>
             {n.text}
           </code>
         );
       case "strong":
-        return <strong key={i} style={{ color: "#0A0A0A" }}>{renderInline(n.children)}</strong>;
+        return <strong key={i} style={{ color: "var(--app-ink)" }}>{renderInline(n.children)}</strong>;
       case "em":
         return <em key={i}>{renderInline(n.children)}</em>;
       case "link":
         return (
           <span key={i}>
-            <span style={{ textDecoration: "underline", textUnderlineOffset: 3, color: "#0A0A0A" }}>{n.text}</span>
-            <span style={{ fontFamily: mono, fontSize: 11, color: "#6B717A" }}> ({n.href})</span>
+            <span style={{ textDecoration: "underline", textUnderlineOffset: 3, color: "var(--app-ink)" }}>{n.text}</span>
+            <span style={{ fontFamily: mono, fontSize: 11, color: "var(--app-mute)" }}> ({n.href})</span>
             <CopyLink href={n.href} label={n.text} />
           </span>
         );
@@ -83,7 +83,7 @@ function renderInline(nodes: Inline[]): ReactNode[] {
 }
 
 function renderBlock(b: Block, i: number): ReactNode {
-  const heading = { fontFamily: "Poppins, system-ui, sans-serif", color: "#0A0A0A", margin: "20px 0 6px", letterSpacing: "-0.01em" } as const;
+  const heading = { fontFamily: "Poppins, system-ui, sans-serif", color: "var(--app-ink)", margin: "20px 0 6px", letterSpacing: "-0.01em" } as const;
   switch (b.t) {
     case "heading": {
       // h1 is the app name and h2 the section, so manual headings start at h3.
@@ -106,13 +106,13 @@ function renderBlock(b: Block, i: number): ReactNode {
       );
     case "quote":
       return (
-        <blockquote key={i} style={{ margin: "0 0 10px", paddingLeft: 14, borderLeft: "2px solid #E3E7EC" }}>
+        <blockquote key={i} style={{ margin: "0 0 10px", paddingLeft: 14, borderLeft: "2px solid var(--app-border)" }}>
           {renderInline(b.children)}
         </blockquote>
       );
     case "pre":
       return (
-        <pre key={i} style={{ margin: "0 0 10px", padding: "10px 12px", background: "#F7F8FA", border: "1px solid #E3E7EC", borderRadius: 6, overflowX: "auto", fontFamily: mono, fontSize: 12 }}>
+        <pre key={i} style={{ margin: "0 0 10px", padding: "10px 12px", background: "var(--app-surface)", border: "1px solid var(--app-border)", borderRadius: 6, overflowX: "auto", fontFamily: mono, fontSize: 12 }}>
           <code>{b.text}</code>
         </pre>
       );
@@ -128,13 +128,13 @@ export function Markdown({ source }: { source: string }) {
     }
   }, [source]);
 
-  const base = { fontFamily: font, fontSize: 14, lineHeight: 1.65, color: "#3A4048", maxWidth: "68ch" } as const;
+  const base = { fontFamily: font, fontSize: 14, lineHeight: 1.65, color: "var(--app-ink-1)", maxWidth: "68ch" } as const;
 
   if (!parsed.blocks) {
     // Outside the subset: show it as it is, as text. Nothing is interpreted.
     return (
       <div style={base}>
-        <p role="note" style={{ margin: "0 0 8px", fontSize: 12, color: "#6B717A" }}>
+        <p role="note" style={{ margin: "0 0 8px", fontSize: 12, color: "var(--app-mute)" }}>
           This manual could not be formatted, so it is shown as plain text.
         </p>
         <pre style={{ margin: 0, whiteSpace: "pre-wrap", fontFamily: mono, fontSize: 12 }}>{source}</pre>

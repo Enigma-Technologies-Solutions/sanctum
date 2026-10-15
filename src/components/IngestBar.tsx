@@ -76,7 +76,7 @@ export function IngestBar({ onIngested }: IngestBarProps) {
           style={{
             fontFamily: "Inter, system-ui, sans-serif",
             fontSize: "12px",
-            color: "#8A9099",
+            color: "var(--app-ink-3)",
           }}
         >
           or drop a <code style={{ fontFamily: "'Space Mono', monospace", fontSize: "11px" }}>.html</code> file here
@@ -92,7 +92,7 @@ export function IngestBar({ onIngested }: IngestBarProps) {
             borderRadius: "6px",
             padding: "8px 12px",
             fontFamily: "Inter, system-ui, sans-serif",
-            fontSize: "12px", color: "#B0301F",
+            fontSize: "12px", color: "var(--danger-ink)",
           }}
         >
           <AlertTriangle className="h-3.5 w-3.5 mt-0.5 flex-shrink-0" />

@@ -67,7 +67,7 @@ export function CardMenu({
         <div
           role="menu"
           aria-label={`${toolName} actions`}
-          className="absolute bottom-full right-0 z-30 mb-1.5 w-44 rounded-lg border border-app-border bg-white p-1 shadow-[0_8px_24px_rgba(16,24,40,.12),0_2px_6px_rgba(16,24,40,.06)]"
+          className="absolute bottom-full right-0 z-30 mb-1.5 w-44 rounded-lg border border-app-border bg-app-bg p-1 shadow-[0_8px_24px_rgba(16,24,40,.12),0_2px_6px_rgba(16,24,40,.06)]"
         >
           <button role="menuitem" type="button" onClick={pick(onUpdate)} className="card-menu-item">
             <RefreshCw className="h-3.5 w-3.5" aria-hidden="true" />

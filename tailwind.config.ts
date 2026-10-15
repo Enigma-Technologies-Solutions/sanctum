@@ -25,13 +25,15 @@ const config: Config = {
     extend: {
       colors: {
         // ── ETS Product Light tokens ─────────────────────────────────
-        "app-bg":      "#FFFFFF",
-        "app-surface": "#F7F8FA",
-        "app-raised":  "#EEF1F4",
-        "app-border":  "#E3E7EC",
-        "app-ink":     "#0A0A0A",
-        "app-ink-2":   "#565B62",
-        "app-ink-3":   "#8A9099",
+        // theme-aware: values live in src/index.css (light and dark)
+        "app-bg":      "var(--app-bg)",
+        "app-surface": "var(--app-surface)",
+        "app-raised":  "var(--app-raised)",
+        "app-border":  "var(--app-border)",
+        "app-ink":     "var(--app-ink)",
+        "app-ink-2":   "var(--app-ink-2)",
+        "app-ink-3":   "var(--app-ink-3)",
+        "on-volt":     "var(--on-volt)",
         // brand accent — fills/active only, black ink on top
         volt: "#FBFF00",
         // status
