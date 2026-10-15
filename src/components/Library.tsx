@@ -11,7 +11,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { listen } from "@tauri-apps/api/event";
 import { Loader2, Layers } from "lucide-react";
 
-export function Library() {
+export function Library({ refreshKey = 0 }: { refreshKey?: number }) {
   const [tools, setTools] = useState<ToolWithVersion[]>([]);
   const [loading, setLoading] = useState(true);
   const [inspecting, setInspecting] = useState<string | null>(null);
@@ -34,7 +34,8 @@ export function Library() {
 
   useEffect(() => {
     refresh().finally(() => setLoading(false));
-  }, [refresh]);
+    // Reload when something was installed elsewhere (the catalogue).
+  }, [refresh, refreshKey]);
 
   const refreshTool = useCallback(async (toolId: string) => {
     try {
@@ -139,15 +140,6 @@ export function Library() {
         {/* Section kicker */}
         <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "12px" }}>
           <div className="volt-bar" style={{ width: "32px" }} />
-          <span
-            style={{
-              fontFamily: "Inter, system-ui, sans-serif",
-              fontSize: "11px", fontWeight: 600,
-              color: "#6B717A", textTransform: "uppercase", letterSpacing: "0.1em",
-            }}
-          >
-            Tool Vault
-          </span>
           {tools.length > 0 && (
             <span
               style={{

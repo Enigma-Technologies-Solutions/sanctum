@@ -38,6 +38,12 @@ jobs:
       - name: Frontend build (TypeScript + Vite)
         run: pnpm build
 
+      # Component tests, the Markdown parser against the shared corpus, and automated
+      # accessibility checks. A real window and screen reader are still checked by hand:
+      # docs/registry-ui-checklist.md.
+      - name: Frontend tests
+        run: pnpm test
+
       # ── Rust ────────────────────────────────────────────────────────────────
       - uses: dtolnay/rust-toolchain@stable
         with:

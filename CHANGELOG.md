@@ -25,7 +25,22 @@ section behind.
   icons, made by `scripts/gen-example-icon.mjs`. `scripts/resign-examples.sh <version>`
   rebuilds and signs both tools.
 - The registry format v1: JSON Schemas, a reference verifier and signed test vectors in
-  `spec/registry/`. The app does not read a registry yet.
+  `spec/registry/`, and a Rust verifier (`sanctum_bundle::registry`) that gives the same
+  verdict on every vector.
+- Registry client commands (`list_registries`, `add_registry`, `refresh_registry`,
+  `remove_registry`). A registry is added by address, over HTTPS only, and must be signed by a
+  key compiled into Sanctum or one you pin. Its verified catalogue is cached and checked again
+  on use. A failed refresh changes nothing. Requests happen only when you add or refresh, and
+  carry no identifiers. You can now install from a registry's catalogue
+  (`registry_catalogue`, `install_from_registry`, `install_all_from_registry`): the bundle is
+  checked against the signed index, verified like any bundle, and must match what the index
+  said before anything is written. Withdrawn versions are refused. Installing, updating or
+  installing everything approves nothing.
+- A **Catalogue** tab: add the Enigma registry in one click (or another registry by address,
+  pinning its signing key only after you have seen it), browse tools with what each one asks
+  for shown before installing, open a tool's changelog, manual and screenshots (each checked
+  against the registry's signed hashes), install one or all, refresh, and remove. Manuals are
+  shown as formatted text from a strict Markdown subset; links are copied, never followed.
 - Signed tool bundles (`.sanctum`). A bundle carries an HTML tool and an Ed25519 signature
   over its hash, name, version and declared capabilities. Sanctum checks the signature and
   the file hash before anything is written, refuses a file that uses capabilities the

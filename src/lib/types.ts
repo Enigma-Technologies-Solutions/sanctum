@@ -111,6 +111,140 @@ export interface TrustAnchorInfo {
   keyId: string;
 }
 
+/** How a registry's signer is trusted: a compiled-in key, or a key the user pinned. */
+export type RegistryTrust = "anchored" | "pinned";
+
+/** A registry the user added, from the cached and re-verified catalogue. */
+export interface RegistrySummary {
+  id: string;
+  name: string;
+  kind: "public" | "licensed";
+  baseUrl: string;
+  trust: RegistryTrust;
+  /** Who the signature identifies, or "Key pinned by you". */
+  publisher: string;
+  signer: string;
+  appCount: number;
+  serial: number;
+  issuedAt: number;
+  expires: number;
+  /** Past its expiry. Browsing still works; say so. */
+  stale: boolean;
+  revocations: { serial: number; expires: number; stale: boolean } | null;
+  addedAt: number;
+  lastCheckedAt: number | null;
+  lastError: string | null;
+}
+
+export type RegistryIndexOutcome =
+  | { state: "unchanged" }
+  | { state: "updated"; fromSerial: number; toSerial: number };
+
+export type RegistryRevocationsOutcome =
+  | { state: "notListed" }
+  | { state: "unchanged" }
+  | { state: "updated" }
+  | { state: "failed"; message: string };
+
+export interface RegistryRefreshReport {
+  index: RegistryIndexOutcome;
+  revocations: RegistryRevocationsOutcome;
+  registry: RegistrySummary;
+}
+
+export interface RegistryCatalogVersion {
+  version: string;
+  publishedAt: number;
+  /** What the publisher declares. The approval screen, not this, grants anything. */
+  declared: DetectedCapability[];
+  size: number;
+  revoked: boolean;
+}
+
+export type RegistryInstallState =
+  | "notInstalled"
+  | "installed"
+  | "updateAvailable"
+  /** Listed but not installable by this version of Sanctum. */
+  | "licensed";
+
+export interface RegistryCatalogApp {
+  appId: string;
+  name: string;
+  summary: string;
+  publisherKey: string;
+  publisherName: string;
+  latest: string;
+  versions: RegistryCatalogVersion[];
+  installedVersion: string | null;
+  state: RegistryInstallState;
+  latestRevoked: boolean;
+}
+
+export interface RegistryCatalogue {
+  registryId: string;
+  registryName: string;
+  stale: boolean;
+  revocationsStale: boolean;
+  apps: RegistryCatalogApp[];
+}
+
+/** Installing never approves anything: `install.tool.approvals` is empty for a new tool. */
+export type RegistryInstallOutcome =
+  | { state: "installed"; install: BundleInstall; notes: string[] }
+  | { state: "alreadyInstalled"; version: string };
+
+export type RegistryBatchItem = { appId: string; name: string } & (
+  | { state: "installed"; toolId: string; version: string; trust: string }
+  | { state: "alreadyInstalled"; version: string }
+  | { state: "failed"; code: string; message: string }
+);
+
+export interface RegistryChangelogEntry {
+  version: string;
+  date: string;
+  changes: { type: "added" | "changed" | "fixed" | "security" | "removed"; text: string }[];
+}
+
+export interface RegistryScreenshot {
+  alt: string;
+  width: number;
+  height: number;
+  /** A data: URL of the verified image, or null if it failed its check. */
+  dataUrl: string | null;
+  error: string | null;
+}
+
+/** An app's detail page. Every file was checked against the signed index in Rust. */
+export interface RegistryAppDetail {
+  appId: string;
+  name: string;
+  description: string;
+  homepage: string | null;
+  source: string | null;
+  license: string | null;
+  changelog: RegistryChangelogEntry[];
+  /** Untrusted Markdown. Render it with parseMarkdown, never as HTML. */
+  manual: string | null;
+  manualError: string | null;
+  screenshots: RegistryScreenshot[];
+  /** A data: URL. Show it only through an <img>. */
+  icon: string | null;
+  iconError: string | null;
+}
+
+/**
+ * What a registry command rejects with. `code` is stable. For "untrusted_signer" the signer
+ * fields are set: show the key and ask before calling addRegistry again with it pinned.
+ */
+export interface RegistryCommandError {
+  code: string;
+  message: string;
+  signer: string | null;
+  registryId: string | null;
+  registryName: string | null;
+}
+
 /** What a signature does and does not mean. Shown wherever a publisher badge appears. */
 export const SIGNATURE_MEANING =
   "A signature says who published this file and that it has not been changed. " +

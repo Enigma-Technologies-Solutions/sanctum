@@ -2,6 +2,7 @@
 // Copyright (C) 2026 Enigma Technologies Solutions
 
 import assert from 'node:assert/strict';
+import { readFileSync } from 'node:fs';
 import { test } from 'node:test';
 import { parseChangelog } from '../lib/changelog.mjs';
 import { imageSize } from '../lib/images.mjs';
@@ -53,6 +54,15 @@ test('markdown refuses anything outside the subset', () => {
 
 test('markdown allows angle brackets inside code', () => {
   assert.match(renderMarkdown('Use `<div>` here'), /<code>&lt;div&gt;<\/code>/);
+});
+
+test('markdown matches the shared corpus that the app parser is also tested against', () => {
+  const corpus = JSON.parse(readFileSync(new URL('../../spec/registry/markdown-cases.json', import.meta.url), 'utf8'));
+  assert.ok(corpus.cases.length >= 25);
+  for (const c of corpus.cases) {
+    if (c.ok) assert.equal(renderMarkdown(c.src), c.html, c.name);
+    else assert.throws(() => renderMarkdown(c.src), MarkdownError, c.name);
+  }
 });
 
 // ── Changelog ─────────────────────────────────────────────────────────────────

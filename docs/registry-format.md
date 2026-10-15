@@ -256,7 +256,8 @@ For `index.json`:
 2. Parse `index.json.sig` and check it against `sigfile.schema.json`. Else `sig_malformed`.
 3. Verify the signature over `domain || bytes`. Else `bad_signature`. **Nothing is parsed
    before this passes.**
-4. Parse the JSON as UTF-8. Else `malformed_json`.
+4. Parse the JSON as UTF-8. A byte order mark is refused. Else `malformed_json`. A number with
+   no fractional part is an integer, so `7.0` is accepted where an integer is required.
 5. If `format` is a string other than `sanctum-registry/1`, `format_unsupported`.
 6. Validate against the schema and the rules below. Else `schema_invalid`.
 7. `id` must equal the id the user added. Else `id_mismatch`.
@@ -299,6 +300,100 @@ revocation. Since the signing key stays offline, someone has to re-sign before i
 Proposed defaults: index valid for 90 days, revocations for 14. A stale file warns; it does
 not block browsing or installing, because bytes and signatures are still checked. Whether
 install should be blocked when revocations are stale is an open decision.
+
+## Certificates in a registry signature
+
+The certificate in `chain` has the same shape as in a bundle: exactly the fields `schema`,
+`subject`, `name`, `not_before`, `not_after` and `scope`, with those types. Any other field,
+or a wrong type, makes it malformed, and a malformed certificate means the signer is
+unanchored (never an error on its own). A `scope` entry only counts if it is not empty and
+is a prefix of the registry id; an empty list or an empty string covers nothing.
+
+## Implementations
+
+| | Where | Tested against |
+|---|---|---|
+| Node reference | `spec/registry/reference.mjs` | every vector, `node --test` |
+| Rust client | `sanctum_bundle::registry` (`src-tauri/crates/sanctum-bundle`) | every vector, plus the published registry, `cargo test` |
+
+The Rust code does not re-write the schema rules. It embeds the files in
+`spec/registry/schema` and interprets them, so a change to a schema changes both sides, and a
+test fails if a schema starts using a keyword the validator does not implement.
+
+One known difference, in the safe direction: Rust verifies signatures strictly (it rejects
+small-order keys and non-canonical signatures), while Node's OpenSSL does not. The vectors
+use ordinary keys, so they agree. A registry that only a lax verifier accepts must be treated
+as invalid.
+
+## What the Sanctum client does
+
+Implemented in `src-tauri/src/registry/`. It acts only when the user asks (add, refresh);
+there is no background polling yet.
+
+**Adding** a registry takes an address. The client fetches `index.json` and its signature
+over HTTPS, reads the registry `id` the file claims only to know what to verify against, then
+runs the verification above. The id is trusted because the signature covers it. The signer
+must be **anchored** (a compiled-in key, directly or through a certificate), or a key the user
+**pinned**. Otherwise the client refuses and reports the signer's key; the interface shows it
+and, only if the user agrees, adds the registry again with that key pinned. If the index names
+a revocation list, it must verify too: a registry whose revocations cannot be read is not added.
+
+**Refreshing** requires the stored id, a serial that does not go back, the same serial only for
+identical bytes, and a signer that is still anchored or pinned. Any failure changes nothing but
+a "last error" note, so a bad registry cannot replace a good cached copy. Revocations may
+partly succeed: if the index verifies but the revocations cannot be refreshed, the index
+updates, the previous revocations stay, and the problem is recorded. Refusing the new index
+instead would let someone block one file to freeze a client on an old catalogue.
+
+**Installing** (`src-tauri/src/registry/install.rs`) works from the cached, re-verified
+catalogue, so it works offline; refresh first to see newer versions. For one app, in order:
+
+1. Refuse if the entry is licensed (`kind` or `access`), or if the registry's revocation list
+   withdraws that version. No bundle is downloaded for either.
+2. If that exact version is already in the library, say so and change nothing.
+3. Download the bundle, capped at the size the index states, then check size and SHA-256.
+4. Verify the bundle as the app does for any file, and require the signed statement to say
+   exactly what the index said: `app_id`, `version`, `checksum`, `declared` and the signer's
+   key. Any difference refuses the install before anything is written. A validly signed index
+   that misdescribes a bundle is refused all the same.
+5. Hand the bundle to the normal install path: local scan, undeclared-capability check, app
+   identity, downgrade rule, storage and provenance.
+
+What a registry does **not** do: it does not approve anything (the tool starts with no
+approvals, and updating or installing everything never adds one), and it does not raise a
+publisher's trust. A bundle signed by an unknown key installs as an unknown signer even from
+an anchored registry, because the registry vouches for its catalogue, not for the key.
+
+"Install all" does the same for each app and carries on after a failure, reporting each
+result. It skips licensed apps instead of listing them as failures.
+
+**The interface** (`src/components/catalogue/`) only ever asks for these things when the user
+acts: add or refresh a registry (the index and revocations), open a detail page (the detail
+file, manual, screenshots and icon, each checked against the hash in the signed index in Rust),
+and install (the bundle). Screenshots and icons reach the window as `data:` URLs after
+verification, so the window's content policy never allows a remote image. An SVG icon is
+accepted only if it contains nothing active, and is shown only through an image element. The
+manual is parsed by the same strict subset as the builder (`src/lib/markdown.ts` and
+`scripts/lib/markdown.mjs`, tested against `spec/registry/markdown-cases.json`) and rendered
+as elements, never as an HTML string; text outside the subset is shown as plain text. Links in
+a manual show their address with a button that copies it. Sanctum does not open links itself.
+
+**The cache is not trusted.** The verified bytes are stored beside a row and verified again
+whenever they are used, so a modified database fails verification whatever its columns say.
+
+**Network policy** (`fetch.rs`):
+
+| Rule | Why |
+|---|---|
+| `https` only; a plain `http` address is refused before any connection | Transport is not the trust root, but there is no reason to expose a request |
+| No user name or password, no `#` part, no `?` part in a registry address | Nothing secret belongs in an address |
+| At most 3 redirects, each to the same scheme, host and port | A registry cannot send the client elsewhere |
+| Size cap checked against `Content-Length`, then while reading | A server cannot fill memory, whether it lies or streams forever |
+| 15 s without data, 30 s in total, 10 s to connect | A server cannot hold the client |
+| No cookies, no decompression, fixed user agent `Sanctum` | No identifiers, no decompression bombs |
+
+Addresses on private networks are allowed: an organisation's own registry may well live there.
+The client only ever reads, and nothing it reads is acted on until it verifies.
 
 ## Limits
 

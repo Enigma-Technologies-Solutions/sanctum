@@ -12,6 +12,12 @@ import type {
   UpdateInfo,
   PolicyStatus,
   TrustAnchorInfo,
+  RegistryAppDetail,
+  RegistryBatchItem,
+  RegistryCatalogue,
+  RegistryInstallOutcome,
+  RegistryRefreshReport,
+  RegistrySummary,
   ProvenanceRecord,
   VersionRecord,
 } from "./types";
@@ -42,6 +48,58 @@ export const Commands = {
   /** Publisher keys this build recognises (read-only). */
   getTrustAnchors(): Promise<TrustAnchorInfo[]> {
     return invoke("get_trust_anchors");
+  },
+
+  /** Registries the user added. No network: reads the cached, re-verified catalogue. */
+  listRegistries(): Promise<RegistrySummary[]> {
+    return invoke("list_registries");
+  },
+
+  /**
+   * Add a registry by address. Contacts that address once. Rejects with a
+   * RegistryCommandError; for code "untrusted_signer", show the signer key and, only if the
+   * user agrees, call again with it as `pinnedKey`.
+   */
+  addRegistry(url: string, pinnedKey?: string): Promise<RegistrySummary> {
+    return invoke("add_registry", { url, pinnedKey: pinnedKey ?? null });
+  },
+
+  /** Fetch the registry again. A failed refresh leaves the cached catalogue unchanged. */
+  refreshRegistry(id: string): Promise<RegistryRefreshReport> {
+    return invoke("refresh_registry", { id });
+  },
+
+  /** The cached, re-verified catalogue with install state per app. No network. */
+  registryCatalogue(registryId: string): Promise<RegistryCatalogue> {
+    return invoke("registry_catalogue", { registryId });
+  },
+
+  /** An app's changelog, manual, screenshots and icon. Contacts the registry; all verified. */
+  registryAppDetail(registryId: string, appId: string): Promise<RegistryAppDetail> {
+    return invoke("registry_app_detail", { registryId, appId });
+  },
+
+  /**
+   * Install one app from a registry (default: its listed latest). The tool starts with
+   * nothing approved. Rejects with a RegistryCommandError, e.g. code "revoked",
+   * "inconsistent" or "not_installable".
+   */
+  installFromRegistry(
+    registryId: string,
+    appId: string,
+    version?: string,
+  ): Promise<RegistryInstallOutcome> {
+    return invoke("install_from_registry", { registryId, appId, version: version ?? null });
+  },
+
+  /** Install several apps, or every installable one when `appIds` is omitted. Approves nothing. */
+  installAllFromRegistry(registryId: string, appIds?: string[]): Promise<RegistryBatchItem[]> {
+    return invoke("install_all_from_registry", { registryId, appIds: appIds ?? null });
+  },
+
+  /** Forget a registry and its cache. Tools already installed from it are not touched. */
+  removeRegistry(id: string): Promise<void> {
+    return invoke("remove_registry", { id });
   },
 
   /** Whether an organisation policy manages this install, and whether it applied. */

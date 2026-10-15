@@ -31,6 +31,17 @@ uuid = { version = "1", features = ["v4"] }
 # (CSP + empty capabilities) is the real security guarantee; the scan is advisory.
 regex = "1"
 url = "2"
+# Screenshots and icons reach the interface as data: URLs, after their hash is checked.
+base64 = "0.22"
+# HTTP client for the registry (docs/registry-format.md). Same TLS stack as the updater
+# (rustls with ring, already in the tree); no cookies, no automatic redirects, no
+# decompression. Redirects and size/time limits are enforced in registry/fetch.rs so they
+# can be tested without a network.
+reqwest = { version = "0.13", default-features = false, features = ["rustls-no-provider", "http2", "system-proxy"] }
+tokio = { version = "1", features = ["time"] }
+# Only to install the ring crypto provider the way the updater does (reqwest is built
+# without a provider). Already in the tree through the updater, so no new compile.
+rustls = { version = "0.23", default-features = false, features = ["ring"] }
 # SQLite — direct sqlx, not tauri-plugin-sql, because all DB operations
 # in v0 flow through Tauri commands (Rust side). tauri-plugin-sql can be
 # added later if the frontend ever needs direct DB access from JS.
@@ -52,7 +63,7 @@ sanctum-bundle = { path = "crates/sanctum-bundle" }
 [dev-dependencies]
 ed25519-dalek = { version = "2", features = ["rand_core"] }
 rand_core = { version = "0.6", features = ["getrandom"] }
-tokio = { version = "1", features = ["macros", "rt-multi-thread"] }
+tokio = { version = "1", features = ["macros", "rt-multi-thread", "test-util"] }
 
 [profile.release]
 panic = "abort"

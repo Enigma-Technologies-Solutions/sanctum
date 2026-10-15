@@ -66,6 +66,12 @@ Gate: maintainer signs and merges, then the live index verifies offline.
 
 ## Phase 3: index verification in Rust (3 days)
 
+Status: built and tested on `feat/registry-client`: `sanctum_bundle::registry` verifies the
+index, revocations, detail and asset files. 120 vector files, 62 cases, identical verdicts in
+Rust and Node, and the published registry verifies in Rust. Nothing in the app calls it yet
+(that is Phase 4).
+
+
 1. Index parsing and signature verification in `sanctum-bundle`.
 2. Rollback protection (`serial`), `expires`, hash checks, attestation parsing.
 
@@ -74,6 +80,10 @@ kept under the signature, and the real published index from Phase 2 verifies.
 Gate: Rust and Node agree on every vector.
 
 ## Phase 4: fetch and store (4 days)
+
+Status: built and tested on `feat/registry-client-app` (`src-tauri/src/registry/`): fetcher,
+`registries` table, client rules, four Tauri commands and TypeScript wrappers. No interface yet.
+
 
 1. HTTPS-only fetcher with size and time limits and a redirect policy.
 2. SQLite migration for registries, cached verified index.
@@ -85,6 +95,10 @@ Gate: a bad registry cannot poison a good cached one. Nothing installs yet.
 
 ## Phase 5: install from registry (4 days)
 
+Status: built and tested on `feat/registry-install`: catalogue with install state, install one,
+install many, three Tauri commands and TypeScript wrappers. Still no interface (Phase 6).
+
+
 1. Download, check the index hash, run the existing bundle verification and ingest.
 2. Updates go through the existing update path with the same downgrade protection.
 
@@ -94,6 +108,13 @@ capabilities.
 Gate: the existing suite plus the new tests pass.
 
 ## Phase 6: catalog UI (5 days)
+
+Status: built and tested on `feat/registry-ui`: the Catalogue tab, add-registry and pin flow,
+cards with scope, detail pages (changelog, manual, hash-checked screenshots), install and
+install all, refresh and remove, plus `registry_app_detail`. Automated: 98 UI tests (Vitest,
+Testing Library, axe). The real-window, VoiceOver and Safari checks are in
+[registry-ui-checklist.md](registry-ui-checklist.md) and are yours.
+
 
 1. Add a registry by URL, plus one-click "Add Enigma registry" on the empty first-run screen.
 2. Browse with scope, changelog, manual, hash-checked screenshots (Markdown as safe text).

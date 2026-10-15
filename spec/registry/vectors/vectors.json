@@ -85,6 +85,57 @@
       }
     },
     {
+      "name": "index_unanchored_cert_empty_scope_entry",
+      "kind": "index",
+      "index": "index_unanchored_cert_empty_scope_entry/index.json",
+      "sig": "index_unanchored_cert_empty_scope_entry/index.json.sig",
+      "now": 1790000000,
+      "anchors": [
+        "root"
+      ],
+      "expected_id": "registry:sh.enigma.test",
+      "expect": {
+        "result": "ok",
+        "trust": "unanchored",
+        "reason": "certificate does not cover this registry",
+        "stale": false
+      }
+    },
+    {
+      "name": "index_unanchored_cert_empty_scope_list",
+      "kind": "index",
+      "index": "index_unanchored_cert_empty_scope_list/index.json",
+      "sig": "index_unanchored_cert_empty_scope_list/index.json.sig",
+      "now": 1790000000,
+      "anchors": [
+        "root"
+      ],
+      "expected_id": "registry:sh.enigma.test",
+      "expect": {
+        "result": "ok",
+        "trust": "unanchored",
+        "reason": "certificate does not cover this registry",
+        "stale": false
+      }
+    },
+    {
+      "name": "index_chain_scope_second_entry_ok",
+      "kind": "index",
+      "index": "index_chain_scope_second_entry_ok/index.json",
+      "sig": "index_chain_scope_second_entry_ok/index.json.sig",
+      "now": 1790000000,
+      "anchors": [
+        "root"
+      ],
+      "expected_id": "registry:sh.enigma.test",
+      "expect": {
+        "result": "ok",
+        "trust": "anchored",
+        "publisher": "Test Publisher",
+        "stale": false
+      }
+    },
+    {
       "name": "index_unanchored_cert_expired",
       "kind": "index",
       "index": "index_unanchored_cert_expired/index.json",
@@ -150,6 +201,136 @@
         "trust": "unanchored",
         "reason": "certificate is for a different key",
         "stale": false
+      }
+    },
+    {
+      "name": "index_unanchored_cert_extra_field",
+      "kind": "index",
+      "index": "index_unanchored_cert_extra_field/index.json",
+      "sig": "index_unanchored_cert_extra_field/index.json.sig",
+      "now": 1790000000,
+      "anchors": [
+        "root"
+      ],
+      "expected_id": "registry:sh.enigma.test",
+      "expect": {
+        "result": "ok",
+        "trust": "unanchored",
+        "reason": "certificate is malformed",
+        "stale": false
+      }
+    },
+    {
+      "name": "index_unanchored_chain_too_long",
+      "kind": "index",
+      "index": "index_unanchored_chain_too_long/index.json",
+      "sig": "index_unanchored_chain_too_long/index.json.sig",
+      "now": 1790000000,
+      "anchors": [
+        "root"
+      ],
+      "expected_id": "registry:sh.enigma.test",
+      "expect": {
+        "result": "ok",
+        "trust": "unanchored",
+        "reason": "certificate chains longer than one are not supported",
+        "stale": false
+      }
+    },
+    {
+      "name": "index_unanchored_cert_bad_signature",
+      "kind": "index",
+      "index": "index_unanchored_cert_bad_signature/index.json",
+      "sig": "index_unanchored_cert_bad_signature/index.json.sig",
+      "now": 1790000000,
+      "anchors": [
+        "root"
+      ],
+      "expected_id": "registry:sh.enigma.test",
+      "expect": {
+        "result": "ok",
+        "trust": "unanchored",
+        "reason": "certificate signature does not verify",
+        "stale": false
+      }
+    },
+    {
+      "name": "index_sig_unknown_fields_ok",
+      "kind": "index",
+      "index": "index_sig_unknown_fields_ok/index.json",
+      "sig": "index_sig_unknown_fields_ok/index.json.sig",
+      "now": 1790000000,
+      "anchors": [
+        "root"
+      ],
+      "expected_id": "registry:sh.enigma.test",
+      "expect": {
+        "result": "ok",
+        "trust": "anchored",
+        "publisher": "Test Root",
+        "stale": false
+      }
+    },
+    {
+      "name": "index_bom_rejected",
+      "kind": "index",
+      "index": "index_bom_rejected/index.json",
+      "sig": "index_bom_rejected/index.json.sig",
+      "now": 1790000000,
+      "anchors": [
+        "root"
+      ],
+      "expected_id": "registry:sh.enigma.test",
+      "expect": {
+        "result": "error",
+        "error": "malformed_json"
+      }
+    },
+    {
+      "name": "index_not_an_object",
+      "kind": "index",
+      "index": "index_not_an_object/index.json",
+      "sig": "index_not_an_object/index.json.sig",
+      "now": 1790000000,
+      "anchors": [
+        "root"
+      ],
+      "expected_id": "registry:sh.enigma.test",
+      "expect": {
+        "result": "error",
+        "error": "schema_invalid"
+      }
+    },
+    {
+      "name": "index_integer_written_as_float_ok",
+      "kind": "index",
+      "index": "index_integer_written_as_float_ok/index.json",
+      "sig": "index_integer_written_as_float_ok/index.json.sig",
+      "now": 1790000000,
+      "anchors": [
+        "root"
+      ],
+      "expected_id": "registry:sh.enigma.test",
+      "expect": {
+        "result": "ok",
+        "trust": "anchored",
+        "publisher": "Test Root",
+        "stale": false
+      }
+    },
+    {
+      "name": "index_serial_is_a_string",
+      "kind": "index",
+      "index": "index_serial_is_a_string/index.json",
+      "sig": "index_serial_is_a_string/index.json.sig",
+      "now": 1790000000,
+      "anchors": [
+        "root"
+      ],
+      "expected_id": "registry:sh.enigma.test",
+      "expect": {
+        "result": "error",
+        "error": "schema_invalid"
       }
     },
     {

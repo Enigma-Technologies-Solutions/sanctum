@@ -69,5 +69,39 @@ pub async fn run_migrations(pool: &SqlitePool) -> Result<(), sqlx::Error> {
         sqlx::query(stmt).execute(pool).await?;
     }
 
+    // Registries the user added (docs/registry-format.md). A row exists only once a verified
+    // index has been fetched, and the verified bytes are cached beside it so the catalogue
+    // works offline. The cache is never trusted on its own: it is verified again on use.
+    let v3: &[&str] = &["CREATE TABLE IF NOT EXISTS registries (
+            id              TEXT    PRIMARY KEY,
+            base_url        TEXT    NOT NULL UNIQUE,
+            name            TEXT    NOT NULL,
+            kind            TEXT    NOT NULL,
+            trust           TEXT    NOT NULL CHECK (trust IN ('anchored', 'pinned')),
+            pinned_key      TEXT,
+            publisher       TEXT    NOT NULL,
+            signer          TEXT    NOT NULL,
+            app_count       INTEGER NOT NULL,
+            added_at        INTEGER NOT NULL,
+            last_checked_at INTEGER,
+            last_error      TEXT,
+            index_json      BLOB    NOT NULL,
+            index_sig       BLOB    NOT NULL,
+            index_serial    INTEGER NOT NULL,
+            index_sha256    TEXT    NOT NULL,
+            index_issued_at INTEGER NOT NULL,
+            index_expires   INTEGER NOT NULL,
+            index_fetched_at INTEGER NOT NULL,
+            rev_json        BLOB,
+            rev_sig         BLOB,
+            rev_serial      INTEGER,
+            rev_sha256      TEXT,
+            rev_expires     INTEGER,
+            rev_fetched_at  INTEGER
+        )"];
+    for stmt in v3 {
+        sqlx::query(stmt).execute(pool).await?;
+    }
+
     Ok(())
 }
