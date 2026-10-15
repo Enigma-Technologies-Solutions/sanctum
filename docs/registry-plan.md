@@ -81,6 +81,10 @@ Gate: Rust and Node agree on every vector.
 
 ## Phase 4: fetch and store (4 days)
 
+Status: built and tested on `feat/registry-client-app` (`src-tauri/src/registry/`): fetcher,
+`registries` table, client rules, four Tauri commands and TypeScript wrappers. No interface yet.
+
+
 1. HTTPS-only fetcher with size and time limits and a redirect policy.
 2. SQLite migration for registries, cached verified index.
 3. Commands: add, remove, refresh, list.

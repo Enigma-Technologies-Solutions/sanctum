@@ -111,6 +111,59 @@ export interface TrustAnchorInfo {
   keyId: string;
 }
 
+/** How a registry's signer is trusted: a compiled-in key, or a key the user pinned. */
+export type RegistryTrust = "anchored" | "pinned";
+
+/** A registry the user added, from the cached and re-verified catalogue. */
+export interface RegistrySummary {
+  id: string;
+  name: string;
+  kind: "public" | "licensed";
+  baseUrl: string;
+  trust: RegistryTrust;
+  /** Who the signature identifies, or "Key pinned by you". */
+  publisher: string;
+  signer: string;
+  appCount: number;
+  serial: number;
+  issuedAt: number;
+  expires: number;
+  /** Past its expiry. Browsing still works; say so. */
+  stale: boolean;
+  revocations: { serial: number; expires: number; stale: boolean } | null;
+  addedAt: number;
+  lastCheckedAt: number | null;
+  lastError: string | null;
+}
+
+export type RegistryIndexOutcome =
+  | { state: "unchanged" }
+  | { state: "updated"; fromSerial: number; toSerial: number };
+
+export type RegistryRevocationsOutcome =
+  | { state: "notListed" }
+  | { state: "unchanged" }
+  | { state: "updated" }
+  | { state: "failed"; message: string };
+
+export interface RegistryRefreshReport {
+  index: RegistryIndexOutcome;
+  revocations: RegistryRevocationsOutcome;
+  registry: RegistrySummary;
+}
+
+/**
+ * What a registry command rejects with. `code` is stable. For "untrusted_signer" the signer
+ * fields are set: show the key and ask before calling addRegistry again with it pinned.
+ */
+export interface RegistryCommandError {
+  code: string;
+  message: string;
+  signer: string | null;
+  registryId: string | null;
+  registryName: string | null;
+}
+
 /** What a signature does and does not mean. Shown wherever a publisher badge appears. */
 export const SIGNATURE_MEANING =
   "A signature says who published this file and that it has not been changed. " +

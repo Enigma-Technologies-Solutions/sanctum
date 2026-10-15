@@ -236,6 +236,10 @@ pub fn run() {
             commands::bundle::get_provenance,
             policy::get_policy_status,
             trust::get_trust_anchors,
+            registry::commands::list_registries,
+            registry::commands::add_registry,
+            registry::commands::refresh_registry,
+            registry::commands::remove_registry,
             commands::library::list_tools,
             commands::library::get_tool,
             commands::library::update_metadata,
@@ -267,6 +271,11 @@ pub fn run() {
             tauri::async_runtime::block_on(db::run_migrations(&pool))
                 .expect("database migration failed");
 
+            // Registries: network only on user action. A failure to set up TLS disables the
+            // feature, not the app.
+            app.manage(registry::commands::RegistryState {
+                client: registry::client::RegistryClient::production(pool.clone()),
+            });
             app.manage(db::DbState(pool));
             app.manage(AppDataDir(data_dir));
 
