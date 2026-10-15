@@ -256,7 +256,8 @@ For `index.json`:
 2. Parse `index.json.sig` and check it against `sigfile.schema.json`. Else `sig_malformed`.
 3. Verify the signature over `domain || bytes`. Else `bad_signature`. **Nothing is parsed
    before this passes.**
-4. Parse the JSON as UTF-8. Else `malformed_json`.
+4. Parse the JSON as UTF-8. A byte order mark is refused. Else `malformed_json`. A number with
+   no fractional part is an integer, so `7.0` is accepted where an integer is required.
 5. If `format` is a string other than `sanctum-registry/1`, `format_unsupported`.
 6. Validate against the schema and the rules below. Else `schema_invalid`.
 7. `id` must equal the id the user added. Else `id_mismatch`.
@@ -299,6 +300,30 @@ revocation. Since the signing key stays offline, someone has to re-sign before i
 Proposed defaults: index valid for 90 days, revocations for 14. A stale file warns; it does
 not block browsing or installing, because bytes and signatures are still checked. Whether
 install should be blocked when revocations are stale is an open decision.
+
+## Certificates in a registry signature
+
+The certificate in `chain` has the same shape as in a bundle: exactly the fields `schema`,
+`subject`, `name`, `not_before`, `not_after` and `scope`, with those types. Any other field,
+or a wrong type, makes it malformed, and a malformed certificate means the signer is
+unanchored (never an error on its own). A `scope` entry only counts if it is not empty and
+is a prefix of the registry id; an empty list or an empty string covers nothing.
+
+## Implementations
+
+| | Where | Tested against |
+|---|---|---|
+| Node reference | `spec/registry/reference.mjs` | every vector, `node --test` |
+| Rust client | `sanctum_bundle::registry` (`src-tauri/crates/sanctum-bundle`) | every vector, plus the published registry, `cargo test` |
+
+The Rust code does not re-write the schema rules. It embeds the files in
+`spec/registry/schema` and interprets them, so a change to a schema changes both sides, and a
+test fails if a schema starts using a keyword the validator does not implement.
+
+One known difference, in the safe direction: Rust verifies signatures strictly (it rejects
+small-order keys and non-canonical signatures), while Node's OpenSSL does not. The vectors
+use ordinary keys, so they agree. A registry that only a lax verifier accepts must be treated
+as invalid.
 
 ## Limits
 

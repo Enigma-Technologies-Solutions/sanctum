@@ -17,6 +17,8 @@ use serde::{Deserialize, Serialize};
 use sha2::{Digest, Sha256};
 use std::fmt;
 
+pub mod registry;
+
 pub const BUNDLE_FORMAT: &str = "sanctum-bundle/1";
 pub const STATEMENT_SCHEMA: u32 = 1;
 const STATEMENT_DOMAIN: &[u8] = b"sanctum-statement-v1\n";

@@ -174,6 +174,15 @@ test('oversize files are refused before any parsing', () => {
   assert.throws(() => checkDetail({ detail: { size: bigDetail.length, sha256: sha256Of(bigDetail), path: 'apps/a.b.json' }, app_id: 'a.b' }, bigDetail), (e) => e.code === 'too_large');
 });
 
+test('an oversize signature file is refused before it is parsed', () => {
+  const indexBytes = read('index_root_signed/index.json');
+  const big = Buffer.alloc(LIMITS.sigfile + 1, 0x20);
+  assert.throws(
+    () => verifyIndex({ indexBytes, sigBytes: big, anchors: anchorsFor(['root']), now: manifest.cases[0].now, expectedId: manifest.cases[0].expected_id }),
+    (e) => e.code === 'too_large',
+  );
+});
+
 test('the test keys are not trust anchors in any build', () => {
   const trust = readFileSync(join(HERE, '..', '..', '..', 'src-tauri', 'src', 'trust.rs'), 'utf8');
   for (const [name, k] of Object.entries(KEYS)) {

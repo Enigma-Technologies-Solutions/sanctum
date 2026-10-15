@@ -158,6 +158,11 @@ export function verifyDomain(domain, bytes, sig, keyid) {
 }
 
 function parseJson(bytes, what) {
+  // A byte order mark is not part of JSON. TextDecoder would silently drop it, and a strict
+  // parser would refuse it, so refuse it everywhere.
+  if (bytes.length >= 3 && bytes[0] === 0xef && bytes[1] === 0xbb && bytes[2] === 0xbf) {
+    throw new RegistryError('malformed_json', `${what} starts with a byte order mark`);
+  }
   let text;
   try {
     text = new TextDecoder('utf-8', { fatal: true }).decode(bytes);
@@ -212,6 +217,7 @@ export function trustOf(sigDoc, subject, anchors, now) {
   } catch {
     return { trust: 'unanchored', reason: 'certificate is malformed' };
   }
+  if (!isCertificateShape(payload)) return { trust: 'unanchored', reason: 'certificate is malformed' };
   if (payload.schema !== 1) return { trust: 'unanchored', reason: 'certificate has an unsupported schema' };
   if (payload.subject !== sigDoc.keyid) return { trust: 'unanchored', reason: 'certificate is for a different key' };
   if (now < payload.not_before) return { trust: 'unanchored', reason: 'certificate is not yet valid' };
@@ -219,6 +225,21 @@ export function trustOf(sigDoc, subject, anchors, now) {
   const covers = (payload.scope ?? []).some((p) => typeof p === 'string' && p !== '' && subject.startsWith(p));
   if (!covers) return { trust: 'unanchored', reason: 'certificate does not cover this registry' };
   return { trust: 'anchored', publisher: payload.name };
+}
+
+/** A certificate has exactly these fields with these types (same as the bundle format). */
+function isCertificateShape(p) {
+  if (typeof p !== 'object' || p === null || Array.isArray(p)) return false;
+  if (Object.keys(p).sort().join() !== 'name,not_after,not_before,schema,scope,subject') return false;
+  return (
+    Number.isInteger(p.schema) &&
+    typeof p.subject === 'string' &&
+    typeof p.name === 'string' &&
+    Number.isInteger(p.not_before) &&
+    Number.isInteger(p.not_after) &&
+    Array.isArray(p.scope) &&
+    p.scope.every((x) => typeof x === 'string')
+  );
 }
 
 // ── Rules beyond the schema ───────────────────────────────────────────────────
