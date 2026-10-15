@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: AGPL-3.0-only
 // Copyright (C) 2026 Enigma Technologies Solutions
 
+import { PageHeader } from "@/components/PageHeader";
 import { useState, useEffect, useCallback } from "react";
 import type { ToolWithVersion, IngestResult, BundleInstall, PolicyStatus } from "@/lib/types";
 import { Commands } from "@/lib/commands";
@@ -9,10 +10,59 @@ import { IngestBar } from "./IngestBar";
 import { InspectView } from "./InspectView";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { listen } from "@tauri-apps/api/event";
-import { Loader2, Layers } from "lucide-react";
+import { AlertTriangle, BadgeCheck, FileCode, HelpCircle, Loader2, Layers } from "lucide-react";
+import { SectionHeader, Dot } from "./SectionHeader";
+import { groupByPublisher } from "@/lib/vault";
+
+/** Dashed card in "Your tools" while you have not added a tool of your own. */
+function EmptySlot() {
+  return (
+    <div
+      data-testid="empty-slot"
+      style={{
+        minHeight: "190px",
+        border: "2px dashed var(--app-border-2)",
+        borderRadius: "10px",
+        display: "flex", flexDirection: "column",
+        alignItems: "center", justifyContent: "center",
+        gap: "10px", padding: "24px", textAlign: "center",
+      }}
+    >
+      <div
+        style={{
+          width: "44px", height: "44px",
+          background: "var(--app-raised)", borderRadius: "12px",
+          display: "flex", alignItems: "center", justifyContent: "center",
+        }}
+      >
+        <Layers className="h-5 w-5" aria-hidden="true" style={{ color: "var(--app-mute)" }} />
+      </div>
+      <p
+        style={{
+          fontFamily: "Poppins, system-ui, sans-serif",
+          fontWeight: 600, fontSize: "15px",
+          color: "var(--app-ink)", margin: 0, letterSpacing: "-0.01em",
+        }}
+      >
+        Your first tool will appear here
+      </p>
+      <p
+        style={{
+          fontFamily: "Inter, system-ui, sans-serif",
+          fontSize: "12.5px", color: "var(--app-ink-2)",
+          maxWidth: "280px", margin: 0, lineHeight: 1.5,
+        }}
+      >
+        Use Paste from Clipboard or Open File above, or drop a .html file into this window. Signed
+        tools are grouped under their publisher below. Find some in the Catalogue.
+      </p>
+    </div>
+  );
+}
 
 export function Library({ refreshKey = 0 }: { refreshKey?: number }) {
   const [tools, setTools] = useState<ToolWithVersion[]>([]);
+  const [ingestError, setIngestError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [inspecting, setInspecting] = useState<string | null>(null);
   const [dragOver, setDragOver] = useState(false);
@@ -99,6 +149,12 @@ export function Library({ refreshKey = 0 }: { refreshKey?: number }) {
     if (inspecting === toolId) setInspecting(null);
   }, [inspecting]);
 
+  // "Your tools" holds what you pasted or opened without a signature. Everything signed is
+  // grouped by publisher below it.
+  const allGroups = groupByPublisher(tools);
+  const ownTools = allGroups.find((g) => g.kind === "unsigned")?.tools ?? [];
+  const publisherGroups = allGroups.filter((g) => g.kind !== "unsigned");
+
   const inspectedItem = inspecting ? tools.find((t) => t.tool.id === inspecting) ?? null : null;
 
   if (loading) {
@@ -129,139 +185,93 @@ export function Library({ refreshKey = 0 }: { refreshKey?: number }) {
       className={`flex flex-col h-full relative ${dragOver ? "drag-over" : ""}`}
       style={{ background: "var(--app-bg)" }}
     >
-      {/* Toolbar */}
-      <div
-        style={{
-          padding: "20px 24px 16px",
-          borderBottom: "1px solid var(--app-border)",
-          background: "var(--app-bg)",
-        }}
-      >
-        {/* Section kicker */}
-        <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "12px" }}>
-          <div className="volt-bar" style={{ width: "32px" }} />
-          {tools.length > 0 && (
-            <span
-              style={{
-                marginLeft: "auto",
-                fontFamily: "Inter, system-ui, sans-serif",
-                fontSize: "12px", color: "var(--app-mute)",
-              }}
-            >
-              {tools.length} {tools.length === 1 ? "tool" : "tools"}
-            </span>
-          )}
-        </div>
-
-        {/* Section heading */}
-        <h1
-          style={{
-            fontFamily: "Poppins, system-ui, sans-serif",
-            fontWeight: 700, fontSize: "20px",
-            color: "var(--app-ink)", letterSpacing: "-0.01em",
-            margin: "0 0 4px",
-          }}
-        >
-          Your tools
-        </h1>
-        {/* Volt accent bar — no radius, stays sharp */}
-        <div className="volt-bar" style={{ width: "48px", marginBottom: "16px" }} />
-
-        <IngestBar onIngested={handleIngested} />
-
-        {policy?.managed && (
-          <div
-            style={{
-              marginTop: "10px",
-              background: policy.error ? "rgba(210,64,46,.08)" : "var(--app-surface)",
-              border: `1px solid ${policy.error ? "rgba(210,64,46,.2)" : "var(--app-border)"}`,
-              borderRadius: "6px",
-              padding: "8px 12px",
-              fontFamily: "Inter, system-ui, sans-serif",
-              fontSize: "12px",
-              color: policy.error ? "var(--danger-ink)" : "var(--app-ink-1)",
-            }}
-          >
-            {policy.error
-              ? `Your organisation's policy could not be applied, so tools are blocked. ${policy.error}`
-              : policy.pinnedCount !== null
-                ? `Your organisation limits which tools can run. ${policy.pinnedCount} approved ${policy.pinnedCount === 1 ? "version" : "versions"}. Other tools can be added but will not open.`
-                : "Your organisation manages this installation."}
-          </div>
-        )}
-
-        {runError && (
-          <div
-            style={{
-              marginTop: "10px",
-              display: "flex", alignItems: "flex-start", gap: "6px",
-              background: "rgba(210,64,46,.08)",
-              border: "1px solid rgba(210,64,46,.2)",
-              borderRadius: "6px",
-              padding: "8px 12px",
-              fontFamily: "Inter, system-ui, sans-serif",
-              fontSize: "12px", color: "var(--danger-ink)",
-            }}
-          >
-            {runError}
-          </div>
-        )}
-      </div>
+      <PageHeader title="Installed tools">
+        Tools you have added to Sanctum. Each one runs in its own sandbox and gets only the access you approve.
+      </PageHeader>
 
       {/* Tool grid */}
       <ScrollArea className="flex-1" style={{ background: "var(--app-surface)" }}>
         <div style={{ padding: "20px 24px 24px" }}>
-          {tools.length === 0 ? (
-            <div
-              style={{
-                display: "flex", flexDirection: "column",
-                alignItems: "center", justifyContent: "center",
-                minHeight: "280px", gap: "16px",
-              }}
-            >
+          <section aria-labelledby="your-tools">
+            <SectionHeader
+              id="your-tools"
+              title="Your tools"
+              meta={
+                <>
+                  <FileCode size={13} aria-hidden="true" />
+                  <span>Pasted or opened by you, not signed</span>
+                  <Dot />
+                  <span>{ownTools.length} {ownTools.length === 1 ? "tool" : "tools"}</span>
+                </>
+              }
+              actions={<IngestBar onIngested={handleIngested} onError={setIngestError} />}
+            />
+            {ingestError && (
               <div
+                role="alert"
                 style={{
-                  width: "48px", height: "48px",
-                  background: "var(--app-raised)", borderRadius: "12px",
-                  display: "flex", alignItems: "center", justifyContent: "center",
+                  marginTop: "10px",
+                  display: "flex", alignItems: "flex-start", gap: "6px",
+                  background: "rgba(210,64,46,.08)",
+                  border: "1px solid rgba(210,64,46,.2)",
+                  borderRadius: "6px",
+                  padding: "8px 12px",
+                  fontFamily: "Inter, system-ui, sans-serif",
+                  fontSize: "12px", color: "var(--danger-ink)",
                 }}
               >
-                <Layers className="h-6 w-6" style={{ color: "var(--app-mute)" }} />
+                <AlertTriangle className="h-3.5 w-3.5 mt-0.5 flex-shrink-0" aria-hidden="true" />
+                <span>{ingestError}</span>
               </div>
-              <div style={{ textAlign: "center" }}>
-                <h2
-                  style={{
-                    fontFamily: "Poppins, system-ui, sans-serif",
-                    fontWeight: 600, fontSize: "16px",
-                    color: "var(--app-ink)", margin: "0 0 6px",
-                    letterSpacing: "-0.01em",
-                  }}
-                >
-                  Vault is empty
-                </h2>
-                <p
-                  style={{
-                    fontFamily: "Inter, system-ui, sans-serif",
-                    fontSize: "13px", color: "var(--app-ink-2)",
-                    maxWidth: "320px", margin: 0, lineHeight: 1.5,
-                  }}
-                >
-                  Copy an AI-generated HTML tool, then click{" "}
-                  <strong>Paste from Clipboard</strong>. Or drag a{" "}
-                  <code style={{ fontFamily: "'Space Mono', monospace", fontSize: "12px" }}>.html</code>{" "}
-                  file into this window.
-                </p>
+            )}
+            {policy?.managed && (
+              <div
+                style={{
+                  marginTop: "10px",
+                  background: policy.error ? "rgba(210,64,46,.08)" : "var(--app-bg)",
+                  border: `1px solid ${policy.error ? "rgba(210,64,46,.2)" : "var(--app-border)"}`,
+                  borderRadius: "6px",
+                  padding: "8px 12px",
+                  fontFamily: "Inter, system-ui, sans-serif",
+                  fontSize: "12px",
+                  color: policy.error ? "var(--danger-ink)" : "var(--app-ink-1)",
+                }}
+              >
+                {policy.error
+                  ? `Your organisation's policy could not be applied, so tools are blocked. ${policy.error}`
+                  : policy.pinnedCount !== null
+                    ? `Your organisation limits which tools can run. ${policy.pinnedCount} approved ${policy.pinnedCount === 1 ? "version" : "versions"}. Other tools can be added but will not open.`
+                    : "Your organisation manages this installation."}
               </div>
-            </div>
-          ) : (
+            )}
+
+            {runError && (
+              <div
+                style={{
+                  marginTop: "10px",
+                  display: "flex", alignItems: "flex-start", gap: "6px",
+                  background: "rgba(210,64,46,.08)",
+                  border: "1px solid rgba(210,64,46,.2)",
+                  borderRadius: "6px",
+                  padding: "8px 12px",
+                  fontFamily: "Inter, system-ui, sans-serif",
+                  fontSize: "12px", color: "var(--danger-ink)",
+                }}
+              >
+                {runError}
+              </div>
+            )}
+
+
             <div
               style={{
+                marginTop: "12px",
                 display: "grid",
                 gridTemplateColumns: "repeat(auto-fill, minmax(320px, 1fr))",
                 gap: "16px",
               }}
             >
-              {tools.map((item) => (
+              {ownTools.map((item) => (
                 <ToolCard
                   key={item.tool.id}
                   item={item}
@@ -271,6 +281,52 @@ export function Library({ refreshKey = 0 }: { refreshKey?: number }) {
                   onUpdated={(toolId) => refreshTool(toolId)}
                 />
               ))}
+              {ownTools.length === 0 && <EmptySlot />}
+            </div>
+          </section>
+
+          {publisherGroups.length > 0 && (
+            <div style={{ borderTop: "1px solid var(--app-border)", marginTop: "24px", paddingTop: "20px", display: "grid", gap: "28px" }}>
+              {publisherGroups.map((g) => {
+                const Icon = g.kind === "verified" ? BadgeCheck : HelpCircle;
+                const how = g.kind === "verified" ? "Verified publisher" : "Signed by a key Sanctum does not recognise";
+                return (
+                  <section key={g.key} aria-labelledby={`grp-${g.key}`}>
+                    <div style={{ marginBottom: "12px" }}>
+                      <SectionHeader
+                        id={`grp-${g.key}`}
+                        title={g.title}
+                        meta={
+                          <>
+                            <Icon size={13} aria-hidden="true" />
+                            <span>{how}</span>
+                            <Dot />
+                            <span>{g.tools.length} {g.tools.length === 1 ? "tool" : "tools"}</span>
+                          </>
+                        }
+                      />
+                    </div>
+                    <div
+                      style={{
+                        display: "grid",
+                        gridTemplateColumns: "repeat(auto-fill, minmax(320px, 1fr))",
+                        gap: "16px",
+                      }}
+                    >
+                      {g.tools.map((item) => (
+                        <ToolCard
+                          key={item.tool.id}
+                          item={item}
+                          onRun={handleRun}
+                          onInspect={setInspecting}
+                          onDeleted={handleDelete}
+                          onUpdated={(toolId) => refreshTool(toolId)}
+                        />
+                      ))}
+                    </div>
+                  </section>
+                );
+              })}
             </div>
           )}
         </div>

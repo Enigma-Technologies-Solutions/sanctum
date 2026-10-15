@@ -19,6 +19,7 @@ import {
 } from "lucide-react";
 import { Commands } from "@/lib/commands";
 import type { PolicyStatus, TrustAnchorInfo, UpdateInfo } from "@/lib/types";
+import { PageHeader } from "@/components/PageHeader";
 import { readTheme, saveTheme, type ThemeChoice } from "@/lib/theme";
 import { ABOUT, HOW_IT_WORKS, LINKS, LINKS_NOTE, type HowItem } from "@/lib/content";
 
@@ -306,13 +307,10 @@ function TrustSection() {
 
 export function SettingsView({ version }: { version: string | null }) {
   return (
-    <div style={{ height: "100%", overflowY: "auto", background: "var(--app-surface)" }}>
-      <div style={{ maxWidth: "720px", margin: "0 auto", padding: "32px 24px 48px" }}>
-        <div className="volt-bar" style={{ width: "48px", marginBottom: "16px" }} />
-        <h1 style={{ margin: "0 0 28px", fontFamily: "Poppins, system-ui, sans-serif", fontWeight: 700, fontSize: "26px", letterSpacing: "-0.02em", color: "var(--app-ink)" }}>
-          Settings
-        </h1>
-
+    <div style={{ height: "100%", display: "flex", flexDirection: "column" }}>
+      <PageHeader title="Settings">Appearance, updates, publisher keys and how Sanctum works.</PageHeader>
+      <div style={{ flex: 1, minHeight: 0, overflowY: "auto", background: "var(--app-surface)" }}>
+      <div style={{ maxWidth: "720px", margin: "0 auto", padding: "24px 24px 48px" }}>
         <AppearanceSection />
 
         <Section id="s-about" title="About">
@@ -364,6 +362,7 @@ export function SettingsView({ version }: { version: string | null }) {
             <span style={{ fontSize: "12px", color: "var(--app-ink-2)" }}>{LINKS_NOTE}</span>
           </Row>
         </Section>
+      </div>
       </div>
     </div>
   );
