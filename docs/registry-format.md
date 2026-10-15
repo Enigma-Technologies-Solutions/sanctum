@@ -345,6 +345,28 @@ partly succeed: if the index verifies but the revocations cannot be refreshed, t
 updates, the previous revocations stay, and the problem is recorded. Refusing the new index
 instead would let someone block one file to freeze a client on an old catalogue.
 
+**Installing** (`src-tauri/src/registry/install.rs`) works from the cached, re-verified
+catalogue, so it works offline; refresh first to see newer versions. For one app, in order:
+
+1. Refuse if the entry is licensed (`kind` or `access`), or if the registry's revocation list
+   withdraws that version. No bundle is downloaded for either.
+2. If that exact version is already in the library, say so and change nothing.
+3. Download the bundle, capped at the size the index states, then check size and SHA-256.
+4. Verify the bundle as the app does for any file, and require the signed statement to say
+   exactly what the index said: `app_id`, `version`, `checksum`, `declared` and the signer's
+   key. Any difference refuses the install before anything is written. A validly signed index
+   that misdescribes a bundle is refused all the same.
+5. Hand the bundle to the normal install path: local scan, undeclared-capability check, app
+   identity, downgrade rule, storage and provenance.
+
+What a registry does **not** do: it does not approve anything (the tool starts with no
+approvals, and updating or installing everything never adds one), and it does not raise a
+publisher's trust. A bundle signed by an unknown key installs as an unknown signer even from
+an anchored registry, because the registry vouches for its catalogue, not for the key.
+
+"Install all" does the same for each app and carries on after a failure, reporting each
+result. It skips licensed apps instead of listing them as failures.
+
 **The cache is not trusted.** The verified bytes are stored beside a row and verified again
 whenever they are used, so a modified database fails verification whatever its columns say.
 

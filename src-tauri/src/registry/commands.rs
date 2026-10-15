@@ -7,6 +7,8 @@
 //! polling. Tool windows have no IPC at all, so a tool cannot call any of this.
 
 use super::client::{ClientError, RefreshReport, RegistryClient, RegistrySummary};
+use super::install::{BatchItem, Catalogue, InstallOutcome};
+use crate::AppDataDir;
 use serde::Serialize;
 use tauri::State;
 
@@ -95,6 +97,42 @@ pub async fn remove_registry(
     id: String,
 ) -> Result<(), CommandError> {
     Ok(client(&state)?.remove(&id).await?)
+}
+
+/// The catalogue from the cached, re-verified index, with install state. No network.
+#[tauri::command]
+pub async fn registry_catalogue(
+    state: State<'_, RegistryState>,
+    registry_id: String,
+) -> Result<Catalogue, CommandError> {
+    Ok(client(&state)?.catalogue(&registry_id).await?)
+}
+
+/// Install one app from a registry. The tool starts with nothing approved, like any tool.
+#[tauri::command]
+pub async fn install_from_registry(
+    state: State<'_, RegistryState>,
+    data_dir: State<'_, AppDataDir>,
+    registry_id: String,
+    app_id: String,
+    version: Option<String>,
+) -> Result<InstallOutcome, CommandError> {
+    Ok(client(&state)?
+        .install(&data_dir.0, &registry_id, &app_id, version.as_deref())
+        .await?)
+}
+
+/// Install several apps (all installable ones when `app_ids` is null). Approves nothing.
+#[tauri::command]
+pub async fn install_all_from_registry(
+    state: State<'_, RegistryState>,
+    data_dir: State<'_, AppDataDir>,
+    registry_id: String,
+    app_ids: Option<Vec<String>>,
+) -> Result<Vec<BatchItem>, CommandError> {
+    Ok(client(&state)?
+        .install_many(&data_dir.0, &registry_id, app_ids.as_deref())
+        .await?)
 }
 
 #[cfg(test)]

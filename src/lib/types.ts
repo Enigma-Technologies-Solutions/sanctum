@@ -152,6 +152,54 @@ export interface RegistryRefreshReport {
   registry: RegistrySummary;
 }
 
+export interface RegistryCatalogVersion {
+  version: string;
+  publishedAt: number;
+  /** What the publisher declares. The approval screen, not this, grants anything. */
+  declared: DetectedCapability[];
+  size: number;
+  revoked: boolean;
+}
+
+export type RegistryInstallState =
+  | "notInstalled"
+  | "installed"
+  | "updateAvailable"
+  /** Listed but not installable by this version of Sanctum. */
+  | "licensed";
+
+export interface RegistryCatalogApp {
+  appId: string;
+  name: string;
+  summary: string;
+  publisherKey: string;
+  publisherName: string;
+  latest: string;
+  versions: RegistryCatalogVersion[];
+  installedVersion: string | null;
+  state: RegistryInstallState;
+  latestRevoked: boolean;
+}
+
+export interface RegistryCatalogue {
+  registryId: string;
+  registryName: string;
+  stale: boolean;
+  revocationsStale: boolean;
+  apps: RegistryCatalogApp[];
+}
+
+/** Installing never approves anything: `install.tool.approvals` is empty for a new tool. */
+export type RegistryInstallOutcome =
+  | { state: "installed"; install: BundleInstall; notes: string[] }
+  | { state: "alreadyInstalled"; version: string };
+
+export type RegistryBatchItem = { appId: string; name: string } & (
+  | { state: "installed"; toolId: string; version: string; trust: string }
+  | { state: "alreadyInstalled"; version: string }
+  | { state: "failed"; code: string; message: string }
+);
+
 /**
  * What a registry command rejects with. `code` is stable. For "untrusted_signer" the signer
  * fields are set: show the key and ask before calling addRegistry again with it pinned.

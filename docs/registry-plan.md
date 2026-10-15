@@ -95,6 +95,10 @@ Gate: a bad registry cannot poison a good cached one. Nothing installs yet.
 
 ## Phase 5: install from registry (4 days)
 
+Status: built and tested on `feat/registry-install`: catalogue with install state, install one,
+install many, three Tauri commands and TypeScript wrappers. Still no interface (Phase 6).
+
+
 1. Download, check the index hash, run the existing bundle verification and ingest.
 2. Updates go through the existing update path with the same downgrade protection.
 

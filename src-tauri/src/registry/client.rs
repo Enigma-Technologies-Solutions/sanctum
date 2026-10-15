@@ -59,6 +59,23 @@ pub enum ClientError {
     /// The index names a revocation list whose signer is not trusted.
     RevocationsUntrusted,
     BadPinnedKey(String),
+    /// The catalogue lists the app but not for installing (a licensed entry in this version).
+    NotInstallable(String),
+    AppNotFound(String),
+    VersionNotFound {
+        app_id: String,
+        version: String,
+    },
+    /// The registry's revocation list withdraws this version.
+    Revoked {
+        app_id: String,
+        version: String,
+        reason: String,
+    },
+    /// The signed bundle does not say what the index said it would.
+    Inconsistent(String),
+    /// The normal bundle checks refused it (signature, undeclared capability, downgrade...).
+    BundleRefused(String),
     AlreadyAdded(String),
     AddressInUse(String),
     NotFound,
@@ -77,6 +94,12 @@ impl ClientError {
             ClientError::SignerChanged { .. } => "signer_changed",
             ClientError::RevocationsUntrusted => "revocations_untrusted",
             ClientError::BadPinnedKey(_) => "bad_pinned_key",
+            ClientError::NotInstallable(_) => "not_installable",
+            ClientError::AppNotFound(_) => "app_not_found",
+            ClientError::VersionNotFound { .. } => "version_not_found",
+            ClientError::Revoked { .. } => "revoked",
+            ClientError::Inconsistent(_) => "inconsistent",
+            ClientError::BundleRefused(_) => "bundle_refused",
             ClientError::AlreadyAdded(_) => "already_added",
             ClientError::AddressInUse(_) => "address_in_use",
             ClientError::NotFound => "not_found",
@@ -102,6 +125,24 @@ impl std::fmt::Display for ClientError {
                 write!(f, "The registry's revocation list is signed by a key that is not trusted.")
             }
             ClientError::BadPinnedKey(m) => write!(f, "That is not a valid key: {m}"),
+            ClientError::NotInstallable(why) => write!(f, "{why}"),
+            ClientError::AppNotFound(id) => write!(f, "This registry does not list {id}."),
+            ClientError::VersionNotFound { app_id, version } => {
+                write!(f, "This registry does not list version {version} of {app_id}.")
+            }
+            ClientError::Revoked {
+                app_id,
+                version,
+                reason,
+            } => write!(
+                f,
+                "Version {version} of {app_id} was withdrawn by the registry ({reason}), so it will not be installed."
+            ),
+            ClientError::Inconsistent(what) => write!(
+                f,
+                "The downloaded bundle does not match what the registry listed ({what}). Nothing was installed."
+            ),
+            ClientError::BundleRefused(m) => write!(f, "{m}"),
             ClientError::AlreadyAdded(id) => write!(f, "{id} is already added."),
             ClientError::AddressInUse(id) => {
                 write!(f, "That address is already used by {id}.")
@@ -205,9 +246,9 @@ pub struct Cached {
 // ── Client ────────────────────────────────────────────────────────────────────
 
 pub struct RegistryClient {
-    pool: SqlitePool,
-    transport: Arc<dyn Transport>,
-    anchors: Vec<Anchor>,
+    pub(super) pool: SqlitePool,
+    pub(super) transport: Arc<dyn Transport>,
+    pub(super) anchors: Vec<Anchor>,
     clock: Arc<dyn Fn() -> i64 + Send + Sync>,
 }
 
@@ -219,7 +260,7 @@ fn system_clock() -> i64 {
 }
 
 /// A base URL ends in `/` so file names resolve inside it.
-fn normalize_base(raw: &str) -> Result<Url, FetchError> {
+pub(super) fn normalize_base(raw: &str) -> Result<Url, FetchError> {
     let mut url = check_url(raw, false)?;
     if !url.path().ends_with('/') {
         let path = format!("{}/", url.path());
@@ -229,7 +270,7 @@ fn normalize_base(raw: &str) -> Result<Url, FetchError> {
 }
 
 /// `relative` resolved inside `base`. The result must stay under it.
-fn resolve(base: &Url, relative: &str) -> Result<Url, FetchError> {
+pub(super) fn resolve(base: &Url, relative: &str) -> Result<Url, FetchError> {
     let url = base
         .join(relative)
         .map_err(|e| FetchError::InvalidUrl(e.to_string()))?;
@@ -273,7 +314,7 @@ impl RegistryClient {
         ))
     }
 
-    fn now(&self) -> i64 {
+    pub(super) fn now(&self) -> i64 {
         (self.clock)()
     }
 

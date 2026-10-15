@@ -12,6 +12,9 @@ import type {
   UpdateInfo,
   PolicyStatus,
   TrustAnchorInfo,
+  RegistryBatchItem,
+  RegistryCatalogue,
+  RegistryInstallOutcome,
   RegistryRefreshReport,
   RegistrySummary,
   ProvenanceRecord,
@@ -63,6 +66,29 @@ export const Commands = {
   /** Fetch the registry again. A failed refresh leaves the cached catalogue unchanged. */
   refreshRegistry(id: string): Promise<RegistryRefreshReport> {
     return invoke("refresh_registry", { id });
+  },
+
+  /** The cached, re-verified catalogue with install state per app. No network. */
+  registryCatalogue(registryId: string): Promise<RegistryCatalogue> {
+    return invoke("registry_catalogue", { registryId });
+  },
+
+  /**
+   * Install one app from a registry (default: its listed latest). The tool starts with
+   * nothing approved. Rejects with a RegistryCommandError, e.g. code "revoked",
+   * "inconsistent" or "not_installable".
+   */
+  installFromRegistry(
+    registryId: string,
+    appId: string,
+    version?: string,
+  ): Promise<RegistryInstallOutcome> {
+    return invoke("install_from_registry", { registryId, appId, version: version ?? null });
+  },
+
+  /** Install several apps, or every installable one when `appIds` is omitted. Approves nothing. */
+  installAllFromRegistry(registryId: string, appIds?: string[]): Promise<RegistryBatchItem[]> {
+    return invoke("install_all_from_registry", { registryId, appIds: appIds ?? null });
   },
 
   /** Forget a registry and its cache. Tools already installed from it are not touched. */
