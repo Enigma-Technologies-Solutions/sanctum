@@ -3,5 +3,23 @@
   "summary": "Time-based one-time codes (TOTP) kept in Sanctum storage and optionally on a smart card.",
   "description": "A two-factor code generator (TOTP, RFC 6238) in a single file. Keys live in an encrypted vault inside the tool's own storage, protected by a username and password. With a YubiKey and smart card access approved for the OATH applet, keys can instead be written to the key, which computes each code and never gives the secret back. The tool asks for storage and, only if you use it, the OATH smart card applet. It asks for no network access.",
   "license": "AGPL-3.0-only",
-  "source": "https://github.com/Enigma-Technologies-Solutions/sanctum/tree/main/examples/otp-vault"
+  "source": "https://github.com/Enigma-Technologies-Solutions/sanctum/tree/main/examples/otp-vault",
+  "screenshots": [
+    {
+      "file": "overview.png",
+      "alt": "Overview of OTP Vault: one-time codes generated inside Sanctum."
+    },
+    {
+      "file": "create-vault.png",
+      "alt": "Create a vault: username, password and the eight-emoji fingerprint."
+    },
+    {
+      "file": "codes.png",
+      "alt": "The code list with a countdown on each code and the next code shown."
+    },
+    {
+      "file": "backup.png",
+      "alt": "Backup and password: copy the encrypted vault, change the password or delete it."
+    }
+  ]
 }

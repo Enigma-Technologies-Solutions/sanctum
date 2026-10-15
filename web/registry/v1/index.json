@@ -3,9 +3,9 @@
   "id": "registry:sh.enigma.public",
   "name": "Enigma Technologies Solutions",
   "kind": "public",
-  "serial": 1,
-  "issued_at": 1792050586,
-  "expires": 1799826586,
+  "serial": 2,
+  "issued_at": 1792085739,
+  "expires": 1799861739,
   "revocations": "revocations.json",
   "apps": [
     {
@@ -25,8 +25,8 @@
       },
       "detail": {
         "path": "apps/sh.enigma.otp-vault.json",
-        "sha256": "sha256:f1499b18c7f7b03f54a256667e562a51a5871e3fed5f72fb9ec7fd6905db0230",
-        "size": 1734
+        "sha256": "sha256:4c01ab852cffb5bbb962f1b1357d24b672164d4783141f3f5fdbceb22cc91b8c",
+        "size": 2994
       },
       "versions": [
         {
@@ -66,8 +66,8 @@
       },
       "detail": {
         "path": "apps/sh.enigma.shamir.json",
-        "sha256": "sha256:540e4f011d4cc43e268d3ea811b56c5e5c9c8d06392a6f38c565106b23ef51f2",
-        "size": 1714
+        "sha256": "sha256:cbb90fec9181716255989fa6c8204f3a913e35c05157f7d09df3a3a72e245b11",
+        "size": 2949
       },
       "versions": [
         {

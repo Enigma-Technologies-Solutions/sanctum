@@ -18,6 +18,10 @@
 <nav class="nav" aria-label="Primary">
   <div class="wrap nav__inner">
     <a class="wordmark" href="../../" aria-label="Sanctum home">SANCTUM<span class="wordmark__sq" aria-hidden="true"></span></a>
+    <div class="nav__links">
+      <a href="../../">Home</a>
+      <a href="../../apps/">Signed tools</a>
+    </div>
     <div class="nav__cta">
       <a class="btn btn--ghost btn--sm nav__gh" href="https://github.com/Enigma-Technologies-Solutions/sanctum" rel="noopener">GitHub</a>
       <a class="btn btn--volt btn--sm" href="https://github.com/Enigma-Technologies-Solutions/sanctum/releases/latest" rel="noopener">Download Sanctum</a>
@@ -27,14 +31,15 @@
 
 <main id="main" class="section apps">
   <div class="wrap">
+    <div class="appdoc">
     <p class="eyebrow"><a href="../">Signed tools</a></p>
-    <h1 class="h2">Shamir Secret Sharing <span class="tag">v1.0.2</span></h1>
-    <p class="lede">Split a secret into shares and combine them back. Runs offline and asks for no access.</p>
+    <h1 class="appdoc__title">Shamir Secret Sharing <span class="tag">v1.0.2</span></h1>
+    <p class="lede appdoc__lede">Split a secret into shares and combine them back. Runs offline and asks for no access.</p>
 
     <article class="card app">
         <p class="app__desc">Splits a secret into shares and rebuilds it from any chosen number of them, using Shamir&#39;s secret sharing. Everything runs inside the tool window: nothing is stored, downloaded or sent. The default Sanctum share format records how many shares are needed and adds a check to each share, so a wrong, mistyped or mixed share gives a clear error instead of a wrong secret. A plain format is also available. The tool asks Sanctum for no access at all.</p>
         <p class="fine">Asks for no special access</p>
-        <p class="fine">Published by Enigma Technologies Solutions · <a href="https://github.com/Enigma-Technologies-Solutions/sanctum/tree/main/examples/shamir" rel="noopener">Source</a> · <span>AGPL-3.0-only</span></p>
+        <p class="fine appdoc__links">Published by Enigma Technologies Solutions · <a href="https://github.com/Enigma-Technologies-Solutions/sanctum/tree/main/examples/shamir" rel="noopener">Source</a> · <span>AGPL-3.0-only</span></p>
         <dl class="app__hashes fine">
           <dt>File SHA-256</dt><dd>986e7c69f03fab9b07d417cf47ed66b9daa9f5c8bc5f6b251c9673893a8f93ea</dd>
           <dt>Tool SHA-256</dt><dd>1601e706b1688fe59864744327934b8cc6cc036b3fccc0adda920b1d146bbf94</dd>
@@ -43,16 +48,24 @@
         </dl>
         <a class="btn btn--volt btn--sm" href="../../registry/v1/bundles/sh.enigma.shamir-1.0.2.sanctum" download>Download (95.8 KB)</a>
     </article>
-    <p class="lede">Verified means the publisher is who it says and the bytes have not changed. It does not mean safe. A signature never grants access: every tool still starts with nothing approved, and you approve each capability yourself.</p>
+    <p class="notice">Verified means the publisher is who it says and the bytes have not changed. It does not mean safe. A signature never grants access: every tool still starts with nothing approved, and you approve each capability yourself.</p>
+
+    <h2 class="apps__sub">Screenshots</h2>
+      <figure class="screenshot"><img src="../../registry/v1/apps/sh.enigma.shamir/overview.png" width="1600" height="1131" alt="Overview of Shamir: split a secret into shares and combine them back." loading="lazy"></figure>
+      <figure class="screenshot"><img src="../../registry/v1/apps/sh.enigma.shamir/split.png" width="1600" height="1131" alt="Split: a secret, the number of shares and how many are needed." loading="lazy"></figure>
+      <figure class="screenshot"><img src="../../registry/v1/apps/sh.enigma.shamir/shares.png" width="1600" height="1131" alt="The shares produced, each with a Copy button and the set identifier." loading="lazy"></figure>
+      <figure class="screenshot"><img src="../../registry/v1/apps/sh.enigma.shamir/combine.png" width="1600" height="1131" alt="Combine: pasted shares checked one by one before the secret is rebuilt." loading="lazy"></figure>
 
     <h2 class="apps__sub">What is new</h2>
-      <section class="log">
-        <h3 class="log__v">1.0.2 <span class="fine">2026-10-02</span></h3>
-        <ul><li><strong>Added.</strong> Split a secret into shares and rebuild it from any chosen number of them.</li><li><strong>Added.</strong> The Sanctum share format, which records the threshold and a set id and checks every share.</li><li><strong>Added.</strong> A plain share format that uses the same bytes as ssss-made-easy and the shamir-secret-sharing npm package.</li><li><strong>Added.</strong> Secrets are masked and hidden again after 60 seconds without typing or when you switch tabs.</li><li><strong>Added.</strong> First release signed by Enigma Technologies Solutions.</li></ul>
+    <div class="changes">
+      <section>
+        <h3 class="changes__v">1.0.2 <span class="fine">2026-10-02</span></h3>
+        <ul class="changes__list"><li><strong>Added.</strong> Split a secret into shares and rebuild it from any chosen number of them.</li><li><strong>Added.</strong> The Sanctum share format, which records the threshold and a set id and checks every share.</li><li><strong>Added.</strong> A plain share format that uses the same bytes as ssss-made-easy and the shamir-secret-sharing npm package.</li><li><strong>Added.</strong> Secrets are masked and hidden again after 60 seconds without typing or when you switch tabs.</li><li><strong>Added.</strong> First release signed by Enigma Technologies Solutions.</li></ul>
       </section>
+    </div>
 
     <h2 class="apps__sub">Manual</h2>
-    <div class="prose">
+    <div class="manual">
 <h4>What it does</h4>
 <p>Shamir&#39;s secret sharing splits a secret into several shares. Any chosen number of them, called the threshold, rebuilds the secret. Fewer than that reveal nothing about it.</p>
 <h4>What it asks Sanctum for</h4>
@@ -71,6 +84,7 @@
 
     <h2 class="apps__sub">For tools and scripts</h2>
     <p class="lede"><a href="../../registry/v1/apps/sh.enigma.shamir.json"><code>apps/sh.enigma.shamir.json</code></a> holds this page's data. It is pinned by hash in the signed <a href="../../registry/v1/index.json"><code>index.json</code></a>.</p>
+    </div>
   </div>
 </main>
 
