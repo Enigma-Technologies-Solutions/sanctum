@@ -188,6 +188,7 @@ export function buildVectors() {
       domain = DOMAIN.index,
       tamper,
       sigRaw,
+      sigExtra,
       anchors = anchorsRoot,
       now = NOW,
       expectedId = REGISTRY_ID,
@@ -195,7 +196,8 @@ export function buildVectors() {
       expect,
     } = spec;
     let bytes = raw ?? json(doc);
-    const sig = sigRaw ?? sigFile(domain, bytes, signer, chain);
+    let sig = sigRaw ?? sigFile(domain, bytes, signer, chain);
+    if (sigExtra) sig = Buffer.from(`${JSON.stringify({ ...JSON.parse(sig.toString('utf8')), ...sigExtra }, null, 2)}\n`);
     if (tamper) bytes = Buffer.from(tamper(bytes.toString('utf8')));
     files.set(`${name}/index.json`, bytes);
     files.set(`${name}/index.json.sig`, sig);
@@ -231,6 +233,21 @@ export function buildVectors() {
     chain: [certBlob(KEYS.root, KEYS.publisher, { scope: ['sh.enigma.'] })],
     expect: { result: 'ok', trust: 'unanchored', reason: 'certificate does not cover this registry', stale: false },
   });
+  indexCase('index_unanchored_cert_empty_scope_entry', {
+    signer: KEYS.publisher,
+    chain: [certBlob(KEYS.root, KEYS.publisher, { scope: [''] })],
+    expect: { result: 'ok', trust: 'unanchored', reason: 'certificate does not cover this registry', stale: false },
+  });
+  indexCase('index_unanchored_cert_empty_scope_list', {
+    signer: KEYS.publisher,
+    chain: [certBlob(KEYS.root, KEYS.publisher, { scope: [] })],
+    expect: { result: 'ok', trust: 'unanchored', reason: 'certificate does not cover this registry', stale: false },
+  });
+  indexCase('index_chain_scope_second_entry_ok', {
+    signer: KEYS.publisher,
+    chain: [certBlob(KEYS.root, KEYS.publisher, { scope: ['sh.other.', 'registry:sh.enigma.'] })],
+    expect: ok('anchored', 'Test Publisher'),
+  });
   indexCase('index_unanchored_cert_expired', {
     signer: KEYS.publisher,
     chain: [certBlob(KEYS.root, KEYS.publisher, { not_after: NOW - 1 })],
@@ -250,6 +267,38 @@ export function buildVectors() {
     signer: KEYS.publisher,
     chain: [certBlob(KEYS.root, KEYS.other)],
     expect: { result: 'ok', trust: 'unanchored', reason: 'certificate is for a different key', stale: false },
+  });
+  indexCase('index_unanchored_cert_extra_field', {
+    signer: KEYS.publisher,
+    chain: [certBlob(KEYS.root, KEYS.publisher, { extra: 1 })],
+    expect: { result: 'ok', trust: 'unanchored', reason: 'certificate is malformed', stale: false },
+  });
+  indexCase('index_unanchored_chain_too_long', {
+    signer: KEYS.publisher,
+    chain: [certBlob(KEYS.root, KEYS.publisher), certBlob(KEYS.root, KEYS.publisher)],
+    expect: { result: 'ok', trust: 'unanchored', reason: 'certificate chains longer than one are not supported', stale: false },
+  });
+  indexCase('index_unanchored_cert_bad_signature', {
+    signer: KEYS.publisher,
+    chain: [{ ...certBlob(KEYS.root, KEYS.publisher), sig: certBlob(KEYS.root, KEYS.other).sig }],
+    expect: { result: 'ok', trust: 'unanchored', reason: 'certificate signature does not verify', stale: false },
+  });
+  indexCase('index_sig_unknown_fields_ok', {
+    sigExtra: { future: [1, 2] },
+    expect: ok('anchored', 'Test Root'),
+  });
+  indexCase('index_bom_rejected', {
+    raw: Buffer.concat([Buffer.from([0xef, 0xbb, 0xbf]), json(baseIndex(assets))]),
+    expect: err('malformed_json'),
+  });
+  indexCase('index_not_an_object', { raw: Buffer.from('[]\n'), expect: err('schema_invalid') });
+  indexCase('index_integer_written_as_float_ok', {
+    raw: Buffer.from(json(baseIndex(assets)).toString('utf8').replace('"serial": 7,', '"serial": 7.0,')),
+    expect: ok('anchored', 'Test Root'),
+  });
+  indexCase('index_serial_is_a_string', {
+    raw: Buffer.from(json(baseIndex(assets)).toString('utf8').replace('"serial": 7,', '"serial": "7",')),
+    expect: err('schema_invalid'),
   });
   indexCase('index_stale', {
     now: NOW + 91 * DAY,

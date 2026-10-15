@@ -25,7 +25,8 @@ section behind.
   icons, made by `scripts/gen-example-icon.mjs`. `scripts/resign-examples.sh <version>`
   rebuilds and signs both tools.
 - The registry format v1: JSON Schemas, a reference verifier and signed test vectors in
-  `spec/registry/`. The app does not read a registry yet.
+  `spec/registry/`, and a Rust verifier (`sanctum_bundle::registry`) that gives the same
+  verdict on every vector. The app does not read a registry yet.
 - Signed tool bundles (`.sanctum`). A bundle carries an HTML tool and an Ed25519 signature
   over its hash, name, version and declared capabilities. Sanctum checks the signature and
   the file hash before anything is written, refuses a file that uses capabilities the

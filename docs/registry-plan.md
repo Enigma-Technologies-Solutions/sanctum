@@ -66,6 +66,12 @@ Gate: maintainer signs and merges, then the live index verifies offline.
 
 ## Phase 3: index verification in Rust (3 days)
 
+Status: built and tested on `feat/registry-client`: `sanctum_bundle::registry` verifies the
+index, revocations, detail and asset files. 120 vector files, 62 cases, identical verdicts in
+Rust and Node, and the published registry verifies in Rust. Nothing in the app calls it yet
+(that is Phase 4).
+
+
 1. Index parsing and signature verification in `sanctum-bundle`.
 2. Rollback protection (`serial`), `expires`, hash checks, attestation parsing.
 
