@@ -7,15 +7,24 @@
    Space Mono is for data/code only — not UI chrome.
    ──────────────────────────────────────────────────────────────────────────── */
 :root {
+  color-scheme: light;
   /* surfaces */
   --app-bg:        #FFFFFF;
   --app-surface:   #F7F8FA;
   --app-raised:    #EEF1F4;
   --app-border:    #E3E7EC;
+  --app-border-2:  #D3D8DF;
   /* text */
   --app-ink:       #0A0A0A;
+  --app-ink-hover: #26282B;
+  --app-ink-1:     #3A4048;
   --app-ink-2:     #565B62;
+  --app-mute:      #6B717A;
   --app-ink-3:     #8A9099;
+  /* text drawn on an ink-coloured fill (primary buttons) */
+  --on-ink:        #FFFFFF;
+  /* text drawn on the volt accent: always black */
+  --on-volt:       #0A0A0A;
   /* accent */
   --volt:          #FBFF00;
   /* status */
@@ -23,6 +32,10 @@
   --warn:          #C77D11;
   --danger:        #D2402E;
   --info:          #2F6FE0;
+  /* status text on a surface */
+  --ok-ink:        #137A4B;
+  --warn-ink:      #92600D;
+  --danger-ink:    #B0301F;
   /* form */
   --app-radius:    8px;
   --app-shadow:    0 1px 2px rgba(16,24,40,.06), 0 1px 3px rgba(16,24,40,.04);
@@ -48,6 +61,27 @@
   --input: 220 13% 91%;
   --ring: 0 0% 4%;
   --radius: 8px;
+}
+
+/* Dark theme: set by data-theme on <html> (see src/lib/theme.ts). */
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --app-bg:        #0B0C0E;
+  --app-surface:   #131518;
+  --app-raised:    #1B1E22;
+  --app-border:    #2A2E34;
+  --app-border-2:  #3A3F47;
+  --app-ink:       #F2F3F5;
+  --app-ink-hover: #D9DCE0;
+  --app-ink-1:     #C9CDD3;
+  --app-ink-2:     #A3A9B1;
+  --app-mute:      #959BA4;
+  --app-ink-3:     #7B818A;
+  --on-ink:        #0A0A0A;
+  --ok-ink:        #4CC38A;
+  --warn-ink:      #E0A646;
+  --danger-ink:    #F0786A;
+  --app-shadow:    0 1px 2px rgba(0,0,0,.5);
 }
 
 /* ── Reset ─────────────────────────────────────────────────────────────────── */
@@ -154,7 +188,7 @@ input::placeholder, textarea::placeholder {
 
 /* ── Tool card ─────────────────────────────────────────────────────────────── */
 .tool-card {
-  background: #fff;
+  background: var(--app-bg);
   border: 1px solid var(--app-border);
   border-radius: 10px;
   box-shadow: var(--app-shadow);
@@ -165,22 +199,22 @@ input::placeholder, textarea::placeholder {
 .tool-card:hover,
 .tool-card:focus-within {
   box-shadow: 0 4px 10px rgba(16,24,40,.08), 0 2px 4px rgba(16,24,40,.05);
-  border-color: #D3D8DF;
+  border-color: var(--app-border-2);
 }
 .tool-card-quarantined { border-color: rgba(210,64,46,.35); }
 
 .card-btn {
   display: inline-flex; align-items: center; justify-content: center; gap: 6px;
   height: 34px; padding: 0 14px; font-size: 13px; font-weight: 600; line-height: 1;
-  border: 1px solid var(--app-border); background: #fff; color: #3A4048;
+  border: 1px solid var(--app-border); background: var(--app-bg); color: var(--app-ink-1);
   cursor: pointer; white-space: nowrap; outline: none;
   transition: background .12s, color .12s;
 }
 .card-btn:hover:not(:disabled) { background: var(--app-surface); color: var(--app-ink); }
-.card-btn:focus-visible { position: relative; z-index: 1; box-shadow: 0 0 0 2px #fff, 0 0 0 4px var(--app-ink); }
+.card-btn:focus-visible { position: relative; z-index: 1; box-shadow: 0 0 0 2px var(--app-bg), 0 0 0 4px var(--app-ink); }
 .card-btn:disabled { opacity: .4; cursor: not-allowed; }
-.card-btn-primary { background: var(--app-ink); border-color: var(--app-ink); color: #fff; }
-.card-btn-primary:hover:not(:disabled) { background: #26282B; color: #fff; }
+.card-btn-primary { background: var(--app-ink); border-color: var(--app-ink); color: var(--on-ink); }
+.card-btn-primary:hover:not(:disabled) { background: var(--app-ink-hover); color: var(--on-ink); }
 .card-btn-left { border-radius: 8px 0 0 8px; }
 .card-btn-right { border-radius: 0 8px 8px 0; margin-left: -1px; }
 
@@ -191,21 +225,21 @@ input::placeholder, textarea::placeholder {
   transition: background .12s, color .12s;
 }
 .card-icon-btn:hover { background: var(--app-raised); color: var(--app-ink); }
-.card-icon-btn:focus-visible { box-shadow: 0 0 0 2px #fff, 0 0 0 4px var(--app-ink); }
+.card-icon-btn:focus-visible { box-shadow: 0 0 0 2px var(--app-bg), 0 0 0 4px var(--app-ink); }
 
 .card-menu-item {
   display: flex; width: 100%; align-items: center; gap: 8px;
   padding: 7px 10px; border: 0; border-radius: 6px; background: transparent;
-  font-size: 13px; font-weight: 500; color: #3A4048; text-align: left; cursor: pointer; outline: none;
+  font-size: 13px; font-weight: 500; color: var(--app-ink-1); text-align: left; cursor: pointer; outline: none;
 }
 .card-menu-item:hover, .card-menu-item:focus { background: var(--app-surface); color: var(--app-ink); }
-.card-menu-item-danger { color: #B0301F; }
-.card-menu-item-danger:hover, .card-menu-item-danger:focus { background: rgba(210,64,46,.07); color: #B0301F; }
+.card-menu-item-danger { color: var(--danger-ink); }
+.card-menu-item-danger:hover, .card-menu-item-danger:focus { background: rgba(210,64,46,.07); color: var(--danger-ink); }
 
 .cap-chip {
   display: inline-flex; align-items: center; gap: 6px;
   height: 22px; padding: 0 8px; border-radius: 6px;
-  border: 1px solid var(--app-border); background: #fff; color: var(--app-ink);
+  border: 1px solid var(--app-border); background: var(--app-bg); color: var(--app-ink);
   font-size: 11.5px; font-weight: 500; white-space: nowrap; cursor: default;
 }
 .cap-chip-quiet { background: var(--app-surface); color: var(--app-ink-2); }

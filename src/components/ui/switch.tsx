@@ -10,7 +10,7 @@ interface SwitchProps {
 
 /**
  * Simple toggle switch. No external dependency — inline CSS only.
- * Uses ink (#0A0A0A) for on-state to match the ETS Product Light system.
+ * Uses ink (var(--app-ink)) for on-state to match the ETS Product Light system.
  */
 export function Switch({ checked, onCheckedChange, disabled, className, id }: SwitchProps) {
   return (
@@ -25,7 +25,7 @@ export function Switch({ checked, onCheckedChange, disabled, className, id }: Sw
         width: "36px",
         height: "20px",
         borderRadius: "10px",
-        background: checked ? "#0A0A0A" : "#D6DAE0",
+        background: checked ? "var(--app-ink)" : "var(--app-border-2)",
         border: "none",
         cursor: disabled ? "not-allowed" : "pointer",
         opacity: disabled ? 0.4 : 1,
@@ -42,7 +42,7 @@ export function Switch({ checked, onCheckedChange, disabled, className, id }: Sw
           width: "16px",
           height: "16px",
           borderRadius: "8px",
-          background: "#FFFFFF",
+          background: "var(--app-bg)",
           boxShadow: "0 1px 2px rgba(0,0,0,.18)",
           transition: "left 0.15s",
         }}

@@ -22,7 +22,7 @@ function App() {
 
   return (
     <TooltipProvider delayDuration={400}>
-      <div style={{ display: "flex", flexDirection: "column", height: "100vh", background: "#FFFFFF", overflow: "hidden" }}>
+      <div style={{ display: "flex", flexDirection: "column", height: "100vh", background: "var(--app-bg)", overflow: "hidden" }}>
         <AppHeader view={view} onNavigate={setView} version={version} />
         <UpdateBanner />
         <main style={{ flex: 1, overflow: "hidden", position: "relative" }}>

@@ -21,7 +21,7 @@ function ETSMark() {
           display: "inline-flex",
           alignItems: "center",
           justifyContent: "center",
-          background: "#0A0A0A",
+          background: "var(--app-ink)",
           width: "42px",
           height: "28px",
           flexShrink: 0,
@@ -32,7 +32,7 @@ function ETSMark() {
             fontFamily: "'Inter', 'Helvetica Neue', Arial, sans-serif",
             fontWeight: 800,
             fontSize: "13px",
-            color: "#FFFFFF",
+            color: "var(--on-ink)",
             letterSpacing: "0.01em",
             lineHeight: 1,
             userSelect: "none",
@@ -47,7 +47,7 @@ function ETSMark() {
           fontSize: "11px",
           letterSpacing: "0.18em",
           textTransform: "uppercase",
-          color: "#0A0A0A",
+          color: "var(--app-ink)",
           userSelect: "none",
         }}
       >
@@ -57,7 +57,7 @@ function ETSMark() {
   );
 }
 
-const divider = <div aria-hidden="true" style={{ width: "1px", height: "12px", background: "#E3E7EC" }} />;
+const divider = <div aria-hidden="true" style={{ width: "1px", height: "12px", background: "var(--app-border)" }} />;
 
 export function AppHeader({
   view,
@@ -71,8 +71,8 @@ export function AppHeader({
   return (
     <header
       style={{
-        background: "#FFFFFF",
-        borderBottom: "1px solid #E3E7EC",
+        background: "var(--app-bg)",
+        borderBottom: "1px solid var(--app-border)",
         display: "flex",
         alignItems: "stretch",
         height: "52px",
@@ -82,18 +82,18 @@ export function AppHeader({
         zIndex: 50,
       }}
     >
-      <div style={{ display: "flex", alignItems: "center", padding: "0 20px", borderRight: "1px solid #E3E7EC", flexShrink: 0 }}>
+      <div style={{ display: "flex", alignItems: "center", padding: "0 20px", borderRight: "1px solid var(--app-border)", flexShrink: 0 }}>
         <ETSMark />
       </div>
 
-      <div style={{ display: "flex", alignItems: "center", gap: "10px", padding: "0 20px", borderRight: "1px solid #E3E7EC", flexShrink: 0 }}>
+      <div style={{ display: "flex", alignItems: "center", gap: "10px", padding: "0 20px", borderRight: "1px solid var(--app-border)", flexShrink: 0 }}>
         <div style={{ width: "3px", height: "20px", background: "#FBFF00", flexShrink: 0 }} />
         <div
           style={{
             fontFamily: "Poppins, system-ui, sans-serif",
             fontWeight: 700,
             fontSize: "14px",
-            color: "#0A0A0A",
+            color: "var(--app-ink)",
             letterSpacing: "-0.01em",
           }}
         >
@@ -122,7 +122,7 @@ export function AppHeader({
                 borderBottom: `3px solid ${active ? "#FBFF00" : "transparent"}`,
                 borderRadius: 0,
                 marginBottom: "-1px",
-                color: active ? "#0A0A0A" : "#565B62",
+                color: active ? "var(--app-ink)" : "var(--app-ink-2)",
                 fontFamily: "'Inter', system-ui, sans-serif",
                 fontSize: "13px",
                 fontWeight: active ? 600 : 500,
@@ -146,7 +146,7 @@ export function AppHeader({
           padding: "0 20px",
           fontFamily: "'Inter', system-ui, sans-serif",
           fontSize: "12px",
-          color: "#6B717A",
+          color: "var(--app-mute)",
         }}
       >
         {version && (

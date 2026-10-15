@@ -15,6 +15,9 @@ section behind.
 
 ### Added
 
+- Settings has an Appearance section: System (default), Light or Dark for the Sanctum
+  window. Tools you open keep their own look. The choice is a display preference kept in the
+  window's local storage.
 - Signed example bundles are downloadable from `sanctum.enigma.sh/apps/`, with a page per
   tool showing its changelog and manual. They are published as a signed registry under
   `sanctum.enigma.sh/registry/v1/` (format in `docs/registry-format.md`).

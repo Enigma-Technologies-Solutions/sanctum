@@ -10,12 +10,12 @@ const badgeVariants = cva(
     variants: {
       variant: {
         // Volt — permission tags only. Black ink on volt.
-        volt:       "bg-volt text-app-ink font-semibold",
+        volt:       "bg-volt text-on-volt font-semibold",
         // Status: soft tinted pills — NOT solid neon
-        success:    "bg-[rgba(30,158,98,.12)]  text-[#137A4B]",
-        warning:    "bg-[rgba(199,125,17,.14)] text-[#92600D]",
-        danger:     "bg-[rgba(210,64,46,.12)]  text-[#B0301F]",
-        info:       "bg-[rgba(47,111,224,.12)] text-[#2358BC]",
+        success:    "bg-[rgba(30,158,98,.12)]  text-[var(--ok-ink)]",
+        warning:    "bg-[rgba(199,125,17,.14)] text-[var(--warn-ink)]",
+        danger:     "bg-[rgba(210,64,46,.12)]  text-[var(--danger-ink)]",
+        info:       "bg-[rgba(47,111,224,.12)] text-info",
         // Neutral surface
         secondary:  "bg-app-surface text-app-ink-2 border border-app-border",
         // Default outline
@@ -23,7 +23,7 @@ const badgeVariants = cva(
         // Muted ghost
         ghost:      "bg-app-surface text-app-ink-3",
         // Destructive (mirror danger for shadcn compat)
-        destructive:"bg-[rgba(210,64,46,.12)] text-[#B0301F]",
+        destructive:"bg-[rgba(210,64,46,.12)] text-[var(--danger-ink)]",
         // Outline (shadcn compat)
         outline:    "border border-app-border text-app-ink-2 bg-transparent",
       },

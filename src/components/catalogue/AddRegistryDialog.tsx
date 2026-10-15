@@ -78,7 +78,7 @@ export function AddRegistryDialog({ open, onOpenChange, onAdded }: Props) {
         <DialogTitle style={{ fontFamily: "Poppins, system-ui, sans-serif", fontSize: 18, fontWeight: 700, margin: "0 0 6px" }}>
           Add a registry
         </DialogTitle>
-        <DialogDescription style={{ fontFamily: font, fontSize: 13, color: "#565B62", margin: "0 0 16px" }}>
+        <DialogDescription style={{ fontFamily: font, fontSize: 13, color: "var(--app-ink-2)", margin: "0 0 16px" }}>
           A registry is a list of tools. Sanctum contacts the address once to read it. Nothing is
           installed until you choose it.
         </DialogDescription>
@@ -99,12 +99,12 @@ export function AddRegistryDialog({ open, onOpenChange, onAdded }: Props) {
               onChange={(e) => setUrl(e.target.value)}
               aria-describedby={error ? "registry-url-error" : undefined}
               aria-invalid={error ? true : undefined}
-              style={{ width: "100%", padding: "8px 10px", border: "1px solid #E3E7EC", borderRadius: 6, fontFamily: mono, fontSize: 12 }}
+              style={{ width: "100%", padding: "8px 10px", border: "1px solid var(--app-border)", borderRadius: 6, fontFamily: mono, fontSize: 12 }}
             />
             {error && (
-              <div id="registry-url-error" role="alert" style={{ marginTop: 10, fontFamily: font, fontSize: 12, color: "#B0301F" }}>
+              <div id="registry-url-error" role="alert" style={{ marginTop: 10, fontFamily: font, fontSize: 12, color: "var(--danger-ink)" }}>
                 <div>{error.message}</div>
-                {errorHint(error.code) && <div style={{ marginTop: 4, color: "#565B62" }}>{errorHint(error.code)}</div>}
+                {errorHint(error.code) && <div style={{ marginTop: 4, color: "var(--app-ink-2)" }}>{errorHint(error.code)}</div>}
               </div>
             )}
             <div style={{ display: "flex", justifyContent: "flex-end", gap: 8, marginTop: 18 }}>
@@ -127,18 +127,18 @@ export function AddRegistryDialog({ open, onOpenChange, onAdded }: Props) {
                 <div id="unknown-signer-title" style={{ fontFamily: font, fontWeight: 600, fontSize: 14 }}>
                   Sanctum does not recognise who signed “{unknown.registryName}”
                 </div>
-                <p style={{ fontFamily: font, fontSize: 13, color: "#565B62", margin: "6px 0 10px" }}>
+                <p style={{ fontFamily: font, fontSize: 13, color: "var(--app-ink-2)", margin: "6px 0 10px" }}>
                   It is signed by a key that is not one of Sanctum's own. The signature proves the list
                   is unchanged and comes from whoever holds this key. It does not tell you who that is.
                 </p>
               </div>
             </div>
-            <div style={{ fontFamily: font, fontSize: 11, fontWeight: 600, color: "#565B62", textTransform: "uppercase", letterSpacing: "0.08em" }}>
+            <div style={{ fontFamily: font, fontSize: 11, fontWeight: 600, color: "var(--app-ink-2)", textTransform: "uppercase", letterSpacing: "0.08em" }}>
               Signing key
             </div>
             <code
               data-testid="signer-key"
-              style={{ display: "block", margin: "4px 0 12px", padding: "8px 10px", background: "#F7F8FA", border: "1px solid #E3E7EC", borderRadius: 6, fontFamily: mono, fontSize: 12, wordBreak: "break-all" }}
+              style={{ display: "block", margin: "4px 0 12px", padding: "8px 10px", background: "var(--app-surface)", border: "1px solid var(--app-border)", borderRadius: 6, fontFamily: mono, fontSize: 12, wordBreak: "break-all" }}
             >
               {unknown.signer}
             </code>
@@ -155,7 +155,7 @@ export function AddRegistryDialog({ open, onOpenChange, onAdded }: Props) {
               </span>
             </label>
             {error && (
-              <div role="alert" style={{ marginTop: 10, fontFamily: font, fontSize: 12, color: "#B0301F" }}>
+              <div role="alert" style={{ marginTop: 10, fontFamily: font, fontSize: 12, color: "var(--danger-ink)" }}>
                 {error.message}
               </div>
             )}

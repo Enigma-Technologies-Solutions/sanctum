@@ -87,7 +87,7 @@ function SectionLabel({ children }: { children: React.ReactNode }) {
       style={{
         fontFamily: "Inter, system-ui, sans-serif",
         fontSize: "11px", fontWeight: 600,
-        color: "#8A9099", textTransform: "uppercase",
+        color: "var(--app-ink-3)", textTransform: "uppercase",
         letterSpacing: "0.08em", marginBottom: "8px",
       }}
     >
@@ -248,15 +248,15 @@ export function InspectView({ item, onBack, onRun, onRefresh, onDelete }: Inspec
   return (
     <div
       className="flex flex-col h-full"
-      style={{ background: "#FFFFFF" }}
+      style={{ background: "var(--app-bg)" }}
     >
       {/* ── Header ─────────────────────────────────────────────────────── */}
       <div
         style={{
           display: "flex", alignItems: "center", gap: "12px",
           padding: "12px 20px",
-          borderBottom: "1px solid #E3E7EC",
-          background: "#FFFFFF",
+          borderBottom: "1px solid var(--app-border)",
+          background: "var(--app-bg)",
         }}
       >
         <Button variant="ghost" size="icon" onClick={onBack} className="h-8 w-8 flex-shrink-0">
@@ -272,7 +272,7 @@ export function InspectView({ item, onBack, onRun, onRefresh, onDelete }: Inspec
                   flex: 1,
                   fontFamily: "Poppins, system-ui, sans-serif",
                   fontWeight: 700, fontSize: "15px",
-                  color: "#0A0A0A",
+                  color: "var(--app-ink)",
                 }}
                 value={name}
                 onChange={(e) => setName(e.target.value)}
@@ -293,7 +293,7 @@ export function InspectView({ item, onBack, onRun, onRefresh, onDelete }: Inspec
               style={{
                 fontFamily: "Poppins, system-ui, sans-serif",
                 fontWeight: 700, fontSize: "15px",
-                color: "#0A0A0A", letterSpacing: "-0.01em",
+                color: "var(--app-ink)", letterSpacing: "-0.01em",
                 margin: 0, cursor: "pointer",
                 overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap",
               }}
@@ -327,10 +327,10 @@ export function InspectView({ item, onBack, onRun, onRefresh, onDelete }: Inspec
       {/* ── Update sub-panel ─────────────────────────────────────────── */}
       {showUpdate && (
         <div style={{
-          padding: "10px 20px", background: "#F7F8FA", borderBottom: "1px solid #E3E7EC",
+          padding: "10px 20px", background: "var(--app-surface)", borderBottom: "1px solid var(--app-border)",
           display: "flex", flexDirection: "column", gap: "8px",
         }}>
-          <span style={{ fontFamily: "Inter, system-ui, sans-serif", fontWeight: 600, fontSize: "12px", color: "#565B62" }}>
+          <span style={{ fontFamily: "Inter, system-ui, sans-serif", fontWeight: 600, fontSize: "12px", color: "var(--app-ink-2)" }}>
             Add new version from:
           </span>
           <div style={{ display: "flex", gap: "8px", flexWrap: "wrap" }}>
@@ -343,7 +343,7 @@ export function InspectView({ item, onBack, onRun, onRefresh, onDelete }: Inspec
             </Button>
           </div>
           {updateError && (
-            <p style={{ fontFamily: "Inter, system-ui, sans-serif", fontSize: "12px", color: "#B0301F", margin: 0 }}>{updateError}</p>
+            <p style={{ fontFamily: "Inter, system-ui, sans-serif", fontSize: "12px", color: "var(--danger-ink)", margin: 0 }}>{updateError}</p>
           )}
         </div>
       )}
@@ -355,7 +355,7 @@ export function InspectView({ item, onBack, onRun, onRefresh, onDelete }: Inspec
           background: "rgba(210,64,46,.06)", borderBottom: "1px solid rgba(210,64,46,.15)",
           display: "flex", alignItems: "center", gap: "12px",
         }}>
-          <p style={{ fontFamily: "Inter, system-ui, sans-serif", fontSize: "13px", color: "#B0301F", margin: 0, flex: 1 }}>
+          <p style={{ fontFamily: "Inter, system-ui, sans-serif", fontSize: "13px", color: "var(--danger-ink)", margin: 0, flex: 1 }}>
             Delete <strong>{tool.name}</strong> and all versions? Cannot be undone.
           </p>
           <Button size="sm" variant="destructive" className="gap-1.5" disabled={deleting} onClick={handleDelete}>
@@ -377,7 +377,7 @@ export function InspectView({ item, onBack, onRun, onRefresh, onDelete }: Inspec
             background: "rgba(210,64,46,.08)",
             borderBottom: "1px solid rgba(210,64,46,.15)",
             fontFamily: "Inter, system-ui, sans-serif",
-            fontSize: "13px", color: "#B0301F",
+            fontSize: "13px", color: "var(--danger-ink)",
           }}
         >
           <AlertTriangle className="h-4 w-4 flex-shrink-0" />
@@ -405,7 +405,7 @@ export function InspectView({ item, onBack, onRun, onRefresh, onDelete }: Inspec
                   <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "10px" }}>
                     <SectionLabel>Access controls</SectionLabel>
                     {approvalSaving && (
-                      <span style={{ fontFamily: "Inter, system-ui, sans-serif", fontSize: "11px", color: "#8A9099", display: "flex", alignItems: "center", gap: "4px" }}>
+                      <span style={{ fontFamily: "Inter, system-ui, sans-serif", fontSize: "11px", color: "var(--app-ink-3)", display: "flex", alignItems: "center", gap: "4px" }}>
                         <Loader2 className="h-3 w-3 animate-spin" /> Saving…
                       </span>
                     )}
@@ -415,7 +415,7 @@ export function InspectView({ item, onBack, onRun, onRefresh, onDelete }: Inspec
                     <div style={{
                       background: "rgba(30,158,98,.08)", border: "1px solid rgba(30,158,98,.2)",
                       borderRadius: "8px", padding: "12px 14px",
-                      fontFamily: "Inter, system-ui, sans-serif", fontSize: "13px", color: "#137A4B",
+                      fontFamily: "Inter, system-ui, sans-serif", fontSize: "13px", color: "var(--ok-ink)",
                       display: "flex", alignItems: "center", gap: "8px",
                     }}>
                       <Shield className="h-4 w-4 flex-shrink-0" />
@@ -436,8 +436,8 @@ export function InspectView({ item, onBack, onRun, onRefresh, onDelete }: Inspec
                           <div
                             key={i}
                             style={{
-                              background: approved ? "#FFFFFF" : "#F7F8FA",
-                              border: approved ? "1px solid #E3E7EC" : "1px solid #E3E7EC",
+                              background: approved ? "var(--app-bg)" : "var(--app-surface)",
+                              border: approved ? "1px solid var(--app-border)" : "1px solid var(--app-border)",
                               borderRadius: "8px",
                               padding: "12px 14px",
                               transition: "background 0.12s",
@@ -445,18 +445,18 @@ export function InspectView({ item, onBack, onRun, onRefresh, onDelete }: Inspec
                           >
                             {/* Row header */}
                             <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
-                              <CapIcon size={16} color="#565B62" style={{ flexShrink: 0 }} aria-hidden />
+                              <CapIcon size={16} color="var(--app-ink-2)" style={{ flexShrink: 0 }} aria-hidden />
                               <div style={{ flex: 1, minWidth: 0 }}>
                                 <div style={{
                                   fontFamily: "Inter, system-ui, sans-serif",
-                                  fontWeight: 600, fontSize: "13px", color: "#0A0A0A",
+                                  fontWeight: 600, fontSize: "13px", color: "var(--app-ink)",
                                 }}>
                                   {plain}
                                 </div>
                                 {isNet && hosts.length > 0 && (
                                   <div style={{
                                     fontFamily: "'Space Mono', monospace",
-                                    fontSize: "10px", color: "#8A9099",
+                                    fontSize: "10px", color: "var(--app-ink-3)",
                                     marginTop: "2px",
                                     wordBreak: "break-all",
                                   }}>
@@ -476,12 +476,12 @@ export function InspectView({ item, onBack, onRun, onRefresh, onDelete }: Inspec
                               <div style={{
                                 marginTop: "8px",
                                 paddingTop: "8px",
-                                borderTop: "1px solid #E3E7EC",
+                                borderTop: "1px solid var(--app-border)",
                                 display: "flex", gap: "6px", alignItems: "flex-start",
                                 fontFamily: "Inter, system-ui, sans-serif",
-                                fontSize: "11px", color: "#565B62",
+                                fontSize: "11px", color: "var(--app-ink-2)",
                               }}>
-                                <Info className="h-3.5 w-3.5 flex-shrink-0 mt-0.5" style={{ color: "#8A9099" }} />
+                                <Info className="h-3.5 w-3.5 flex-shrink-0 mt-0.5" style={{ color: "var(--app-ink-3)" }} />
                                 {riskNote}
                               </div>
                             )}
@@ -499,7 +499,7 @@ export function InspectView({ item, onBack, onRun, onRefresh, onDelete }: Inspec
                 }}>
                   <SectionLabel>When run, this tool can</SectionLabel>
                   {approvals.length === 0 ? (
-                    <p style={{ fontFamily: "Inter, system-ui, sans-serif", fontSize: "13px", color: "#0A0A0A", margin: 0 }}>
+                    <p style={{ fontFamily: "Inter, system-ui, sans-serif", fontSize: "13px", color: "var(--app-ink)", margin: 0 }}>
                       Render HTML only. No network, no device access.
                     </p>
                   ) : (
@@ -507,7 +507,7 @@ export function InspectView({ item, onBack, onRun, onRefresh, onDelete }: Inspec
                       {approvals.map((cap, i) => (
                         <li key={i} style={{
                           fontFamily: "Inter, system-ui, sans-serif",
-                          fontSize: "13px", color: "#0A0A0A",
+                          fontSize: "13px", color: "var(--app-ink)",
                           lineHeight: 1.7,
                         }}>
                           {capabilityToPlain(cap)}
@@ -515,20 +515,20 @@ export function InspectView({ item, onBack, onRun, onRefresh, onDelete }: Inspec
                       ))}
                     </ul>
                   )}
-                  <p style={{ fontFamily: "Inter, system-ui, sans-serif", fontSize: "11px", color: "#8A9099", margin: "6px 0 0" }}>
+                  <p style={{ fontFamily: "Inter, system-ui, sans-serif", fontSize: "11px", color: "var(--app-ink-3)", margin: "6px 0 0" }}>
                     Changes apply the next time you run the tool. Close and reopen its window.
                   </p>
                 </div>
 
                 {/* Scan limitation note */}
                 <div style={{
-                  background: "#F7F8FA", border: "1px solid #E3E7EC",
+                  background: "var(--app-surface)", border: "1px solid var(--app-border)",
                   borderRadius: "8px", padding: "12px 14px",
                   display: "flex", gap: "10px", alignItems: "flex-start",
                 }}>
-                  <Shield className="h-4 w-4 flex-shrink-0 mt-0.5" style={{ color: "#565B62" }} />
-                  <p style={{ fontFamily: "Inter, system-ui, sans-serif", fontSize: "12px", color: "#565B62", margin: 0, lineHeight: 1.5 }}>
-                    <strong style={{ color: "#0A0A0A" }}>Scan note:</strong>{" "}
+                  <Shield className="h-4 w-4 flex-shrink-0 mt-0.5" style={{ color: "var(--app-ink-2)" }} />
+                  <p style={{ fontFamily: "Inter, system-ui, sans-serif", fontSize: "12px", color: "var(--app-ink-2)", margin: 0, lineHeight: 1.5 }}>
+                    <strong style={{ color: "var(--app-ink)" }}>Scan note:</strong>{" "}
                     The scan uses regular expressions, so eval or obfuscated code can hide
                     capabilities from it. That doesn't grant them: the sandbox only allows what
                     you approve, and the{" "}
@@ -565,7 +565,7 @@ export function InspectView({ item, onBack, onRun, onRefresh, onDelete }: Inspec
                     <p
                       style={{
                         fontFamily: "Inter, system-ui, sans-serif", fontSize: "13px",
-                        color: description ? "#0A0A0A" : "#8A9099",
+                        color: description ? "var(--app-ink)" : "var(--app-ink-3)",
                         cursor: "pointer", margin: 0, lineHeight: 1.6,
                         fontStyle: description ? "normal" : "italic",
                       }}
@@ -588,15 +588,15 @@ export function InspectView({ item, onBack, onRun, onRefresh, onDelete }: Inspec
                         style={{
                           display: "inline-flex", alignItems: "center", gap: "4px",
                           fontFamily: "Inter, system-ui, sans-serif", fontSize: "12px",
-                          color: "#565B62",
-                          background: "#F7F8FA", border: "1px solid #E3E7EC",
+                          color: "var(--app-ink-2)",
+                          background: "var(--app-surface)", border: "1px solid var(--app-border)",
                           borderRadius: "4px", padding: "3px 8px",
                         }}
                       >
                         {tag}
                         <button
                           onClick={() => removeTag(tag)}
-                          style={{ display: "flex", color: "#8A9099", cursor: "pointer", background: "none", border: "none", padding: 0 }}
+                          style={{ display: "flex", color: "var(--app-ink-3)", cursor: "pointer", background: "none", border: "none", padding: 0 }}
                           className="hover:text-danger"
                         >
                           <X className="h-3 w-3" />
@@ -636,18 +636,18 @@ export function InspectView({ item, onBack, onRun, onRefresh, onDelete }: Inspec
                         ["Signed",  provenanceLabel(provenance), false],
                       ].map(([label, value, isMono]) => (
                         <>
-                          <dt key={`dt-${label}`} style={{ fontFamily: "Inter, system-ui, sans-serif", fontSize: "12px", color: "#8A9099", alignSelf: "baseline" }}>{label}</dt>
+                          <dt key={`dt-${label}`} style={{ fontFamily: "Inter, system-ui, sans-serif", fontSize: "12px", color: "var(--app-ink-3)", alignSelf: "baseline" }}>{label}</dt>
                           <dd key={`dd-${label}`} style={{
                             fontFamily: isMono ? "'Space Mono', monospace" : "Inter, system-ui, sans-serif",
                             fontSize: isMono ? "11px" : "13px",
-                            color: label === "Signed" && !provenance ? "#92600D" : "#0A0A0A",
+                            color: label === "Signed" && !provenance ? "var(--warn-ink)" : "var(--app-ink)",
                             wordBreak: "break-all", margin: 0,
                           }}>{value as string}</dd>
                         </>
                       ))}
                     </dl>
                     {provenance && (
-                      <p style={{ fontFamily: "Inter, system-ui, sans-serif", fontSize: "12px", color: "#8A9099", margin: "10px 0 0", lineHeight: 1.5 }}>
+                      <p style={{ fontFamily: "Inter, system-ui, sans-serif", fontSize: "12px", color: "var(--app-ink-3)", margin: "10px 0 0", lineHeight: 1.5 }}>
                         {SIGNATURE_MEANING} Approve only what you want it to do, above.
                       </p>
                     )}
@@ -667,12 +667,12 @@ export function InspectView({ item, onBack, onRun, onRefresh, onDelete }: Inspec
                     <div
                       key={v.id}
                       style={{
-                        background: isCurrent ? "#F7F8FA" : "#FFFFFF",
+                        background: isCurrent ? "var(--app-surface)" : "var(--app-bg)",
                         border: v.quarantined
                           ? "1px solid rgba(210,64,46,.25)"
                           : isCurrent
-                            ? "1px solid #E3E7EC"
-                            : "1px solid #E3E7EC",
+                            ? "1px solid var(--app-border)"
+                            : "1px solid var(--app-border)",
                         borderRadius: "8px",
                         padding: "12px 14px",
                         display: "flex", alignItems: "flex-start",
@@ -681,13 +681,13 @@ export function InspectView({ item, onBack, onRun, onRefresh, onDelete }: Inspec
                     >
                       <div style={{ flex: 1, minWidth: 0 }}>
                         <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "4px" }}>
-                          <span style={{ fontFamily: "Poppins, system-ui, sans-serif", fontWeight: 600, fontSize: "13px", color: "#0A0A0A" }}>
+                          <span style={{ fontFamily: "Poppins, system-ui, sans-serif", fontWeight: 600, fontSize: "13px", color: "var(--app-ink)" }}>
                             {versionLabel(v)}
                           </span>
                           {isCurrent && (
                             <span style={{
                               fontFamily: "Inter, system-ui, sans-serif", fontWeight: 500,
-                              fontSize: "11px", color: "#137A4B",
+                              fontSize: "11px", color: "var(--ok-ink)",
                               background: "rgba(30,158,98,.12)",
                               borderRadius: "4px", padding: "1px 7px",
                             }}>current</span>
@@ -695,7 +695,7 @@ export function InspectView({ item, onBack, onRun, onRefresh, onDelete }: Inspec
                           {v.quarantined && (
                             <span style={{
                               fontFamily: "Inter, system-ui, sans-serif", fontWeight: 500,
-                              fontSize: "11px", color: "#B0301F",
+                              fontSize: "11px", color: "var(--danger-ink)",
                               background: "rgba(210,64,46,.1)",
                               borderRadius: "4px", padding: "1px 7px",
                               display: "inline-flex", alignItems: "center", gap: "4px",
@@ -705,10 +705,10 @@ export function InspectView({ item, onBack, onRun, onRefresh, onDelete }: Inspec
                           )}
                         </div>
                         {/* Hash — Space Mono (it's data) */}
-                        <p style={{ fontFamily: "'Space Mono', monospace", fontSize: "10px", color: "#8A9099", margin: "0 0 4px", wordBreak: "break-all" }}>
+                        <p style={{ fontFamily: "'Space Mono', monospace", fontSize: "10px", color: "var(--app-ink-3)", margin: "0 0 4px", wordBreak: "break-all" }}>
                           {v.checksum}
                         </p>
-                        <p style={{ fontFamily: "Inter, system-ui, sans-serif", fontSize: "12px", color: "#8A9099", margin: 0, display: "flex", alignItems: "center", gap: "4px" }}>
+                        <p style={{ fontFamily: "Inter, system-ui, sans-serif", fontSize: "12px", color: "var(--app-ink-3)", margin: 0, display: "flex", alignItems: "center", gap: "4px" }}>
                           <Clock className="h-3 w-3" />
                           {formatDate(v.created_at)} · {formatBytes(v.file_size)}
                         </p>

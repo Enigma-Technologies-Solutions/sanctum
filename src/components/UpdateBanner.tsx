@@ -60,9 +60,9 @@ export function UpdateBanner() {
         flexShrink: 0,
         // Volt fill always carries black ink; the error state drops to a
         // neutral surface rather than repurposing the brand accent as a warning.
-        background: isError ? "#F7F8FA" : "#FBFF00",
-        color: "#0A0A0A",
-        borderBottom: "1px solid #E3E7EC",
+        background: isError ? "var(--app-surface)" : "#FBFF00",
+        color: isError ? "var(--app-ink)" : "var(--on-volt)",
+        borderBottom: "1px solid var(--app-border)",
         fontFamily: "'Inter', system-ui, sans-serif",
         fontSize: "13px",
       }}
@@ -70,7 +70,7 @@ export function UpdateBanner() {
       <ArrowUpCircle size={15} style={{ flexShrink: 0, opacity: isError ? 0.45 : 1 }} />
 
       {isError ? (
-        <span style={{ color: "#5A6069" }}>Update check failed: {error.replace(/^update check failed:\s*/i, "")}</span>
+        <span style={{ color: "var(--app-ink-2)" }}>Update check failed: {error.replace(/^update check failed:\s*/i, "")}</span>
       ) : (
         <>
           <span>
@@ -102,8 +102,8 @@ export function UpdateBanner() {
               display: "inline-flex",
               alignItems: "center",
               gap: "6px",
-              background: "#0A0A0A",
-              color: "#FFFFFF",
+              background: "var(--app-ink)",
+              color: "var(--on-ink)",
               border: "none",
               padding: "6px 14px",
               fontSize: "12px",

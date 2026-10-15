@@ -18,13 +18,13 @@ const buttonVariants = cva(
       variant: {
         // Ink primary — black bg, white text. Default action.
         default:
-          "bg-app-ink text-white rounded hover:bg-[#1a1a1a] active:bg-[#2a2a2a]",
+          "bg-app-ink text-[var(--on-ink)] rounded hover:bg-[var(--app-ink-hover)] active:bg-[var(--app-ink-hover)]",
         // Volt CTA — yellow, black text. ONE per view. Do not overuse.
         volt:
-          "bg-volt text-app-ink rounded font-bold hover:bg-[#eaed00] active:bg-[#d5d800]",
+          "bg-volt text-on-volt rounded font-bold hover:bg-[#eaed00] active:bg-[#d5d800]",
         // Ghost / secondary — white bg, border, ink text
         outline:
-          "bg-white border border-app-border text-app-ink rounded hover:bg-app-surface active:bg-app-raised",
+          "bg-app-bg border border-app-border text-app-ink rounded hover:bg-app-surface active:bg-app-raised",
         // Destructive
         destructive:
           "bg-danger text-white rounded hover:bg-[#b83527]",

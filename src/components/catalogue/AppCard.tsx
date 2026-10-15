@@ -35,8 +35,8 @@ export function AppCard({ app, busy, paused, onInstall, onOpen }: Props) {
         flexDirection: "column",
         gap: 10,
         padding: 16,
-        background: "#FFFFFF",
-        border: "1px solid #E3E7EC",
+        background: "var(--app-bg)",
+        border: "1px solid var(--app-border)",
         borderRadius: 10,
         minHeight: 168,
       }}
@@ -44,7 +44,7 @@ export function AppCard({ app, busy, paused, onInstall, onOpen }: Props) {
       <div style={{ display: "flex", alignItems: "flex-start", gap: 10 }}>
         <span
           aria-hidden="true"
-          style={{ display: "inline-flex", width: 36, height: 36, alignItems: "center", justifyContent: "center", background: "#F7F8FA", border: "1px solid #E3E7EC", borderRadius: 8, flexShrink: 0 }}
+          style={{ display: "inline-flex", width: 36, height: 36, alignItems: "center", justifyContent: "center", background: "var(--app-surface)", border: "1px solid var(--app-border)", borderRadius: 8, flexShrink: 0 }}
         >
           <Package size={18} />
         </span>
@@ -53,13 +53,13 @@ export function AppCard({ app, busy, paused, onInstall, onOpen }: Props) {
             <button
               type="button"
               onClick={() => onOpen(app)}
-              style={{ all: "unset", cursor: "pointer", textDecoration: "underline", textDecorationColor: "#E3E7EC", textUnderlineOffset: 4 }}
+              style={{ all: "unset", cursor: "pointer", textDecoration: "underline", textDecorationColor: "var(--app-border)", textUnderlineOffset: 4 }}
               aria-label={`Details for ${app.name}`}
             >
               {app.name}
             </button>
           </h3>
-          <div style={{ display: "flex", alignItems: "center", gap: 6, fontFamily: font, fontSize: 12, color: "#565B62", marginTop: 2 }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 6, fontFamily: font, fontSize: 12, color: "var(--app-ink-2)", marginTop: 2 }}>
             <BadgeCheck size={13} aria-hidden="true" />
             <span>{app.publisherName}</span>
             <span aria-hidden="true">·</span>
@@ -68,10 +68,10 @@ export function AppCard({ app, busy, paused, onInstall, onOpen }: Props) {
         </div>
       </div>
 
-      <p style={{ margin: 0, fontFamily: font, fontSize: 13, color: "#3A4048", flex: 1 }}>{app.summary}</p>
+      <p style={{ margin: 0, fontFamily: font, fontSize: 13, color: "var(--app-ink-1)", flex: 1 }}>{app.summary}</p>
 
       <div>
-        <div style={{ fontFamily: font, fontSize: 10.5, fontWeight: 600, letterSpacing: "0.08em", textTransform: "uppercase", color: "#6B717A", marginBottom: 4 }}>
+        <div style={{ fontFamily: font, fontSize: 10.5, fontWeight: 600, letterSpacing: "0.08em", textTransform: "uppercase", color: "var(--app-mute)", marginBottom: 4 }}>
           Asks for
         </div>
         <PermissionBadge detected={latestScope(app)} mode="compact" />
@@ -83,7 +83,7 @@ export function AppCard({ app, busy, paused, onInstall, onOpen }: Props) {
             <Button variant="outline" size="sm" disabled aria-describedby={reasonId}>
               {action.label}
             </Button>
-            <span id={reasonId} style={{ fontFamily: font, fontSize: 11.5, color: "#565B62" }}>
+            <span id={reasonId} style={{ fontFamily: font, fontSize: 11.5, color: "var(--app-ink-2)" }}>
               {action.reason}
             </span>
           </>

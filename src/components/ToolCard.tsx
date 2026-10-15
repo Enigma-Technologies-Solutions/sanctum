@@ -29,7 +29,7 @@ function NetworkStatus({ detected, approvals }: { detected: Detected; approvals:
   if (!detected.some((c) => typeof c === "object" && "net" in c)) return null;
   const on = approvals.some((a) => typeof a === "object" && "net" in a);
   return (
-    <span className={"cap-chip " + (on ? "" : "cap-chip-quiet")} style={on ? { color: "#137A4B", borderColor: "rgba(30,158,98,.35)" } : undefined}>
+    <span className={"cap-chip " + (on ? "" : "cap-chip-quiet")} style={on ? { color: "var(--ok-ink)", borderColor: "rgba(30,158,98,.35)" } : undefined}>
       {on ? <Wifi className="h-3 w-3" aria-hidden="true" /> : <WifiOff className="h-3 w-3" aria-hidden="true" />}
       {on ? "Network on" : "Network off"}
     </span>
@@ -123,10 +123,10 @@ export function ToolCard({ item, onRun, onInspect, onDeleted, onUpdated }: ToolC
           ) : (
             <div style={{
               width: 40, height: 40, flexShrink: 0,
-              background: "#F7F8FA", border: "1px solid #E3E7EC", borderRadius: 9,
+              background: "var(--app-surface)", border: "1px solid var(--app-border)", borderRadius: 9,
               display: "flex", alignItems: "center", justifyContent: "center",
               fontFamily: "Poppins, system-ui, sans-serif",
-              fontWeight: 700, fontSize: 13, color: "#6B717A", userSelect: "none",
+              fontWeight: 700, fontSize: 13, color: "var(--app-mute)", userSelect: "none",
             }} aria-hidden="true">
               {tool.name.slice(0, 2).toUpperCase()}
             </div>
@@ -138,7 +138,7 @@ export function ToolCard({ item, onRun, onInspect, onDeleted, onUpdated }: ToolC
                 title={tool.name}
                 style={{
                   fontFamily: "Poppins, system-ui, sans-serif",
-                  fontWeight: 600, fontSize: 15, color: "#0A0A0A",
+                  fontWeight: 600, fontSize: 15, color: "var(--app-ink)",
                   letterSpacing: "-0.01em", lineHeight: 1.3, margin: 0,
                   overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap",
                   minWidth: 0,
@@ -150,7 +150,7 @@ export function ToolCard({ item, onRun, onInspect, onDeleted, onUpdated }: ToolC
             </div>
             <div style={{
               fontFamily: "'Space Mono', ui-monospace, monospace",
-              fontSize: 11, color: "#6B717A", marginTop: 1,
+              fontSize: 11, color: "var(--app-mute)", marginTop: 1,
             }}>
               {cv ? (provenance && provenance.versionId === cv.id ? `v${provenance.version}` : `v${cv.version_num}`) : "No version"}
             </div>
@@ -160,7 +160,7 @@ export function ToolCard({ item, onRun, onInspect, onDeleted, onUpdated }: ToolC
         {/* Description */}
         <p style={{
           fontFamily: "Inter, system-ui, sans-serif",
-          fontSize: 13, color: tool.description ? "#565B62" : "#8A9099", margin: 0, lineHeight: 1.5,
+          fontSize: 13, color: tool.description ? "var(--app-ink-2)" : "var(--app-ink-3)", margin: 0, lineHeight: 1.5,
           fontStyle: tool.description ? "normal" : "italic",
           minHeight: 39,
           overflow: "hidden", display: "-webkit-box",
@@ -175,7 +175,7 @@ export function ToolCard({ item, onRun, onInspect, onDeleted, onUpdated }: ToolC
             display: "flex", alignItems: "center", gap: 6,
             background: "rgba(210,64,46,.08)", border: "1px solid rgba(210,64,46,.2)",
             borderRadius: 6, padding: "6px 10px",
-            fontFamily: "Inter, system-ui, sans-serif", fontSize: 12, color: "#B0301F",
+            fontFamily: "Inter, system-ui, sans-serif", fontSize: 12, color: "var(--danger-ink)",
           }}>
             <AlertTriangle style={{ width: 14, height: 14, flexShrink: 0 }} aria-hidden="true" />
             Quarantined: integrity check failed
@@ -193,8 +193,8 @@ export function ToolCard({ item, onRun, onInspect, onDeleted, onUpdated }: ToolC
           <div style={{ display: "flex", flexWrap: "wrap", gap: 4 }}>
             {tool.tags.map((tag) => (
               <span key={tag} style={{
-                fontFamily: "Inter, system-ui, sans-serif", fontSize: 11, color: "#6B717A",
-                border: "1px solid #E3E7EC", borderRadius: 4, padding: "1px 6px",
+                fontFamily: "Inter, system-ui, sans-serif", fontSize: 11, color: "var(--app-mute)",
+                border: "1px solid var(--app-border)", borderRadius: 4, padding: "1px 6px",
               }}>{tag}</span>
             ))}
           </div>
@@ -204,12 +204,12 @@ export function ToolCard({ item, onRun, onInspect, onDeleted, onUpdated }: ToolC
         {cv && (
           <div style={{
             fontFamily: "'Space Mono', ui-monospace, monospace",
-            fontSize: 11, color: "#6B717A",
+            fontSize: 11, color: "var(--app-mute)",
             display: "flex", alignItems: "center", gap: 6,
             marginTop: hasCaps || tool.tags.length > 0 ? 0 : -2,
           }}>
             <span title={cv.checksum}>{shortSha(cv.checksum)}</span>
-            <span style={{ color: "#D0D5DC" }} aria-hidden="true">·</span>
+            <span style={{ color: "var(--app-border-2)" }} aria-hidden="true">·</span>
             <span>{formatBytes(cv.file_size)}</span>
           </div>
         )}
@@ -219,11 +219,11 @@ export function ToolCard({ item, onRun, onInspect, onDeleted, onUpdated }: ToolC
       {showUpdate && (
         <div style={{
           margin: "0 18px 14px",
-          background: "#F7F8FA", border: "1px solid #E3E7EC",
+          background: "var(--app-surface)", border: "1px solid var(--app-border)",
           borderRadius: 8, padding: "10px 12px",
           display: "flex", flexDirection: "column", gap: 6,
         }}>
-          <span style={{ fontFamily: "Inter, system-ui, sans-serif", fontWeight: 600, fontSize: 12, color: "#565B62" }}>
+          <span style={{ fontFamily: "Inter, system-ui, sans-serif", fontWeight: 600, fontSize: 12, color: "var(--app-ink-2)" }}>
             Add new version from:
           </span>
           <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
@@ -239,7 +239,7 @@ export function ToolCard({ item, onRun, onInspect, onDeleted, onUpdated }: ToolC
             </Button>
           </div>
           {updateError && (
-            <p style={{ fontFamily: "Inter, system-ui, sans-serif", fontSize: 11, color: "#B0301F", margin: 0 }}>
+            <p style={{ fontFamily: "Inter, system-ui, sans-serif", fontSize: 11, color: "var(--danger-ink)", margin: 0 }}>
               {updateError}
             </p>
           )}
@@ -254,7 +254,7 @@ export function ToolCard({ item, onRun, onInspect, onDeleted, onUpdated }: ToolC
           borderRadius: 8, padding: "10px 12px",
           display: "flex", flexDirection: "column", gap: 8,
         }}>
-          <p style={{ fontFamily: "Inter, system-ui, sans-serif", fontSize: 12, color: "#B0301F", margin: 0 }}>
+          <p style={{ fontFamily: "Inter, system-ui, sans-serif", fontSize: 12, color: "var(--danger-ink)", margin: 0 }}>
             Delete <strong>{tool.name}</strong> and all versions? Cannot be undone.
           </p>
           <div style={{ display: "flex", gap: 6 }}>
@@ -271,7 +271,7 @@ export function ToolCard({ item, onRun, onInspect, onDeleted, onUpdated }: ToolC
 
       {/* Actions: Run + Inspect as one joined pair, overflow menu for Update and Delete */}
       <div style={{
-        marginTop: "auto", borderTop: "1px solid #EEF1F4",
+        marginTop: "auto", borderTop: "1px solid var(--app-raised)",
         padding: "12px 12px 12px 18px",
         display: "flex", alignItems: "center", gap: 8,
       }}>
