@@ -47,6 +47,10 @@ function shell({ title, description, canonical, depth, body }) {
 <nav class="nav" aria-label="Primary">
   <div class="wrap nav__inner">
     <a class="wordmark" href="${up}" aria-label="Sanctum home">SANCTUM<span class="wordmark__sq" aria-hidden="true"></span></a>
+    <div class="nav__links">
+      <a href="${up}">Home</a>
+      <a href="${up}apps/">Signed tools</a>
+    </div>
     <div class="nav__cta">
       <a class="btn btn--ghost btn--sm nav__gh" href="https://github.com/Enigma-Technologies-Solutions/sanctum" rel="noopener">GitHub</a>
       <a class="btn btn--volt btn--sm" href="https://github.com/Enigma-Technologies-Solutions/sanctum/releases/latest" rel="noopener">Download Sanctum</a>
@@ -128,14 +132,14 @@ function appPage({ config, entry, detail, manualHtml }) {
         </dl>`;
   const changelog = detail.changelog
     .map(
-      (c) => `      <section class="log">
-        <h3 class="log__v">${esc(c.version)} <span class="fine">${esc(c.date)}</span></h3>
-        <ul>${c.changes.map((x) => `<li><strong>${CHANGE_LABEL[x.type]}.</strong> ${esc(x.text)}</li>`).join('')}</ul>
+      (c) => `      <section>
+        <h3 class="changes__v">${esc(c.version)} <span class="fine">${esc(c.date)}</span></h3>
+        <ul class="changes__list">${c.changes.map((x) => `<li><strong>${CHANGE_LABEL[x.type]}.</strong> ${esc(x.text)}</li>`).join('')}</ul>
       </section>`,
     )
     .join('\n');
   const shots = (detail.screenshots ?? [])
-    .map((s) => `      <figure class="shot"><img src="${reg}${esc(s.path)}" width="${s.width}" height="${s.height}" alt="${esc(s.alt)}" loading="lazy"></figure>`)
+    .map((s) => `      <figure class="screenshot"><img src="${reg}${esc(s.path)}" width="${s.width}" height="${s.height}" alt="${esc(s.alt)}" loading="lazy"></figure>`)
     .join('\n');
   const links = [
     detail.homepage && `<a href="${esc(detail.homepage)}" rel="noopener">Website</a>`,
@@ -143,24 +147,28 @@ function appPage({ config, entry, detail, manualHtml }) {
     detail.license && `<span>${esc(detail.license)}</span>`,
   ].filter(Boolean);
 
-  const body = `    <p class="eyebrow"><a href="../">Signed tools</a></p>
-    <h1 class="h2">${esc(entry.name)} <span class="tag">v${esc(entry.latest)}</span></h1>
-    <p class="lede">${esc(entry.summary)}</p>
+  const body = `    <div class="appdoc">
+    <p class="eyebrow"><a href="../">Signed tools</a></p>
+    <h1 class="appdoc__title">${esc(entry.name)} <span class="tag">v${esc(entry.latest)}</span></h1>
+    <p class="lede appdoc__lede">${esc(entry.summary)}</p>
 
     <article class="card app">
         <p class="app__desc">${esc(detail.description)}</p>
         <p class="fine">${esc(describeAccess(v.declared))}</p>
-        <p class="fine">Published by ${esc(entry.publisher.name)}${links.length ? ` · ${links.join(' · ')}` : ''}</p>
+        <p class="fine appdoc__links">Published by ${esc(entry.publisher.name)}${links.length ? ` · ${links.join(' · ')}` : ''}</p>
 ${hashes}
         <a class="btn btn--volt btn--sm" href="${reg}${esc(v.bundle.path)}" download>Download (${(v.bundle.size / 1024).toFixed(1)} KB)</a>
     </article>
-    ${NOTE}
+    <p class="notice">Verified means the publisher is who it says and the bytes have not changed. It does not mean safe. A signature never grants access: every tool still starts with nothing approved, and you approve each capability yourself.</p>
 ${shots ? `\n    <h2 class="apps__sub">Screenshots</h2>\n${shots}\n` : ''}
     <h2 class="apps__sub">What is new</h2>
+    <div class="changes">
 ${changelog}
-${manualHtml ? `\n    <h2 class="apps__sub">Manual</h2>\n    <div class="prose">\n${manualHtml}\n    </div>\n` : ''}
+    </div>
+${manualHtml ? `\n    <h2 class="apps__sub">Manual</h2>\n    <div class="manual">\n${manualHtml}\n    </div>\n` : ''}
     <h2 class="apps__sub">For tools and scripts</h2>
-    <p class="lede"><a href="${reg}${esc(entry.detail.path)}"><code>${esc(entry.detail.path)}</code></a> holds this page's data. It is pinned by hash in the signed <a href="${reg}index.json"><code>index.json</code></a>.</p>`;
+    <p class="lede"><a href="${reg}${esc(entry.detail.path)}"><code>${esc(entry.detail.path)}</code></a> holds this page's data. It is pinned by hash in the signed <a href="${reg}index.json"><code>index.json</code></a>.</p>
+    </div>`;
   return shell({
     title: `${entry.name}, a signed tool for Sanctum`,
     description: entry.summary,
