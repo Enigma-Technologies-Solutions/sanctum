@@ -1,0 +1,30 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "sanctum-registry-revocations",
+  "$comment": "revocations.json. Signed separately from the index so it can be re-issued often and served from a fast path.",
+  "type": "object",
+  "required": ["format", "registry", "serial", "issued_at", "expires", "entries"],
+  "properties": {
+    "format": { "const": "sanctum-registry-revocations/1" },
+    "registry": { "$ref": "common.schema.json#/$defs/registryId" },
+    "serial": { "type": "integer", "minimum": 1 },
+    "issued_at": { "$ref": "common.schema.json#/$defs/unixTime" },
+    "expires": { "$ref": "common.schema.json#/$defs/unixTime" },
+    "entries": {
+      "type": "array",
+      "maxItems": 5000,
+      "items": {
+        "type": "object",
+        "required": ["checksum", "app_id", "reason", "revoked_at"],
+        "properties": {
+          "checksum": { "$ref": "common.schema.json#/$defs/sha256" },
+          "app_id": { "$ref": "common.schema.json#/$defs/appId" },
+          "version": { "$ref": "common.schema.json#/$defs/version" },
+          "reason": { "enum": ["compromised", "vulnerable", "withdrawn", "mistake"] },
+          "note": { "type": "string", "maxLength": 200 },
+          "revoked_at": { "$ref": "common.schema.json#/$defs/unixTime" }
+        }
+      }
+    }
+  }
+}

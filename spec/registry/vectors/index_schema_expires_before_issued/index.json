@@ -1,0 +1,77 @@
+{
+  "format": "sanctum-registry/1",
+  "id": "registry:sh.enigma.test",
+  "name": "Test Registry",
+  "kind": "public",
+  "serial": 7,
+  "issued_at": 1789999000,
+  "expires": 1789995000,
+  "mirrors": [
+    "https://mirror.test/registry/v1/"
+  ],
+  "revocations": "revocations.json",
+  "apps": [
+    {
+      "app_id": "sh.enigma.otp-vault",
+      "name": "OTP Vault",
+      "summary": "OTP Vault, a test entry.",
+      "publisher": {
+        "keyid": "ed25519:55CDZ7mfAMEL6ieWncaqXq4rS9TTUp421d95Eq8d3gg",
+        "name": "Test Publisher"
+      },
+      "access": "free",
+      "latest": "1.0.0",
+      "detail": {
+        "path": "apps/sh.enigma.otp-vault.json",
+        "sha256": "sha256:08dcaf728b376de5e092bd65af26e0fc36d794a99d3d536cc4f41f7b235bd661",
+        "size": 360
+      },
+      "versions": [
+        {
+          "version": "1.0.0",
+          "published_at": 1789995000,
+          "bundle": {
+            "path": "bundles/sh.enigma.otp-vault-1.0.0.sanctum",
+            "sha256": "sha256:b9c691ae04278a582fa067be1dcff6f9d090ebb8271037ef672c712d88852153",
+            "size": 42
+          },
+          "checksum": "sha256:5263827eecb21796977be62d7585439636b6da5d7337cdb103e4379cd7544bec",
+          "declared": [
+            "storage"
+          ]
+        }
+      ]
+    },
+    {
+      "app_id": "sh.enigma.shamir",
+      "name": "Shamir Secret Sharing",
+      "summary": "Shamir Secret Sharing, a test entry.",
+      "publisher": {
+        "keyid": "ed25519:55CDZ7mfAMEL6ieWncaqXq4rS9TTUp421d95Eq8d3gg",
+        "name": "Test Publisher"
+      },
+      "access": "free",
+      "latest": "1.0.2",
+      "detail": {
+        "path": "apps/sh.enigma.shamir.json",
+        "sha256": "sha256:ff3c0f9db5dd89bbb1bf95c5c68c3416406becb01c54619bd28f77e8e9cfb770",
+        "size": 357
+      },
+      "versions": [
+        {
+          "version": "1.0.2",
+          "published_at": 1789995000,
+          "bundle": {
+            "path": "bundles/sh.enigma.shamir-1.0.2.sanctum",
+            "sha256": "sha256:44c857df566d9c902cbed43c300095161929fa98db3dbb8015c70675b2afd897",
+            "size": 39
+          },
+          "checksum": "sha256:546f359b8a69c94cc35c184160306c45174bf9761fc6329d9db19bf044332ce6",
+          "declared": [
+            "storage"
+          ]
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,921 @@
+{
+  "format": "sanctum-registry-vectors/1",
+  "note": "TEST KEYS ONLY. Derived from public strings. Never a trust anchor in any build.",
+  "keys": {
+    "root": {
+      "keyid": "ed25519:T9XAWjRP2C-2_xCxgSyUIHllNg1DMbypEVHE3FyY1D4",
+      "name": "Test Root"
+    },
+    "publisher": {
+      "keyid": "ed25519:55CDZ7mfAMEL6ieWncaqXq4rS9TTUp421d95Eq8d3gg",
+      "name": "Test Publisher"
+    },
+    "other": {
+      "keyid": "ed25519:LrnTGlV7F8Kw2UepMxs_Hfzqdl0BsMoJ5JYDcQLZ7Wg",
+      "name": "Test Other"
+    }
+  },
+  "cases": [
+    {
+      "name": "index_root_signed",
+      "kind": "index",
+      "index": "index_root_signed/index.json",
+      "sig": "index_root_signed/index.json.sig",
+      "now": 1790000000,
+      "anchors": [
+        "root"
+      ],
+      "expected_id": "registry:sh.enigma.test",
+      "expect": {
+        "result": "ok",
+        "trust": "anchored",
+        "publisher": "Test Root",
+        "stale": false
+      }
+    },
+    {
+      "name": "index_chain_signed",
+      "kind": "index",
+      "index": "index_chain_signed/index.json",
+      "sig": "index_chain_signed/index.json.sig",
+      "now": 1790000000,
+      "anchors": [
+        "root"
+      ],
+      "expected_id": "registry:sh.enigma.test",
+      "expect": {
+        "result": "ok",
+        "trust": "anchored",
+        "publisher": "Test Publisher",
+        "stale": false
+      }
+    },
+    {
+      "name": "index_unanchored_no_chain",
+      "kind": "index",
+      "index": "index_unanchored_no_chain/index.json",
+      "sig": "index_unanchored_no_chain/index.json.sig",
+      "now": 1790000000,
+      "anchors": [
+        "root"
+      ],
+      "expected_id": "registry:sh.enigma.test",
+      "expect": {
+        "result": "ok",
+        "trust": "unanchored",
+        "reason": null,
+        "stale": false
+      }
+    },
+    {
+      "name": "index_unanchored_app_scope_only",
+      "kind": "index",
+      "index": "index_unanchored_app_scope_only/index.json",
+      "sig": "index_unanchored_app_scope_only/index.json.sig",
+      "now": 1790000000,
+      "anchors": [
+        "root"
+      ],
+      "expected_id": "registry:sh.enigma.test",
+      "expect": {
+        "result": "ok",
+        "trust": "unanchored",
+        "reason": "certificate does not cover this registry",
+        "stale": false
+      }
+    },
+    {
+      "name": "index_unanchored_cert_expired",
+      "kind": "index",
+      "index": "index_unanchored_cert_expired/index.json",
+      "sig": "index_unanchored_cert_expired/index.json.sig",
+      "now": 1790000000,
+      "anchors": [
+        "root"
+      ],
+      "expected_id": "registry:sh.enigma.test",
+      "expect": {
+        "result": "ok",
+        "trust": "unanchored",
+        "reason": "certificate has expired",
+        "stale": false
+      }
+    },
+    {
+      "name": "index_unanchored_cert_not_yet_valid",
+      "kind": "index",
+      "index": "index_unanchored_cert_not_yet_valid/index.json",
+      "sig": "index_unanchored_cert_not_yet_valid/index.json.sig",
+      "now": 1790000000,
+      "anchors": [
+        "root"
+      ],
+      "expected_id": "registry:sh.enigma.test",
+      "expect": {
+        "result": "ok",
+        "trust": "unanchored",
+        "reason": "certificate is not yet valid",
+        "stale": false
+      }
+    },
+    {
+      "name": "index_unanchored_cert_wrong_issuer",
+      "kind": "index",
+      "index": "index_unanchored_cert_wrong_issuer/index.json",
+      "sig": "index_unanchored_cert_wrong_issuer/index.json.sig",
+      "now": 1790000000,
+      "anchors": [
+        "root"
+      ],
+      "expected_id": "registry:sh.enigma.test",
+      "expect": {
+        "result": "ok",
+        "trust": "unanchored",
+        "reason": "certificate was not issued by a trusted key",
+        "stale": false
+      }
+    },
+    {
+      "name": "index_unanchored_cert_other_subject",
+      "kind": "index",
+      "index": "index_unanchored_cert_other_subject/index.json",
+      "sig": "index_unanchored_cert_other_subject/index.json.sig",
+      "now": 1790000000,
+      "anchors": [
+        "root"
+      ],
+      "expected_id": "registry:sh.enigma.test",
+      "expect": {
+        "result": "ok",
+        "trust": "unanchored",
+        "reason": "certificate is for a different key",
+        "stale": false
+      }
+    },
+    {
+      "name": "index_stale",
+      "kind": "index",
+      "index": "index_stale/index.json",
+      "sig": "index_stale/index.json.sig",
+      "now": 1797862400,
+      "anchors": [
+        "root"
+      ],
+      "expected_id": "registry:sh.enigma.test",
+      "expect": {
+        "result": "ok",
+        "trust": "anchored",
+        "publisher": "Test Root",
+        "stale": true
+      }
+    },
+    {
+      "name": "index_bad_signature_tampered",
+      "kind": "index",
+      "index": "index_bad_signature_tampered/index.json",
+      "sig": "index_bad_signature_tampered/index.json.sig",
+      "now": 1790000000,
+      "anchors": [
+        "root"
+      ],
+      "expected_id": "registry:sh.enigma.test",
+      "expect": {
+        "result": "error",
+        "error": "bad_signature"
+      }
+    },
+    {
+      "name": "index_bad_signature_wrong_domain",
+      "kind": "index",
+      "index": "index_bad_signature_wrong_domain/index.json",
+      "sig": "index_bad_signature_wrong_domain/index.json.sig",
+      "now": 1790000000,
+      "anchors": [
+        "root"
+      ],
+      "expected_id": "registry:sh.enigma.test",
+      "expect": {
+        "result": "error",
+        "error": "bad_signature"
+      }
+    },
+    {
+      "name": "index_bad_signature_revocations_domain",
+      "kind": "index",
+      "index": "index_bad_signature_revocations_domain/index.json",
+      "sig": "index_bad_signature_revocations_domain/index.json.sig",
+      "now": 1790000000,
+      "anchors": [
+        "root"
+      ],
+      "expected_id": "registry:sh.enigma.test",
+      "expect": {
+        "result": "error",
+        "error": "bad_signature"
+      }
+    },
+    {
+      "name": "index_sig_malformed",
+      "kind": "index",
+      "index": "index_sig_malformed/index.json",
+      "sig": "index_sig_malformed/index.json.sig",
+      "now": 1790000000,
+      "anchors": [
+        "root"
+      ],
+      "expected_id": "registry:sh.enigma.test",
+      "expect": {
+        "result": "error",
+        "error": "sig_malformed"
+      }
+    },
+    {
+      "name": "index_malformed_json",
+      "kind": "index",
+      "index": "index_malformed_json/index.json",
+      "sig": "index_malformed_json/index.json.sig",
+      "now": 1790000000,
+      "anchors": [
+        "root"
+      ],
+      "expected_id": "registry:sh.enigma.test",
+      "expect": {
+        "result": "error",
+        "error": "malformed_json"
+      }
+    },
+    {
+      "name": "index_format_unsupported",
+      "kind": "index",
+      "index": "index_format_unsupported/index.json",
+      "sig": "index_format_unsupported/index.json.sig",
+      "now": 1790000000,
+      "anchors": [
+        "root"
+      ],
+      "expected_id": "registry:sh.enigma.test",
+      "expect": {
+        "result": "error",
+        "error": "format_unsupported"
+      }
+    },
+    {
+      "name": "index_unknown_fields_ok",
+      "kind": "index",
+      "index": "index_unknown_fields_ok/index.json",
+      "sig": "index_unknown_fields_ok/index.json.sig",
+      "now": 1790000000,
+      "anchors": [
+        "root"
+      ],
+      "expected_id": "registry:sh.enigma.test",
+      "expect": {
+        "result": "ok",
+        "trust": "anchored",
+        "publisher": "Test Root",
+        "stale": false
+      }
+    },
+    {
+      "name": "index_licensed_listed_ok",
+      "kind": "index",
+      "index": "index_licensed_listed_ok/index.json",
+      "sig": "index_licensed_listed_ok/index.json.sig",
+      "now": 1790000000,
+      "anchors": [
+        "root"
+      ],
+      "expected_id": "registry:sh.enigma.test",
+      "expect": {
+        "result": "ok",
+        "trust": "anchored",
+        "publisher": "Test Root",
+        "stale": false
+      }
+    },
+    {
+      "name": "index_attestation_parsed_ok",
+      "kind": "index",
+      "index": "index_attestation_parsed_ok/index.json",
+      "sig": "index_attestation_parsed_ok/index.json.sig",
+      "now": 1790000000,
+      "anchors": [
+        "root"
+      ],
+      "expected_id": "registry:sh.enigma.test",
+      "expect": {
+        "result": "ok",
+        "trust": "anchored",
+        "publisher": "Test Root",
+        "stale": false
+      }
+    },
+    {
+      "name": "index_schema_missing_apps",
+      "kind": "index",
+      "index": "index_schema_missing_apps/index.json",
+      "sig": "index_schema_missing_apps/index.json.sig",
+      "now": 1790000000,
+      "anchors": [
+        "root"
+      ],
+      "expected_id": "registry:sh.enigma.test",
+      "expect": {
+        "result": "error",
+        "error": "schema_invalid"
+      }
+    },
+    {
+      "name": "index_schema_bad_checksum",
+      "kind": "index",
+      "index": "index_schema_bad_checksum/index.json",
+      "sig": "index_schema_bad_checksum/index.json.sig",
+      "now": 1790000000,
+      "anchors": [
+        "root"
+      ],
+      "expected_id": "registry:sh.enigma.test",
+      "expect": {
+        "result": "error",
+        "error": "schema_invalid"
+      }
+    },
+    {
+      "name": "index_schema_bad_id",
+      "kind": "index",
+      "index": "index_schema_bad_id/index.json",
+      "sig": "index_schema_bad_id/index.json.sig",
+      "now": 1790000000,
+      "anchors": [
+        "root"
+      ],
+      "expected_id": "registry:sh.enigma.test",
+      "expect": {
+        "result": "error",
+        "error": "schema_invalid"
+      }
+    },
+    {
+      "name": "index_schema_duplicate_app",
+      "kind": "index",
+      "index": "index_schema_duplicate_app/index.json",
+      "sig": "index_schema_duplicate_app/index.json.sig",
+      "now": 1790000000,
+      "anchors": [
+        "root"
+      ],
+      "expected_id": "registry:sh.enigma.test",
+      "expect": {
+        "result": "error",
+        "error": "schema_invalid"
+      }
+    },
+    {
+      "name": "index_schema_latest_missing",
+      "kind": "index",
+      "index": "index_schema_latest_missing/index.json",
+      "sig": "index_schema_latest_missing/index.json.sig",
+      "now": 1790000000,
+      "anchors": [
+        "root"
+      ],
+      "expected_id": "registry:sh.enigma.test",
+      "expect": {
+        "result": "error",
+        "error": "schema_invalid"
+      }
+    },
+    {
+      "name": "index_schema_expires_before_issued",
+      "kind": "index",
+      "index": "index_schema_expires_before_issued/index.json",
+      "sig": "index_schema_expires_before_issued/index.json.sig",
+      "now": 1790000000,
+      "anchors": [
+        "root"
+      ],
+      "expected_id": "registry:sh.enigma.test",
+      "expect": {
+        "result": "error",
+        "error": "schema_invalid"
+      }
+    },
+    {
+      "name": "index_path_traversal",
+      "kind": "index",
+      "index": "index_path_traversal/index.json",
+      "sig": "index_path_traversal/index.json.sig",
+      "now": 1790000000,
+      "anchors": [
+        "root"
+      ],
+      "expected_id": "registry:sh.enigma.test",
+      "expect": {
+        "result": "error",
+        "error": "schema_invalid"
+      }
+    },
+    {
+      "name": "index_path_absolute_url",
+      "kind": "index",
+      "index": "index_path_absolute_url/index.json",
+      "sig": "index_path_absolute_url/index.json.sig",
+      "now": 1790000000,
+      "anchors": [
+        "root"
+      ],
+      "expected_id": "registry:sh.enigma.test",
+      "expect": {
+        "result": "error",
+        "error": "schema_invalid"
+      }
+    },
+    {
+      "name": "index_path_not_canonical",
+      "kind": "index",
+      "index": "index_path_not_canonical/index.json",
+      "sig": "index_path_not_canonical/index.json.sig",
+      "now": 1790000000,
+      "anchors": [
+        "root"
+      ],
+      "expected_id": "registry:sh.enigma.test",
+      "expect": {
+        "result": "error",
+        "error": "schema_invalid"
+      }
+    },
+    {
+      "name": "index_id_mismatch",
+      "kind": "index",
+      "index": "index_id_mismatch/index.json",
+      "sig": "index_id_mismatch/index.json.sig",
+      "now": 1790000000,
+      "anchors": [
+        "root"
+      ],
+      "expected_id": "registry:sh.enigma.other",
+      "expect": {
+        "result": "error",
+        "error": "id_mismatch"
+      }
+    },
+    {
+      "name": "index_from_future",
+      "kind": "index",
+      "index": "index_from_future/index.json",
+      "sig": "index_from_future/index.json.sig",
+      "now": 1790000000,
+      "anchors": [
+        "root"
+      ],
+      "expected_id": "registry:sh.enigma.test",
+      "expect": {
+        "result": "error",
+        "error": "from_future"
+      }
+    },
+    {
+      "name": "index_rollback",
+      "kind": "index",
+      "index": "index_rollback/index.json",
+      "sig": "index_rollback/index.json.sig",
+      "now": 1790000000,
+      "anchors": [
+        "root"
+      ],
+      "expected_id": "registry:sh.enigma.test",
+      "expect": {
+        "result": "error",
+        "error": "rollback"
+      },
+      "last_seen": {
+        "serial": 8,
+        "sha256": "sha256:6da0633528deaa0144e7b058315f0b753ec0b945163a72bf96a0d18180f9de0d"
+      }
+    },
+    {
+      "name": "index_serial_replay",
+      "kind": "index",
+      "index": "index_serial_replay/index.json",
+      "sig": "index_serial_replay/index.json.sig",
+      "now": 1790000000,
+      "anchors": [
+        "root"
+      ],
+      "expected_id": "registry:sh.enigma.test",
+      "expect": {
+        "result": "error",
+        "error": "serial_replay"
+      },
+      "last_seen": {
+        "serial": 7,
+        "sha256": "sha256:538a741c622733afe147819e939d82cc071edfbeb3eb49ed701a55975ac288b3"
+      }
+    },
+    {
+      "name": "index_same_serial_same_bytes_ok",
+      "kind": "index",
+      "index": "index_same_serial_same_bytes_ok/index.json",
+      "sig": "index_same_serial_same_bytes_ok/index.json.sig",
+      "now": 1790000000,
+      "anchors": [
+        "root"
+      ],
+      "expected_id": "registry:sh.enigma.test",
+      "expect": {
+        "result": "ok",
+        "trust": "anchored",
+        "publisher": "Test Root",
+        "stale": false
+      },
+      "last_seen": {
+        "serial": 7,
+        "sha256": "sha256:383cede41c06ab5db0212d62610d7922827f925455af0386122eb7f6de111eeb"
+      }
+    },
+    {
+      "name": "index_newer_serial_ok",
+      "kind": "index",
+      "index": "index_newer_serial_ok/index.json",
+      "sig": "index_newer_serial_ok/index.json.sig",
+      "now": 1790000000,
+      "anchors": [
+        "root"
+      ],
+      "expected_id": "registry:sh.enigma.test",
+      "expect": {
+        "result": "ok",
+        "trust": "anchored",
+        "publisher": "Test Root",
+        "stale": false
+      },
+      "last_seen": {
+        "serial": 6,
+        "sha256": "sha256:da925a30e31f7fdaa7044e3e5ba4ae17670de82d677b0e7adf5700428a137a36"
+      }
+    },
+    {
+      "name": "revocations_ok",
+      "kind": "revocations",
+      "file": "revocations_ok/revocations.json",
+      "sig": "revocations_ok/revocations.json.sig",
+      "now": 1790000000,
+      "anchors": [
+        "root"
+      ],
+      "expected_id": "registry:sh.enigma.test",
+      "expect": {
+        "result": "ok",
+        "trust": "anchored",
+        "publisher": "Test Root",
+        "stale": false
+      }
+    },
+    {
+      "name": "revocations_chain_ok",
+      "kind": "revocations",
+      "file": "revocations_chain_ok/revocations.json",
+      "sig": "revocations_chain_ok/revocations.json.sig",
+      "now": 1790000000,
+      "anchors": [
+        "root"
+      ],
+      "expected_id": "registry:sh.enigma.test",
+      "expect": {
+        "result": "ok",
+        "trust": "anchored",
+        "publisher": "Test Publisher",
+        "stale": false
+      }
+    },
+    {
+      "name": "revocations_empty_ok",
+      "kind": "revocations",
+      "file": "revocations_empty_ok/revocations.json",
+      "sig": "revocations_empty_ok/revocations.json.sig",
+      "now": 1790000000,
+      "anchors": [
+        "root"
+      ],
+      "expected_id": "registry:sh.enigma.test",
+      "expect": {
+        "result": "ok",
+        "trust": "anchored",
+        "publisher": "Test Root",
+        "stale": false
+      }
+    },
+    {
+      "name": "revocations_stale",
+      "kind": "revocations",
+      "file": "revocations_stale/revocations.json",
+      "sig": "revocations_stale/revocations.json.sig",
+      "now": 1791296000,
+      "anchors": [
+        "root"
+      ],
+      "expected_id": "registry:sh.enigma.test",
+      "expect": {
+        "result": "ok",
+        "trust": "anchored",
+        "publisher": "Test Root",
+        "stale": true
+      }
+    },
+    {
+      "name": "revocations_bad_signature",
+      "kind": "revocations",
+      "file": "revocations_bad_signature/revocations.json",
+      "sig": "revocations_bad_signature/revocations.json.sig",
+      "now": 1790000000,
+      "anchors": [
+        "root"
+      ],
+      "expected_id": "registry:sh.enigma.test",
+      "expect": {
+        "result": "error",
+        "error": "bad_signature"
+      }
+    },
+    {
+      "name": "revocations_index_domain",
+      "kind": "revocations",
+      "file": "revocations_index_domain/revocations.json",
+      "sig": "revocations_index_domain/revocations.json.sig",
+      "now": 1790000000,
+      "anchors": [
+        "root"
+      ],
+      "expected_id": "registry:sh.enigma.test",
+      "expect": {
+        "result": "error",
+        "error": "bad_signature"
+      }
+    },
+    {
+      "name": "revocations_registry_mismatch",
+      "kind": "revocations",
+      "file": "revocations_registry_mismatch/revocations.json",
+      "sig": "revocations_registry_mismatch/revocations.json.sig",
+      "now": 1790000000,
+      "anchors": [
+        "root"
+      ],
+      "expected_id": "registry:sh.enigma.test",
+      "expect": {
+        "result": "error",
+        "error": "id_mismatch"
+      }
+    },
+    {
+      "name": "revocations_rollback",
+      "kind": "revocations",
+      "file": "revocations_rollback/revocations.json",
+      "sig": "revocations_rollback/revocations.json.sig",
+      "now": 1790000000,
+      "anchors": [
+        "root"
+      ],
+      "expected_id": "registry:sh.enigma.test",
+      "expect": {
+        "result": "error",
+        "error": "rollback"
+      },
+      "last_seen": {
+        "serial": 4,
+        "sha256": "sha256:2d711642b726b04401627ca9fbac32f5c8530fb1903cc4db02258717921a4881"
+      }
+    },
+    {
+      "name": "revocations_duplicate_checksum",
+      "kind": "revocations",
+      "file": "revocations_duplicate_checksum/revocations.json",
+      "sig": "revocations_duplicate_checksum/revocations.json.sig",
+      "now": 1790000000,
+      "anchors": [
+        "root"
+      ],
+      "expected_id": "registry:sh.enigma.test",
+      "expect": {
+        "result": "error",
+        "error": "schema_invalid"
+      }
+    },
+    {
+      "name": "revocations_bad_reason",
+      "kind": "revocations",
+      "file": "revocations_bad_reason/revocations.json",
+      "sig": "revocations_bad_reason/revocations.json.sig",
+      "now": 1790000000,
+      "anchors": [
+        "root"
+      ],
+      "expected_id": "registry:sh.enigma.test",
+      "expect": {
+        "result": "error",
+        "error": "schema_invalid"
+      }
+    },
+    {
+      "name": "asset_bundle_ok",
+      "kind": "asset",
+      "entry": {
+        "path": "bundles/sh.enigma.otp-vault-1.0.0.sanctum",
+        "sha256": "sha256:b9c691ae04278a582fa067be1dcff6f9d090ebb8271037ef672c712d88852153",
+        "size": 42
+      },
+      "file": "asset_bundle_ok/file",
+      "expect": {
+        "result": "ok"
+      }
+    },
+    {
+      "name": "asset_bundle_hash_mismatch",
+      "kind": "asset",
+      "entry": {
+        "path": "bundles/sh.enigma.otp-vault-1.0.0.sanctum",
+        "sha256": "sha256:b9c691ae04278a582fa067be1dcff6f9d090ebb8271037ef672c712d88852153",
+        "size": 42
+      },
+      "file": "asset_bundle_hash_mismatch/file",
+      "expect": {
+        "result": "error",
+        "error": "hash_mismatch"
+      }
+    },
+    {
+      "name": "asset_bundle_size_mismatch",
+      "kind": "asset",
+      "entry": {
+        "path": "bundles/sh.enigma.otp-vault-1.0.0.sanctum",
+        "sha256": "sha256:b9c691ae04278a582fa067be1dcff6f9d090ebb8271037ef672c712d88852153",
+        "size": 42
+      },
+      "file": "asset_bundle_size_mismatch/file",
+      "expect": {
+        "result": "error",
+        "error": "size_mismatch"
+      }
+    },
+    {
+      "name": "detail_ok",
+      "kind": "detail",
+      "entry": {
+        "app_id": "sh.enigma.otp-vault",
+        "name": "OTP Vault",
+        "summary": "OTP Vault, a test entry.",
+        "publisher": {
+          "keyid": "ed25519:55CDZ7mfAMEL6ieWncaqXq4rS9TTUp421d95Eq8d3gg",
+          "name": "Test Publisher"
+        },
+        "access": "free",
+        "latest": "1.0.0",
+        "detail": {
+          "path": "apps/sh.enigma.otp-vault.json",
+          "sha256": "sha256:08dcaf728b376de5e092bd65af26e0fc36d794a99d3d536cc4f41f7b235bd661",
+          "size": 360
+        },
+        "versions": [
+          {
+            "version": "1.0.0",
+            "published_at": 1789995000,
+            "bundle": {
+              "path": "bundles/sh.enigma.otp-vault-1.0.0.sanctum",
+              "sha256": "sha256:b9c691ae04278a582fa067be1dcff6f9d090ebb8271037ef672c712d88852153",
+              "size": 42
+            },
+            "checksum": "sha256:5263827eecb21796977be62d7585439636b6da5d7337cdb103e4379cd7544bec",
+            "declared": [
+              "storage"
+            ]
+          }
+        ]
+      },
+      "file": "detail_ok/file",
+      "expect": {
+        "result": "ok"
+      }
+    },
+    {
+      "name": "detail_hash_mismatch",
+      "kind": "detail",
+      "entry": {
+        "app_id": "sh.enigma.otp-vault",
+        "name": "OTP Vault",
+        "summary": "OTP Vault, a test entry.",
+        "publisher": {
+          "keyid": "ed25519:55CDZ7mfAMEL6ieWncaqXq4rS9TTUp421d95Eq8d3gg",
+          "name": "Test Publisher"
+        },
+        "access": "free",
+        "latest": "1.0.0",
+        "detail": {
+          "path": "apps/sh.enigma.otp-vault.json",
+          "sha256": "sha256:08dcaf728b376de5e092bd65af26e0fc36d794a99d3d536cc4f41f7b235bd661",
+          "size": 360
+        },
+        "versions": [
+          {
+            "version": "1.0.0",
+            "published_at": 1789995000,
+            "bundle": {
+              "path": "bundles/sh.enigma.otp-vault-1.0.0.sanctum",
+              "sha256": "sha256:b9c691ae04278a582fa067be1dcff6f9d090ebb8271037ef672c712d88852153",
+              "size": 42
+            },
+            "checksum": "sha256:5263827eecb21796977be62d7585439636b6da5d7337cdb103e4379cd7544bec",
+            "declared": [
+              "storage"
+            ]
+          }
+        ]
+      },
+      "file": "detail_hash_mismatch/file",
+      "expect": {
+        "result": "error",
+        "error": "hash_mismatch"
+      }
+    },
+    {
+      "name": "detail_app_id_mismatch",
+      "kind": "detail",
+      "entry": {
+        "app_id": "sh.enigma.otp-vault",
+        "name": "OTP Vault",
+        "summary": "OTP Vault, a test entry.",
+        "publisher": {
+          "keyid": "ed25519:55CDZ7mfAMEL6ieWncaqXq4rS9TTUp421d95Eq8d3gg",
+          "name": "Test Publisher"
+        },
+        "access": "free",
+        "latest": "1.0.0",
+        "detail": {
+          "path": "apps/sh.enigma.otp-vault.json",
+          "sha256": "sha256:ff3c0f9db5dd89bbb1bf95c5c68c3416406becb01c54619bd28f77e8e9cfb770",
+          "size": 357
+        },
+        "versions": [
+          {
+            "version": "1.0.0",
+            "published_at": 1789995000,
+            "bundle": {
+              "path": "bundles/sh.enigma.otp-vault-1.0.0.sanctum",
+              "sha256": "sha256:b9c691ae04278a582fa067be1dcff6f9d090ebb8271037ef672c712d88852153",
+              "size": 42
+            },
+            "checksum": "sha256:5263827eecb21796977be62d7585439636b6da5d7337cdb103e4379cd7544bec",
+            "declared": [
+              "storage"
+            ]
+          }
+        ]
+      },
+      "file": "detail_app_id_mismatch/file",
+      "expect": {
+        "result": "error",
+        "error": "id_mismatch"
+      }
+    },
+    {
+      "name": "detail_schema_invalid",
+      "kind": "detail",
+      "entry": {
+        "app_id": "sh.enigma.otp-vault",
+        "name": "OTP Vault",
+        "summary": "OTP Vault, a test entry.",
+        "publisher": {
+          "keyid": "ed25519:55CDZ7mfAMEL6ieWncaqXq4rS9TTUp421d95Eq8d3gg",
+          "name": "Test Publisher"
+        },
+        "access": "free",
+        "latest": "1.0.0",
+        "detail": {
+          "path": "apps/sh.enigma.otp-vault.json",
+          "sha256": "sha256:f6bc127f0147c5ecb06e11c06f82f84733c09a1cd0cd115cda66aad7129f6cde",
+          "size": 270
+        },
+        "versions": [
+          {
+            "version": "1.0.0",
+            "published_at": 1789995000,
+            "bundle": {
+              "path": "bundles/sh.enigma.otp-vault-1.0.0.sanctum",
+              "sha256": "sha256:b9c691ae04278a582fa067be1dcff6f9d090ebb8271037ef672c712d88852153",
+              "size": 42
+            },
+            "checksum": "sha256:5263827eecb21796977be62d7585439636b6da5d7337cdb103e4379cd7544bec",
+            "declared": [
+              "storage"
+            ]
+          }
+        ]
+      },
+      "file": "detail_schema_invalid/file",
+      "expect": {
+        "result": "error",
+        "error": "schema_invalid"
+      }
+    }
+  ]
+}

@@ -41,6 +41,9 @@ and both live bundle hashes match their cards.
 2. Pin the exact signed bytes (canonical JSON).
 3. Add a JSON Schema and test vectors: valid, invalid, tampered.
 
+Delivered as `docs/registry-format.md` and `spec/registry/` (schemas, a zero-dependency
+reference verifier, 98 vector files, `node --test`). Only the schema review gate remains.
+
 Tests: each fixture is accepted or rejected as labelled. The same canonical-bytes vectors pass
 in Node and Rust.
 Gate: the maintainer approves the schema. After this it changes only by version bump.

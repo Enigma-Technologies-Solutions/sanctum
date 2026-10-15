@@ -196,6 +196,12 @@ refuses the window the same way a checksum mismatch does.
 
 ## Stage 3: the registry (`registry.rs`)
 
+**The format is now specified in [registry-format.md](registry-format.md)** (draft, with
+schemas and signed test vectors in `spec/registry/`). The sketch below is superseded: the
+index is signed with a detached signature over exact bytes, revocations live in a separate
+signed file instead of a `revoked` flag, and every path is relative. The reasoning on why
+the index is a pointer and not an authority still holds.
+
 A static, signed index, not a service. It can be served from GitHub Pages or any object
 store, and mirrored inside a customer network.
 
