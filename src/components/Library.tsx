@@ -140,15 +140,6 @@ export function Library({ refreshKey = 0 }: { refreshKey?: number }) {
         {/* Section kicker */}
         <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "12px" }}>
           <div className="volt-bar" style={{ width: "32px" }} />
-          <span
-            style={{
-              fontFamily: "Inter, system-ui, sans-serif",
-              fontSize: "11px", fontWeight: 600,
-              color: "#6B717A", textTransform: "uppercase", letterSpacing: "0.1em",
-            }}
-          >
-            Tool Vault
-          </span>
           {tools.length > 0 && (
             <span
               style={{
