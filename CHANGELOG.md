@@ -31,7 +31,11 @@ section behind.
   `remove_registry`). A registry is added by address, over HTTPS only, and must be signed by a
   key compiled into Sanctum or one you pin. Its verified catalogue is cached and checked again
   on use. A failed refresh changes nothing. Requests happen only when you add or refresh, and
-  carry no identifiers. There is no interface for this yet.
+  carry no identifiers. You can now install from a registry's catalogue
+  (`registry_catalogue`, `install_from_registry`, `install_all_from_registry`): the bundle is
+  checked against the signed index, verified like any bundle, and must match what the index
+  said before anything is written. Withdrawn versions are refused. Installing, updating or
+  installing everything approves nothing. There is no interface for this yet.
 - Signed tool bundles (`.sanctum`). A bundle carries an HTML tool and an Ed25519 signature
   over its hash, name, version and declared capabilities. Sanctum checks the signature and
   the file hash before anything is written, refuses a file that uses capabilities the

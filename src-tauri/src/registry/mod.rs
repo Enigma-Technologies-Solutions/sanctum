@@ -29,4 +29,5 @@
 pub mod client;
 pub mod commands;
 pub mod fetch;
+pub mod install;
 pub mod store;
