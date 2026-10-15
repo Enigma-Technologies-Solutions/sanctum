@@ -1,0 +1,13 @@
+{
+  "format": "sanctum-registry/1",
+  "id": "registry:sh.enigma.test",
+  "name": "Test Registry",
+  "kind": "public",
+  "serial": 7,
+  "issued_at": 1789999000,
+  "expires": 1797776000,
+  "mirrors": [
+    "https://mirror.test/registry/v1/"
+  ],
+  "revocations": "revocations.json"
+}

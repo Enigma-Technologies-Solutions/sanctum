@@ -1,0 +1,87 @@
+{
+  "format": "sanctum-registry/1",
+  "id": "registry:sh.enigma.public",
+  "name": "Enigma Technologies Solutions",
+  "kind": "public",
+  "serial": 1,
+  "issued_at": 1792050586,
+  "expires": 1799826586,
+  "revocations": "revocations.json",
+  "apps": [
+    {
+      "app_id": "sh.enigma.otp-vault",
+      "name": "OTP Vault",
+      "summary": "Time-based one-time codes (TOTP) kept in Sanctum storage and optionally on a smart card.",
+      "publisher": {
+        "keyid": "ed25519:2daedA0n4NSI2p2McCqLBfGiKRmR5XCm8lypbQTT6hg",
+        "name": "Enigma Technologies Solutions"
+      },
+      "access": "free",
+      "latest": "1.0.2",
+      "icon": {
+        "path": "apps/sh.enigma.otp-vault/icon.svg",
+        "sha256": "sha256:b9f1acc5a67117eb58d99e01934a7606be0afa797599380b5e5ff96590d7fde3",
+        "size": 411
+      },
+      "detail": {
+        "path": "apps/sh.enigma.otp-vault.json",
+        "sha256": "sha256:f1499b18c7f7b03f54a256667e562a51a5871e3fed5f72fb9ec7fd6905db0230",
+        "size": 1734
+      },
+      "versions": [
+        {
+          "version": "1.0.2",
+          "published_at": 1790900767,
+          "bundle": {
+            "path": "bundles/sh.enigma.otp-vault-1.0.2.sanctum",
+            "sha256": "sha256:badf5ffc7e419ae0302c23f051c10311665975c1096040b6a0e6849fe005702e",
+            "size": 78787
+          },
+          "checksum": "sha256:bd325dd981eca233867583e6af2c30a0d9d7ebe39130a409825e55c958105172",
+          "declared": [
+            "storage",
+            {
+              "smartcard": [
+                "a0000005272101"
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "app_id": "sh.enigma.shamir",
+      "name": "Shamir Secret Sharing",
+      "summary": "Split a secret into shares and combine them back. Runs offline and asks for no access.",
+      "publisher": {
+        "keyid": "ed25519:2daedA0n4NSI2p2McCqLBfGiKRmR5XCm8lypbQTT6hg",
+        "name": "Enigma Technologies Solutions"
+      },
+      "access": "free",
+      "latest": "1.0.2",
+      "icon": {
+        "path": "apps/sh.enigma.shamir/icon.svg",
+        "sha256": "sha256:4794936d11f88932dce8b38d63d1430e1b4345765dcb5fa7ec52a1ede3ea7af3",
+        "size": 411
+      },
+      "detail": {
+        "path": "apps/sh.enigma.shamir.json",
+        "sha256": "sha256:540e4f011d4cc43e268d3ea811b56c5e5c9c8d06392a6f38c565106b23ef51f2",
+        "size": 1714
+      },
+      "versions": [
+        {
+          "version": "1.0.2",
+          "published_at": 1790900901,
+          "bundle": {
+            "path": "bundles/sh.enigma.shamir-1.0.2.sanctum",
+            "sha256": "sha256:986e7c69f03fab9b07d417cf47ed66b9daa9f5c8bc5f6b251c9673893a8f93ea",
+            "size": 98136
+          },
+          "checksum": "sha256:1601e706b1688fe59864744327934b8cc6cc036b3fccc0adda920b1d146bbf94",
+          "declared": []
+        }
+      ]
+    }
+  ]
+}

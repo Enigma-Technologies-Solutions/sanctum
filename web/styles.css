@@ -948,3 +948,21 @@ code {
 .app__hashes dd { margin: 0; color: var(--ink-2); overflow-wrap: anywhere; }
 .apps__sub { font-size: clamp(20px, 2vw, 26px); margin-bottom: 12px; }
 .apps code { font-family: var(--mono); font-size: .9em; color: var(--ink); }
+
+/* Registry pages: per-app detail */
+.app__name a { text-decoration: underline; text-decoration-color: var(--line-2); text-underline-offset: 4px; }
+.app__name a:hover { text-decoration-color: var(--volt); }
+.eyebrow a { text-decoration: underline; text-underline-offset: 4px; }
+.log { margin-bottom: 20px; }
+.log__v { font-size: 18px; margin-bottom: 6px; display: flex; align-items: baseline; gap: 12px; }
+.log ul { margin: 0; padding-left: 20px; color: var(--ink-2); display: grid; gap: 4px; max-width: 70ch; }
+.shot { margin: 0 0 16px; }
+.shot img { max-width: 100%; height: auto; border: 1px solid var(--line); border-radius: var(--r); display: block; }
+.prose { color: var(--ink-2); max-width: 70ch; display: grid; gap: 12px; }
+.prose h3, .prose h4, .prose h5, .prose h6 { color: var(--ink); margin-top: 12px; }
+.prose ul, .prose ol { margin: 0; padding-left: 22px; display: grid; gap: 4px; }
+.prose a { color: var(--ink); text-decoration: underline; text-underline-offset: 3px; }
+.prose blockquote { margin: 0; padding-left: 16px; border-left: 2px solid var(--line-2); }
+.prose pre { overflow-x: auto; padding: 12px 14px; background: var(--card-2); border: 1px solid var(--line); border-radius: var(--r-sm); font-family: var(--mono); font-size: .9em; }
+.prose code { font-family: var(--mono); font-size: .9em; color: var(--ink); }
+.prose p { margin: 0; }

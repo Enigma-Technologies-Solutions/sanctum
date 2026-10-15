@@ -1,0 +1,40 @@
+{
+  "format": "sanctum-registry-app/1",
+  "app_id": "sh.enigma.shamir",
+  "description": "Splits a secret into shares and rebuilds it from any chosen number of them, using Shamir's secret sharing. Everything runs inside the tool window: nothing is stored, downloaded or sent. The default Sanctum share format records how many shares are needed and adds a check to each share, so a wrong, mistyped or mixed share gives a clear error instead of a wrong secret. A plain format is also available. The tool asks Sanctum for no access at all.",
+  "source": "https://github.com/Enigma-Technologies-Solutions/sanctum/tree/main/examples/shamir",
+  "license": "AGPL-3.0-only",
+  "changelog": [
+    {
+      "version": "1.0.2",
+      "date": "2026-10-02",
+      "changes": [
+        {
+          "type": "added",
+          "text": "Split a secret into shares and rebuild it from any chosen number of them."
+        },
+        {
+          "type": "added",
+          "text": "The Sanctum share format, which records the threshold and a set id and checks every share."
+        },
+        {
+          "type": "added",
+          "text": "A plain share format that uses the same bytes as ssss-made-easy and the shamir-secret-sharing npm package."
+        },
+        {
+          "type": "added",
+          "text": "Secrets are masked and hidden again after 60 seconds without typing or when you switch tabs."
+        },
+        {
+          "type": "added",
+          "text": "First release signed by Enigma Technologies Solutions."
+        }
+      ]
+    }
+  ],
+  "manual": {
+    "path": "apps/sh.enigma.shamir/manual.md",
+    "sha256": "sha256:593d5d84709e08012aa478f865d91083c9fe338ba3632b3319094213338e5f2f",
+    "size": 2100
+  }
+}

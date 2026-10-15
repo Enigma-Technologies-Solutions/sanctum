@@ -20,6 +20,8 @@ sanctum-bundle cert    --issuer KEYFILE --subject KEYID --name NAME --not-after 
                        --scope APP_ID_PREFIX [--scope ...] [--not-before UNIX] --out CERTFILE
 sanctum-bundle sign    --key KEYFILE --html FILE --app-id ID --name NAME --version X.Y.Z
                        --declared JSONFILE [--cert CERTFILE] [--issued-at UNIX] --out FILE.sanctum
+sanctum-bundle registry-sign --kind index|revocations --key KEYFILE --file FILE
+                       [--cert CERTFILE] --out FILE.sig
 sanctum-bundle inspect FILE.sanctum
 sanctum-bundle verify  FILE.sanctum [--anchor KEYID=NAME ...] [--now UNIX]
 
@@ -186,6 +188,63 @@ fn run(argv: Vec<String>) -> Result<(), String> {
                 false,
             )?;
             println!("{}", checksum_of(&html));
+            Ok(())
+        }
+        "registry-sign" => {
+            let (kind, format, id_field) = match a.one("kind")? {
+                "index" => (RegistryFile::Index, "sanctum-registry/1", "id"),
+                "revocations" => (
+                    RegistryFile::Revocations,
+                    "sanctum-registry-revocations/1",
+                    "registry",
+                ),
+                other => return Err(format!("--kind is index or revocations, not {other}")),
+            };
+            let key = load_key(a.one("key")?)?;
+            let path = a.one("file")?;
+            let bytes = std::fs::read(path).map_err(|e| format!("cannot read {path}: {e}"))?;
+            // Refuse to sign something that is not the file it claims to be. The signature
+            // still covers the exact bytes; this only catches pointing at the wrong file.
+            let doc: serde_json::Value =
+                serde_json::from_slice(&bytes).map_err(|e| format!("{path}: {e}"))?;
+            if doc["format"].as_str() != Some(format) {
+                return Err(format!("{path} is not a {format} file"));
+            }
+            let id = doc[id_field]
+                .as_str()
+                .ok_or_else(|| format!("{path} has no \"{id_field}\""))?
+                .to_string();
+            let signer = key_id(&key.verifying_key());
+            let cert = match a.opt("cert")? {
+                Some(p) => {
+                    let blob = serde_json::from_str::<SignedBlob>(
+                        &std::fs::read_to_string(p).map_err(|e| e.to_string())?,
+                    )
+                    .map_err(|e| format!("--cert: {e}"))?;
+                    certificate_covers_registry(&blob, &signer, &id)?;
+                    Some(blob)
+                }
+                None => {
+                    eprintln!(
+                        "note: no --cert. Clients will treat {signer} as an unknown signer \
+                         unless it is a trust anchor itself."
+                    );
+                    None
+                }
+            };
+            let sig = sign_registry_file(kind, &bytes, &key, cert);
+            // Check our own work before writing it.
+            verify_registry_signature(kind, &bytes, &sig).map_err(|e| e.to_string())?;
+            write_new(
+                a.one("out")?,
+                serde_json::to_string_pretty(&sig).unwrap().as_bytes(),
+                false,
+            )?;
+            println!(
+                "signed {} serial {} for {id}",
+                a.one("kind")?,
+                doc["serial"]
+            );
             Ok(())
         }
         "inspect" | "verify" => {

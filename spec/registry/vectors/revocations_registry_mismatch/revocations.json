@@ -1,0 +1,17 @@
+{
+  "format": "sanctum-registry-revocations/1",
+  "registry": "registry:sh.enigma.other",
+  "serial": 3,
+  "issued_at": 1789999500,
+  "expires": 1791209600,
+  "entries": [
+    {
+      "checksum": "sha256:5263827eecb21796977be62d7585439636b6da5d7337cdb103e4379cd7544bec",
+      "app_id": "sh.enigma.otp-vault",
+      "version": "1.0.0",
+      "reason": "vulnerable",
+      "note": "Test entry.",
+      "revoked_at": 1789999400
+    }
+  ]
+}

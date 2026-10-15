@@ -1,0 +1,25 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "sanctum-registry-sig",
+  "$comment": "index.json.sig and revocations.json.sig. A detached signature over the exact bytes of the file it sits beside.",
+  "type": "object",
+  "required": ["format", "keyid", "sig"],
+  "properties": {
+    "format": { "const": "sanctum-registry-sig/1" },
+    "keyid": { "$ref": "common.schema.json#/$defs/keyid" },
+    "sig": { "$ref": "common.schema.json#/$defs/signature" },
+    "chain": {
+      "type": "array",
+      "maxItems": 4,
+      "items": {
+        "type": "object",
+        "required": ["payload", "sig", "keyid"],
+        "properties": {
+          "payload": { "type": "string", "maxLength": 4096 },
+          "sig": { "$ref": "common.schema.json#/$defs/signature" },
+          "keyid": { "$ref": "common.schema.json#/$defs/keyid" }
+        }
+      }
+    }
+  }
+}

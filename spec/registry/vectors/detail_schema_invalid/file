@@ -1,0 +1,13 @@
+{
+  "format": "sanctum-registry-app/1",
+  "app_id": "sh.enigma.otp-vault",
+  "description": "A test description. Plain text only.",
+  "license": "AGPL-3.0-only",
+  "changelog": [
+    {
+      "version": "1.0.0",
+      "date": "yesterday",
+      "changes": []
+    }
+  ]
+}

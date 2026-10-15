@@ -1,0 +1,40 @@
+{
+  "format": "sanctum-registry-app/1",
+  "app_id": "sh.enigma.otp-vault",
+  "description": "A two-factor code generator (TOTP, RFC 6238) in a single file. Keys live in an encrypted vault inside the tool's own storage, protected by a username and password. With a YubiKey and smart card access approved for the OATH applet, keys can instead be written to the key, which computes each code and never gives the secret back. The tool asks for storage and, only if you use it, the OATH smart card applet. It asks for no network access.",
+  "source": "https://github.com/Enigma-Technologies-Solutions/sanctum/tree/main/examples/otp-vault",
+  "license": "AGPL-3.0-only",
+  "changelog": [
+    {
+      "version": "1.0.2",
+      "date": "2026-10-02",
+      "changes": [
+        {
+          "type": "added",
+          "text": "Time-based codes for SHA-1, SHA-256 and SHA-512 keys, checked against the RFC 6238 test vectors."
+        },
+        {
+          "type": "added",
+          "text": "An encrypted software vault, unlocked with a username and password and shown with an eight-emoji fingerprint so you can recognise a correct login before anything is decrypted."
+        },
+        {
+          "type": "added",
+          "text": "Optional YubiKey mode that keeps keys on the OATH applet of the key."
+        },
+        {
+          "type": "added",
+          "text": "Backup and restore through the clipboard."
+        },
+        {
+          "type": "added",
+          "text": "First release signed by Enigma Technologies Solutions."
+        }
+      ]
+    }
+  ],
+  "manual": {
+    "path": "apps/sh.enigma.otp-vault/manual.md",
+    "sha256": "sha256:8cc8cc08665b20180ce383aec99ffb47566f5a510929fe8e752fb3a30d56b010",
+    "size": 2071
+  }
+}

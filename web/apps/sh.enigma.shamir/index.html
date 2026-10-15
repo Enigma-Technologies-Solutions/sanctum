@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Shamir Secret Sharing, a signed tool for Sanctum</title>
+<meta name="description" content="Split a secret into shares and combine them back. Runs offline and asks for no access.">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'none'; style-src 'self'; font-src 'self'; img-src 'self' data:; connect-src 'none'; form-action 'none'; base-uri 'none'">
+<meta name="referrer" content="strict-origin-when-cross-origin">
+<link rel="canonical" href="https://sanctum.enigma.sh/apps/sh.enigma.shamir/">
+<meta name="theme-color" content="#0A0A09">
+<meta name="color-scheme" content="dark">
+<link rel="icon" href="../../assets/favicon.svg" type="image/svg+xml">
+<link rel="stylesheet" href="../../styles.css">
+</head>
+<body>
+<a class="skip" href="#main">Skip to content</a>
+<nav class="nav" aria-label="Primary">
+  <div class="wrap nav__inner">
+    <a class="wordmark" href="../../" aria-label="Sanctum home">SANCTUM<span class="wordmark__sq" aria-hidden="true"></span></a>
+    <div class="nav__cta">
+      <a class="btn btn--ghost btn--sm nav__gh" href="https://github.com/Enigma-Technologies-Solutions/sanctum" rel="noopener">GitHub</a>
+      <a class="btn btn--volt btn--sm" href="https://github.com/Enigma-Technologies-Solutions/sanctum/releases/latest" rel="noopener">Download Sanctum</a>
+    </div>
+  </div>
+</nav>
+
+<main id="main" class="section apps">
+  <div class="wrap">
+    <p class="eyebrow"><a href="../">Signed tools</a></p>
+    <h1 class="h2">Shamir Secret Sharing <span class="tag">v1.0.2</span></h1>
+    <p class="lede">Split a secret into shares and combine them back. Runs offline and asks for no access.</p>
+
+    <article class="card app">
+        <p class="app__desc">Splits a secret into shares and rebuilds it from any chosen number of them, using Shamir&#39;s secret sharing. Everything runs inside the tool window: nothing is stored, downloaded or sent. The default Sanctum share format records how many shares are needed and adds a check to each share, so a wrong, mistyped or mixed share gives a clear error instead of a wrong secret. A plain format is also available. The tool asks Sanctum for no access at all.</p>
+        <p class="fine">Asks for no special access</p>
+        <p class="fine">Published by Enigma Technologies Solutions · <a href="https://github.com/Enigma-Technologies-Solutions/sanctum/tree/main/examples/shamir" rel="noopener">Source</a> · <span>AGPL-3.0-only</span></p>
+        <dl class="app__hashes fine">
+          <dt>File SHA-256</dt><dd>986e7c69f03fab9b07d417cf47ed66b9daa9f5c8bc5f6b251c9673893a8f93ea</dd>
+          <dt>Tool SHA-256</dt><dd>1601e706b1688fe59864744327934b8cc6cc036b3fccc0adda920b1d146bbf94</dd>
+          <dt>App id</dt><dd>sh.enigma.shamir</dd>
+          <dt>Publisher key</dt><dd>ed25519:2daedA0n4NSI2p2McCqLBfGiKRmR5XCm8lypbQTT6hg</dd>
+        </dl>
+        <a class="btn btn--volt btn--sm" href="../../registry/v1/bundles/sh.enigma.shamir-1.0.2.sanctum" download>Download (95.8 KB)</a>
+    </article>
+    <p class="lede">Verified means the publisher is who it says and the bytes have not changed. It does not mean safe. A signature never grants access: every tool still starts with nothing approved, and you approve each capability yourself.</p>
+
+    <h2 class="apps__sub">What is new</h2>
+      <section class="log">
+        <h3 class="log__v">1.0.2 <span class="fine">2026-10-02</span></h3>
+        <ul><li><strong>Added.</strong> Split a secret into shares and rebuild it from any chosen number of them.</li><li><strong>Added.</strong> The Sanctum share format, which records the threshold and a set id and checks every share.</li><li><strong>Added.</strong> A plain share format that uses the same bytes as ssss-made-easy and the shamir-secret-sharing npm package.</li><li><strong>Added.</strong> Secrets are masked and hidden again after 60 seconds without typing or when you switch tabs.</li><li><strong>Added.</strong> First release signed by Enigma Technologies Solutions.</li></ul>
+      </section>
+
+    <h2 class="apps__sub">Manual</h2>
+    <div class="prose">
+<h4>What it does</h4>
+<p>Shamir&#39;s secret sharing splits a secret into several shares. Any chosen number of them, called the threshold, rebuilds the secret. Fewer than that reveal nothing about it.</p>
+<h4>What it asks Sanctum for</h4>
+<p>Nothing. The approval screen is empty: no storage, no network, no smart card and no device access. Results leave the window only when you press a copy button.</p>
+<h4>Split a secret</h4>
+<p>Under <strong>Turn one secret into shares</strong>, enter the secret, choose how many shares to make and the <strong>Needed (k)</strong> count, then press <strong>Split</strong>. Copy each share and give each one to a different person or place. Record the check value (SHA-256) shown when you split, so you can check the result when you combine.</p>
+<p>The secret can be up to 1024 bytes.</p>
+<h4>Combine shares</h4>
+<p>Under <strong>Rebuild a secret from shares</strong>, paste the shares into the text box, one per line, then press <strong>Combine</strong>. With the Sanctum format, the tool tells you if a share is damaged, mistyped, from a different set, or if you have too few. Compare the SHA-256 of the result with the one you recorded.</p>
+<h4>Formats</h4>
+<ul><li><strong>Sanctum (default).</strong> Looks like <code>ops-ss1-3-0b704569-...</code>. It records the threshold and a set id, and each share carries a checksum. Shares are padded to a multiple of 32 bytes by default so a share does not show the exact length of the secret.</li><li><strong>Plain.</strong> Looks like <code>03-...</code>. The bytes match ssss-made-easy and the shamir-secret-sharing npm package. It has no checks, so too few shares give a wrong answer without a warning.</li></ul>
+<p>These shares do not work with the <code>ssss-split</code> and <code>ssss-combine</code> command line tools.</p>
+<h4>Good to know</h4>
+<ul><li>The checks catch mistakes. They do not stop a dishonest share holder from forging a share, and a matching check does not prove the secret is the original.</li><li>There are no downloads, because tool windows cannot save files. Shares go to the clipboard. If the clipboard is blocked, the text is shown selected in a box.</li><li>Secrets are masked and hidden again after 60 seconds without typing or when you switch tabs. Clear empties the fields and the bytes the page holds, on a best effort basis.</li></ul>
+    </div>
+
+    <h2 class="apps__sub">For tools and scripts</h2>
+    <p class="lede"><a href="../../registry/v1/apps/sh.enigma.shamir.json"><code>apps/sh.enigma.shamir.json</code></a> holds this page's data. It is pinned by hash in the signed <a href="../../registry/v1/index.json"><code>index.json</code></a>.</p>
+  </div>
+</main>
+
+<footer class="foot">
+  <div class="wrap">
+    <div class="foot__bar">
+      <span class="ets" aria-hidden="true">ETS</span>
+      <span>© 2026 Enigma Technologies Solutions</span>
+      <span class="foot__bar-sp">AGPL-3.0-only</span>
+    </div>
+  </div>
+</footer>
+</body>
+</html>

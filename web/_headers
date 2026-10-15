@@ -12,6 +12,16 @@
   Cross-Origin-Resource-Policy: same-origin
   X-Frame-Options: DENY
 
+# The registry is read by apps and scripts, and may be fetched by pages on other origins.
+# Everything in it is verified by signature or hash, so being readable cross-origin adds
+# nothing an attacker could use. (GitHub Pages already sends open CORS headers and ignores
+# this file; Cloudflare Pages and Netlify honour it.)
+/registry/*
+  ! Cross-Origin-Resource-Policy
+  Cross-Origin-Resource-Policy: cross-origin
+  Access-Control-Allow-Origin: *
+  Cache-Control: public, max-age=300
+
 # Fonts are content-addressed by filename, so cache them hard.
 /assets/fonts/*
   Cache-Control: public, max-age=31536000, immutable
