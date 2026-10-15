@@ -11,7 +11,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { listen } from "@tauri-apps/api/event";
 import { Loader2, Layers } from "lucide-react";
 
-export function Library() {
+export function Library({ refreshKey = 0 }: { refreshKey?: number }) {
   const [tools, setTools] = useState<ToolWithVersion[]>([]);
   const [loading, setLoading] = useState(true);
   const [inspecting, setInspecting] = useState<string | null>(null);
@@ -34,7 +34,8 @@ export function Library() {
 
   useEffect(() => {
     refresh().finally(() => setLoading(false));
-  }, [refresh]);
+    // Reload when something was installed elsewhere (the catalogue).
+  }, [refresh, refreshKey]);
 
   const refreshTool = useCallback(async (toolId: string) => {
     try {

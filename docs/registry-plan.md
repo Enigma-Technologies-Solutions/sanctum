@@ -109,6 +109,13 @@ Gate: the existing suite plus the new tests pass.
 
 ## Phase 6: catalog UI (5 days)
 
+Status: built and tested on `feat/registry-ui`: the Catalogue tab, add-registry and pin flow,
+cards with scope, detail pages (changelog, manual, hash-checked screenshots), install and
+install all, refresh and remove, plus `registry_app_detail`. Automated: 98 UI tests (Vitest,
+Testing Library, axe). The real-window, VoiceOver and Safari checks are in
+[registry-ui-checklist.md](registry-ui-checklist.md) and are yours.
+
+
 1. Add a registry by URL, plus one-click "Add Enigma registry" on the empty first-run screen.
 2. Browse with scope, changelog, manual, hash-checked screenshots (Markdown as safe text).
 3. Per-app Install and Install all.

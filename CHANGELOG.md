@@ -35,7 +35,12 @@ section behind.
   (`registry_catalogue`, `install_from_registry`, `install_all_from_registry`): the bundle is
   checked against the signed index, verified like any bundle, and must match what the index
   said before anything is written. Withdrawn versions are refused. Installing, updating or
-  installing everything approves nothing. There is no interface for this yet.
+  installing everything approves nothing.
+- A **Catalogue** tab: add the Enigma registry in one click (or another registry by address,
+  pinning its signing key only after you have seen it), browse tools with what each one asks
+  for shown before installing, open a tool's changelog, manual and screenshots (each checked
+  against the registry's signed hashes), install one or all, refresh, and remove. Manuals are
+  shown as formatted text from a strict Markdown subset; links are copied, never followed.
 - Signed tool bundles (`.sanctum`). A bundle carries an HTML tool and an Ed25519 signature
   over its hash, name, version and declared capabilities. Sanctum checks the signature and
   the file hash before anything is written, refuses a file that uses capabilities the

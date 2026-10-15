@@ -1,0 +1,176 @@
+{
+  "note": "Shared by scripts/test/lib.test.mjs and src/lib/markdown.test.ts. ok:true cases must render to exactly html; ok:false cases must be refused.",
+  "cases": [
+    {
+      "name": "heading levels",
+      "src": "# One\n\n## Two\n\n### Three\n\n#### Four",
+      "ok": true,
+      "html": "<h3>One</h3>\n<h4>Two</h4>\n<h5>Three</h5>\n<h6>Four</h6>"
+    },
+    {
+      "name": "paragraph joins lines",
+      "src": "line one\nline two\n\nnext",
+      "ok": true,
+      "html": "<p>line one line two</p>\n<p>next</p>"
+    },
+    {
+      "name": "inline styles",
+      "src": "Some **bold**, *soft* and `code`.",
+      "ok": true,
+      "html": "<p>Some <strong>bold</strong>, <em>soft</em> and <code>code</code>.</p>"
+    },
+    {
+      "name": "nested emphasis",
+      "src": "**bold with *soft* inside**",
+      "ok": true,
+      "html": "<p>*<em>bold with </em>soft* inside**</p>"
+    },
+    {
+      "name": "https link",
+      "src": "See [the site](https://example.test/a?b=1&c=2#top).",
+      "ok": true,
+      "html": "<p>See <a href=\"https://example.test/a?b=1&amp;c=2#top\" rel=\"noopener noreferrer\">the site</a>.</p>"
+    },
+    {
+      "name": "bullets",
+      "src": "- one\n- two **bold**\n* three",
+      "ok": true,
+      "html": "<ul><li>one</li><li>two <strong>bold</strong></li><li>three</li></ul>"
+    },
+    {
+      "name": "numbers",
+      "src": "1. first\n2. second",
+      "ok": true,
+      "html": "<ol><li>first</li><li>second</li></ol>"
+    },
+    {
+      "name": "quote",
+      "src": "> quoted text\n> continues",
+      "ok": true,
+      "html": "<blockquote><p>quoted text continues</p></blockquote>"
+    },
+    {
+      "name": "fenced code with html",
+      "src": "```\nlet x = \"<tag>\" && y;\n```",
+      "ok": true,
+      "html": "<pre><code>let x = &quot;&lt;tag&gt;&quot; &amp;&amp; y;</code></pre>"
+    },
+    {
+      "name": "escapes",
+      "src": "Fish & chips \"quoted\" and 'single'",
+      "ok": true,
+      "html": "<p>Fish &amp; chips &quot;quoted&quot; and &#39;single&#39;</p>"
+    },
+    {
+      "name": "angle bracket in code span",
+      "src": "Use `<div>` here",
+      "ok": true,
+      "html": "<p>Use <code>&lt;div&gt;</code> here</p>"
+    },
+    {
+      "name": "empty",
+      "src": "",
+      "ok": true,
+      "html": ""
+    },
+    {
+      "name": "only blank lines",
+      "src": "\n\n\n",
+      "ok": true,
+      "html": ""
+    },
+    {
+      "name": "code span with star",
+      "src": "`a*b*c` and *real*",
+      "ok": true,
+      "html": "<p><code>a*b*c</code> and <em>real</em></p>"
+    },
+    {
+      "name": "unicode",
+      "src": "Café résumé 日本語 **強調**",
+      "ok": true,
+      "html": "<p>Café résumé 日本語 <strong>強調</strong></p>"
+    },
+    {
+      "name": "raw html",
+      "src": "Hello <b>there</b>",
+      "ok": false
+    },
+    {
+      "name": "html comment",
+      "src": "<!-- hi -->",
+      "ok": false
+    },
+    {
+      "name": "script tag",
+      "src": "<script>alert(1)</script>",
+      "ok": false
+    },
+    {
+      "name": "image",
+      "src": "![alt](https://example.test/x.png)",
+      "ok": false
+    },
+    {
+      "name": "image after text",
+      "src": "text ![alt](https://example.test/x.png)",
+      "ok": false
+    },
+    {
+      "name": "http link",
+      "src": "[x](http://example.test/)",
+      "ok": false
+    },
+    {
+      "name": "javascript link",
+      "src": "[x](javascript:alert(1))",
+      "ok": false
+    },
+    {
+      "name": "relative link",
+      "src": "[x](../other.md)",
+      "ok": false
+    },
+    {
+      "name": "link with space",
+      "src": "[x](https://example.test/a b)",
+      "ok": false
+    },
+    {
+      "name": "mailto link",
+      "src": "[x](mailto:a@b.test)",
+      "ok": false
+    },
+    {
+      "name": "nested list",
+      "src": "- one\n  - two",
+      "ok": false
+    },
+    {
+      "name": "table",
+      "src": "| a | b |\n|---|---|",
+      "ok": false
+    },
+    {
+      "name": "open fence",
+      "src": "```\ncode",
+      "ok": false
+    },
+    {
+      "name": "crlf",
+      "src": "a\r\nb",
+      "ok": false
+    },
+    {
+      "name": "bare brackets paren",
+      "src": "text ](oops",
+      "ok": false
+    },
+    {
+      "name": "indented code is just text",
+      "src": "    indented",
+      "ok": true,
+      "html": "<p>indented</p>"
+    }
+  ]
+}

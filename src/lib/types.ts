@@ -200,6 +200,39 @@ export type RegistryBatchItem = { appId: string; name: string } & (
   | { state: "failed"; code: string; message: string }
 );
 
+export interface RegistryChangelogEntry {
+  version: string;
+  date: string;
+  changes: { type: "added" | "changed" | "fixed" | "security" | "removed"; text: string }[];
+}
+
+export interface RegistryScreenshot {
+  alt: string;
+  width: number;
+  height: number;
+  /** A data: URL of the verified image, or null if it failed its check. */
+  dataUrl: string | null;
+  error: string | null;
+}
+
+/** An app's detail page. Every file was checked against the signed index in Rust. */
+export interface RegistryAppDetail {
+  appId: string;
+  name: string;
+  description: string;
+  homepage: string | null;
+  source: string | null;
+  license: string | null;
+  changelog: RegistryChangelogEntry[];
+  /** Untrusted Markdown. Render it with parseMarkdown, never as HTML. */
+  manual: string | null;
+  manualError: string | null;
+  screenshots: RegistryScreenshot[];
+  /** A data: URL. Show it only through an <img>. */
+  icon: string | null;
+  iconError: string | null;
+}
+
 /**
  * What a registry command rejects with. `code` is stable. For "untrusted_signer" the signer
  * fields are set: show the key and ask before calling addRegistry again with it pinned.

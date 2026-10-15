@@ -1,12 +1,13 @@
 // SPDX-License-Identifier: AGPL-3.0-only
 // Copyright (C) 2026 Enigma Technologies Solutions
 
-import { Library as LibraryIcon, Settings as SettingsIcon } from "lucide-react";
+import { Library as LibraryIcon, Settings as SettingsIcon, Store as StoreIcon } from "lucide-react";
 
-export type View = "vault" | "settings";
+export type View = "vault" | "catalogue" | "settings";
 
 const NAV: { id: View; label: string; Icon: typeof LibraryIcon }[] = [
   { id: "vault", label: "Tool Vault", Icon: LibraryIcon },
+  { id: "catalogue", label: "Catalogue", Icon: StoreIcon },
   { id: "settings", label: "Settings", Icon: SettingsIcon },
 ];
 
