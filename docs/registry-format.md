@@ -325,6 +325,43 @@ small-order keys and non-canonical signatures), while Node's OpenSSL does not. T
 use ordinary keys, so they agree. A registry that only a lax verifier accepts must be treated
 as invalid.
 
+## What the Sanctum client does
+
+Implemented in `src-tauri/src/registry/`. It acts only when the user asks (add, refresh);
+there is no background polling yet.
+
+**Adding** a registry takes an address. The client fetches `index.json` and its signature
+over HTTPS, reads the registry `id` the file claims only to know what to verify against, then
+runs the verification above. The id is trusted because the signature covers it. The signer
+must be **anchored** (a compiled-in key, directly or through a certificate), or a key the user
+**pinned**. Otherwise the client refuses and reports the signer's key; the interface shows it
+and, only if the user agrees, adds the registry again with that key pinned. If the index names
+a revocation list, it must verify too: a registry whose revocations cannot be read is not added.
+
+**Refreshing** requires the stored id, a serial that does not go back, the same serial only for
+identical bytes, and a signer that is still anchored or pinned. Any failure changes nothing but
+a "last error" note, so a bad registry cannot replace a good cached copy. Revocations may
+partly succeed: if the index verifies but the revocations cannot be refreshed, the index
+updates, the previous revocations stay, and the problem is recorded. Refusing the new index
+instead would let someone block one file to freeze a client on an old catalogue.
+
+**The cache is not trusted.** The verified bytes are stored beside a row and verified again
+whenever they are used, so a modified database fails verification whatever its columns say.
+
+**Network policy** (`fetch.rs`):
+
+| Rule | Why |
+|---|---|
+| `https` only; a plain `http` address is refused before any connection | Transport is not the trust root, but there is no reason to expose a request |
+| No user name or password, no `#` part, no `?` part in a registry address | Nothing secret belongs in an address |
+| At most 3 redirects, each to the same scheme, host and port | A registry cannot send the client elsewhere |
+| Size cap checked against `Content-Length`, then while reading | A server cannot fill memory, whether it lies or streams forever |
+| 15 s without data, 30 s in total, 10 s to connect | A server cannot hold the client |
+| No cookies, no decompression, fixed user agent `Sanctum` | No identifiers, no decompression bombs |
+
+Addresses on private networks are allowed: an organisation's own registry may well live there.
+The client only ever reads, and nothing it reads is acted on until it verifies.
+
 ## Limits
 
 | Item | Limit |

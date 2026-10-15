@@ -12,6 +12,8 @@ import type {
   UpdateInfo,
   PolicyStatus,
   TrustAnchorInfo,
+  RegistryRefreshReport,
+  RegistrySummary,
   ProvenanceRecord,
   VersionRecord,
 } from "./types";
@@ -42,6 +44,30 @@ export const Commands = {
   /** Publisher keys this build recognises (read-only). */
   getTrustAnchors(): Promise<TrustAnchorInfo[]> {
     return invoke("get_trust_anchors");
+  },
+
+  /** Registries the user added. No network: reads the cached, re-verified catalogue. */
+  listRegistries(): Promise<RegistrySummary[]> {
+    return invoke("list_registries");
+  },
+
+  /**
+   * Add a registry by address. Contacts that address once. Rejects with a
+   * RegistryCommandError; for code "untrusted_signer", show the signer key and, only if the
+   * user agrees, call again with it as `pinnedKey`.
+   */
+  addRegistry(url: string, pinnedKey?: string): Promise<RegistrySummary> {
+    return invoke("add_registry", { url, pinnedKey: pinnedKey ?? null });
+  },
+
+  /** Fetch the registry again. A failed refresh leaves the cached catalogue unchanged. */
+  refreshRegistry(id: string): Promise<RegistryRefreshReport> {
+    return invoke("refresh_registry", { id });
+  },
+
+  /** Forget a registry and its cache. Tools already installed from it are not touched. */
+  removeRegistry(id: string): Promise<void> {
+    return invoke("remove_registry", { id });
   },
 
   /** Whether an organisation policy manages this install, and whether it applied. */
