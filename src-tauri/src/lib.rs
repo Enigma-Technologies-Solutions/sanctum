@@ -241,6 +241,7 @@ pub fn run() {
             registry::commands::refresh_registry,
             registry::commands::remove_registry,
             registry::commands::registry_catalogue,
+            registry::commands::registry_app_detail,
             registry::commands::install_from_registry,
             registry::commands::install_all_from_registry,
             commands::library::list_tools,

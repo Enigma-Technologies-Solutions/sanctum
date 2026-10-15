@@ -367,6 +367,17 @@ an anchored registry, because the registry vouches for its catalogue, not for th
 "Install all" does the same for each app and carries on after a failure, reporting each
 result. It skips licensed apps instead of listing them as failures.
 
+**The interface** (`src/components/catalogue/`) only ever asks for these things when the user
+acts: add or refresh a registry (the index and revocations), open a detail page (the detail
+file, manual, screenshots and icon, each checked against the hash in the signed index in Rust),
+and install (the bundle). Screenshots and icons reach the window as `data:` URLs after
+verification, so the window's content policy never allows a remote image. An SVG icon is
+accepted only if it contains nothing active, and is shown only through an image element. The
+manual is parsed by the same strict subset as the builder (`src/lib/markdown.ts` and
+`scripts/lib/markdown.mjs`, tested against `spec/registry/markdown-cases.json`) and rendered
+as elements, never as an HTML string; text outside the subset is shown as plain text. Links in
+a manual show their address with a button that copies it. Sanctum does not open links itself.
+
 **The cache is not trusted.** The verified bytes are stored beside a row and verified again
 whenever they are used, so a modified database fails verification whatever its columns say.
 

@@ -31,6 +31,8 @@ uuid = { version = "1", features = ["v4"] }
 # (CSP + empty capabilities) is the real security guarantee; the scan is advisory.
 regex = "1"
 url = "2"
+# Screenshots and icons reach the interface as data: URLs, after their hash is checked.
+base64 = "0.22"
 # HTTP client for the registry (docs/registry-format.md). Same TLS stack as the updater
 # (rustls with ring, already in the tree); no cookies, no automatic redirects, no
 # decompression. Redirects and size/time limits are enforced in registry/fetch.rs so they

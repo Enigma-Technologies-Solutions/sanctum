@@ -7,6 +7,7 @@
 //! polling. Tool windows have no IPC at all, so a tool cannot call any of this.
 
 use super::client::{ClientError, RefreshReport, RegistryClient, RegistrySummary};
+use super::detail::AppDetailView;
 use super::install::{BatchItem, Catalogue, InstallOutcome};
 use crate::AppDataDir;
 use serde::Serialize;
@@ -106,6 +107,17 @@ pub async fn registry_catalogue(
     registry_id: String,
 ) -> Result<Catalogue, CommandError> {
     Ok(client(&state)?.catalogue(&registry_id).await?)
+}
+
+/// An app's description, changelog, manual, screenshots and icon. Contacts the registry; every
+/// file is checked against the hash in the signed index before it is returned.
+#[tauri::command]
+pub async fn registry_app_detail(
+    state: State<'_, RegistryState>,
+    registry_id: String,
+    app_id: String,
+) -> Result<AppDetailView, CommandError> {
+    Ok(client(&state)?.app_detail(&registry_id, &app_id).await?)
 }
 
 /// Install one app from a registry. The tool starts with nothing approved, like any tool.

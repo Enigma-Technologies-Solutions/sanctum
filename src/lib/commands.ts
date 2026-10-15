@@ -12,6 +12,7 @@ import type {
   UpdateInfo,
   PolicyStatus,
   TrustAnchorInfo,
+  RegistryAppDetail,
   RegistryBatchItem,
   RegistryCatalogue,
   RegistryInstallOutcome,
@@ -71,6 +72,11 @@ export const Commands = {
   /** The cached, re-verified catalogue with install state per app. No network. */
   registryCatalogue(registryId: string): Promise<RegistryCatalogue> {
     return invoke("registry_catalogue", { registryId });
+  },
+
+  /** An app's changelog, manual, screenshots and icon. Contacts the registry; all verified. */
+  registryAppDetail(registryId: string, appId: string): Promise<RegistryAppDetail> {
+    return invoke("registry_app_detail", { registryId, appId });
   },
 
   /**
