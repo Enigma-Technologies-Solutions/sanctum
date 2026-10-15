@@ -36,5 +36,39 @@
     "path": "apps/sh.enigma.shamir/manual.md",
     "sha256": "sha256:593d5d84709e08012aa478f865d91083c9fe338ba3632b3319094213338e5f2f",
     "size": 2100
-  }
+  },
+  "screenshots": [
+    {
+      "path": "apps/sh.enigma.shamir/overview.png",
+      "sha256": "sha256:a4acbabced831fa0efde740df7609260d35bb5e28fd732c8939797faafa25abb",
+      "size": 226706,
+      "width": 1600,
+      "height": 1131,
+      "alt": "Overview of Shamir: split a secret into shares and combine them back."
+    },
+    {
+      "path": "apps/sh.enigma.shamir/split.png",
+      "sha256": "sha256:b963e994b6176e06ba0b8bd42cd70a59927234a962971829984879d4632563df",
+      "size": 276361,
+      "width": 1600,
+      "height": 1131,
+      "alt": "Split: a secret, the number of shares and how many are needed."
+    },
+    {
+      "path": "apps/sh.enigma.shamir/shares.png",
+      "sha256": "sha256:f89d0ca41de189d65afe5418be11f147b9a8d5e1b24474278dc4d7ad51889148",
+      "size": 398153,
+      "width": 1600,
+      "height": 1131,
+      "alt": "The shares produced, each with a Copy button and the set identifier."
+    },
+    {
+      "path": "apps/sh.enigma.shamir/combine.png",
+      "sha256": "sha256:da96d01a4bf7075257312f56a1569313bde10fbfd727dad5f5b2ead235dff963",
+      "size": 326125,
+      "width": 1600,
+      "height": 1131,
+      "alt": "Combine: pasted shares checked one by one before the secret is rebuilt."
+    }
+  ]
 }

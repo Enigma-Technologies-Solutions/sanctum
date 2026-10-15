@@ -3,5 +3,23 @@
   "summary": "Split a secret into shares and combine them back. Runs offline and asks for no access.",
   "description": "Splits a secret into shares and rebuilds it from any chosen number of them, using Shamir's secret sharing. Everything runs inside the tool window: nothing is stored, downloaded or sent. The default Sanctum share format records how many shares are needed and adds a check to each share, so a wrong, mistyped or mixed share gives a clear error instead of a wrong secret. A plain format is also available. The tool asks Sanctum for no access at all.",
   "license": "AGPL-3.0-only",
-  "source": "https://github.com/Enigma-Technologies-Solutions/sanctum/tree/main/examples/shamir"
+  "source": "https://github.com/Enigma-Technologies-Solutions/sanctum/tree/main/examples/shamir",
+  "screenshots": [
+    {
+      "file": "overview.png",
+      "alt": "Overview of Shamir: split a secret into shares and combine them back."
+    },
+    {
+      "file": "split.png",
+      "alt": "Split: a secret, the number of shares and how many are needed."
+    },
+    {
+      "file": "shares.png",
+      "alt": "The shares produced, each with a Copy button and the set identifier."
+    },
+    {
+      "file": "combine.png",
+      "alt": "Combine: pasted shares checked one by one before the secret is rebuilt."
+    }
+  ]
 }

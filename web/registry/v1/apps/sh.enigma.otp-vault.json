@@ -36,5 +36,39 @@
     "path": "apps/sh.enigma.otp-vault/manual.md",
     "sha256": "sha256:8cc8cc08665b20180ce383aec99ffb47566f5a510929fe8e752fb3a30d56b010",
     "size": 2071
-  }
+  },
+  "screenshots": [
+    {
+      "path": "apps/sh.enigma.otp-vault/overview.png",
+      "sha256": "sha256:10f28ea2ea9a2e3a2d6450e0ded1942159303349ee388a40b0f8c10445cd8713",
+      "size": 309015,
+      "width": 1600,
+      "height": 1131,
+      "alt": "Overview of OTP Vault: one-time codes generated inside Sanctum."
+    },
+    {
+      "path": "apps/sh.enigma.otp-vault/create-vault.png",
+      "sha256": "sha256:4d27ecc5fde2372124abecc45c77c9401218bbde2fbfc525a7f4d3fb7cfa11c1",
+      "size": 411672,
+      "width": 1600,
+      "height": 1131,
+      "alt": "Create a vault: username, password and the eight-emoji fingerprint."
+    },
+    {
+      "path": "apps/sh.enigma.otp-vault/codes.png",
+      "sha256": "sha256:7e64eb11cec93d737e51bca2db85f07168d83c8078ac63ca50b3de432e654436",
+      "size": 283789,
+      "width": 1600,
+      "height": 1131,
+      "alt": "The code list with a countdown on each code and the next code shown."
+    },
+    {
+      "path": "apps/sh.enigma.otp-vault/backup.png",
+      "sha256": "sha256:27e9723b0f5a95e75019e62998a659908b862089dda83256e9231644a82f31bc",
+      "size": 415638,
+      "width": 1600,
+      "height": 1131,
+      "alt": "Backup and password: copy the encrypted vault, change the password or delete it."
+    }
+  ]
 }
