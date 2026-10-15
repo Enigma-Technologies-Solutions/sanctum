@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>OTP Vault, a signed tool for Sanctum</title>
+<meta name="description" content="Time-based one-time codes (TOTP) kept in Sanctum storage and optionally on a smart card.">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'none'; style-src 'self'; font-src 'self'; img-src 'self' data:; connect-src 'none'; form-action 'none'; base-uri 'none'">
+<meta name="referrer" content="strict-origin-when-cross-origin">
+<link rel="canonical" href="https://sanctum.enigma.sh/apps/sh.enigma.otp-vault/">
+<meta name="theme-color" content="#0A0A09">
+<meta name="color-scheme" content="dark">
+<link rel="icon" href="../../assets/favicon.svg" type="image/svg+xml">
+<link rel="stylesheet" href="../../styles.css">
+</head>
+<body>
+<a class="skip" href="#main">Skip to content</a>
+<nav class="nav" aria-label="Primary">
+  <div class="wrap nav__inner">
+    <a class="wordmark" href="../../" aria-label="Sanctum home">SANCTUM<span class="wordmark__sq" aria-hidden="true"></span></a>
+    <div class="nav__cta">
+      <a class="btn btn--ghost btn--sm nav__gh" href="https://github.com/Enigma-Technologies-Solutions/sanctum" rel="noopener">GitHub</a>
+      <a class="btn btn--volt btn--sm" href="https://github.com/Enigma-Technologies-Solutions/sanctum/releases/latest" rel="noopener">Download Sanctum</a>
+    </div>
+  </div>
+</nav>
+
+<main id="main" class="section apps">
+  <div class="wrap">
+    <p class="eyebrow"><a href="../">Signed tools</a></p>
+    <h1 class="h2">OTP Vault <span class="tag">v1.0.2</span></h1>
+    <p class="lede">Time-based one-time codes (TOTP) kept in Sanctum storage and optionally on a smart card.</p>
+
+    <article class="card app">
+        <p class="app__desc">A two-factor code generator (TOTP, RFC 6238) in a single file. Keys live in an encrypted vault inside the tool&#39;s own storage, protected by a username and password. With a YubiKey and smart card access approved for the OATH applet, keys can instead be written to the key, which computes each code and never gives the secret back. The tool asks for storage and, only if you use it, the OATH smart card applet. It asks for no network access.</p>
+        <p class="fine">Asks for: Storage, Smart card (applet a0000005272101)</p>
+        <p class="fine">Published by Enigma Technologies Solutions · <a href="https://github.com/Enigma-Technologies-Solutions/sanctum/tree/main/examples/otp-vault" rel="noopener">Source</a> · <span>AGPL-3.0-only</span></p>
+        <dl class="app__hashes fine">
+          <dt>File SHA-256</dt><dd>badf5ffc7e419ae0302c23f051c10311665975c1096040b6a0e6849fe005702e</dd>
+          <dt>Tool SHA-256</dt><dd>bd325dd981eca233867583e6af2c30a0d9d7ebe39130a409825e55c958105172</dd>
+          <dt>App id</dt><dd>sh.enigma.otp-vault</dd>
+          <dt>Publisher key</dt><dd>ed25519:2daedA0n4NSI2p2McCqLBfGiKRmR5XCm8lypbQTT6hg</dd>
+        </dl>
+        <a class="btn btn--volt btn--sm" href="../../registry/v1/bundles/sh.enigma.otp-vault-1.0.2.sanctum" download>Download (76.9 KB)</a>
+    </article>
+    <p class="lede">Verified means the publisher is who it says and the bytes have not changed. It does not mean safe. A signature never grants access: every tool still starts with nothing approved, and you approve each capability yourself.</p>
+
+    <h2 class="apps__sub">What is new</h2>
+      <section class="log">
+        <h3 class="log__v">1.0.2 <span class="fine">2026-10-02</span></h3>
+        <ul><li><strong>Added.</strong> Time-based codes for SHA-1, SHA-256 and SHA-512 keys, checked against the RFC 6238 test vectors.</li><li><strong>Added.</strong> An encrypted software vault, unlocked with a username and password and shown with an eight-emoji fingerprint so you can recognise a correct login before anything is decrypted.</li><li><strong>Added.</strong> Optional YubiKey mode that keeps keys on the OATH applet of the key.</li><li><strong>Added.</strong> Backup and restore through the clipboard.</li><li><strong>Added.</strong> First release signed by Enigma Technologies Solutions.</li></ul>
+      </section>
+
+    <h2 class="apps__sub">Manual</h2>
+    <div class="prose">
+<h4>What it does</h4>
+<p>OTP Vault generates the six-digit codes that sites ask for as a second step when you sign in. You add the key a site gives you, and the vault shows the current code for it.</p>
+<h4>What it asks Sanctum for</h4>
+<ul><li><strong>Storage.</strong> The encrypted vault lives in this tool&#39;s own storage. Deleting the tool and adding it again gives it new, empty storage, so make a backup first.</li><li><strong>Smart card, OATH applet (a0000005272101).</strong> Optional. It is only used if you keep keys on a YubiKey.</li></ul>
+<p>It asks for no network access and no other device. You approve each of these yourself the first time you open the tool.</p>
+<h4>Create a vault</h4>
+<p>Choose a username and a password, then press <strong>Create vault</strong>. The vault is encrypted with a key made from both. The tool also shows a fingerprint of eight emoji. Note it down: next time you unlock, the same username and password show the same eight emoji, and anything else means you mistyped.</p>
+<p>There is no password reset. If you forget the password, the vault cannot be opened.</p>
+<h4>Add a key</h4>
+<p>Choose <strong>New authenticator key</strong>. Paste the <code>otpauth://</code> link a site gives you, or enter the secret and the account by hand. The code appears next to the account name and refreshes on its own. Click a code to copy it.</p>
+<h4>Use a YubiKey</h4>
+<p>If you approved smart card access for the OATH applet, you can write a key to your YubiKey instead of the vault. The secret goes to the key once and cannot be read back. Each code is computed on the key. Nothing about these accounts is stored in the tool&#39;s storage. If an account needs a touch, the key blinks when you ask for its code.</p>
+<h4>Back up and restore</h4>
+<p>Tool windows cannot save files, so <strong>Copy backup</strong> puts the encrypted backup on the clipboard. Paste it into a safe place. <strong>Restore pasted backup</strong> accepts pasted text, and <strong>Choose file</strong> accepts a file. A backup is still encrypted, so it is only as safe as your password.</p>
+<h4>Good to know</h4>
+<ul><li>Codes from the vault are computed in the tool window. They do not leave it unless you click one to copy it.</li><li>Keys held on a YubiKey are not in the backup.</li></ul>
+    </div>
+
+    <h2 class="apps__sub">For tools and scripts</h2>
+    <p class="lede"><a href="../../registry/v1/apps/sh.enigma.otp-vault.json"><code>apps/sh.enigma.otp-vault.json</code></a> holds this page's data. It is pinned by hash in the signed <a href="../../registry/v1/index.json"><code>index.json</code></a>.</p>
+  </div>
+</main>
+
+<footer class="foot">
+  <div class="wrap">
+    <div class="foot__bar">
+      <span class="ets" aria-hidden="true">ETS</span>
+      <span>© 2026 Enigma Technologies Solutions</span>
+      <span class="foot__bar-sp">AGPL-3.0-only</span>
+    </div>
+  </div>
+</footer>
+</body>
+</html>

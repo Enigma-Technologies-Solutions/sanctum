@@ -175,6 +175,21 @@ The manual is Markdown restricted to headings, paragraphs, emphasis, code, lists
 quotes and links with `https:` targets. Raw HTML and images are not allowed in it. The
 renderer is specified in Phase 6; it must treat the text as untrusted.
 
+### Manual Markdown
+
+A manual is Markdown restricted to a small subset, checked when the registry is built so
+that what is published is exactly what every renderer shows:
+
+- headings `#` to `####`, paragraphs, block quotes
+- `**strong**`, `*emphasis*` and `` `code` ``
+- fenced code blocks
+- bullet and numbered lists, one level only
+- links written `[text](https://...)`; no other scheme, no relative links
+
+Raw HTML, images, tables and nested lists are errors, not silently dropped. Line endings are
+LF. A renderer must escape all text and treat the file as untrusted even though the build
+already checked it.
+
 ## `revocations.json`
 
 ```jsonc
@@ -201,6 +216,37 @@ hash, so a revoked file is revoked wherever it came from. What a client does wit
 version (block or warn) is client policy, decided in Phase 8.
 
 The index stores no `revoked` flag. There is one source of truth for withdrawal.
+
+## How Enigma builds and signs its registry
+
+Sources live in the repository, outputs are committed, and the site publishes them from
+`main`:
+
+| Path | What |
+|---|---|
+| `registry/registry.json` | Registry id, name, validity periods |
+| `registry/apps/<app_id>/` | `app.json`, `CHANGELOG.md`, `manual.md`, `screenshots/` |
+| `registry/revocations.json` | Revoked tool hashes |
+| `web/registry/v1/` | The published registry (this format) |
+| `web/apps/` | The human pages, generated from the same data |
+
+```bash
+node scripts/build-registry.mjs            # build; says which files need signing
+scripts/sign-registry.sh                   # sign what changed (you run this, with your keys)
+node scripts/verify-registry.mjs           # verify as a client would, plus consistency checks
+node scripts/build-registry.mjs --check    # CI: committed files match the sources
+```
+
+The builder refuses to publish a bundle unless its signature verifies, its file hash
+matches, and its certificate chains to a trust anchor. It never signs. When it changes
+`index.json` or `revocations.json` it raises the `serial`, restarts the validity period and
+deletes the old `.sig`, so a stale signature can never sit beside a new file.
+
+The registry is signed by its own key, not the publisher key that signs tools. The root
+certifies it once with the scope `registry:sh.enigma.`, so a leaked registry key cannot
+sign a tool and a leaked publisher key cannot sign a registry. Revocations must be re-issued
+every 14 days, so this key is the one that may later live on a server while the root and the
+publisher key stay offline.
 
 ## Verifying (what a client must do, in order)
 

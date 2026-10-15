@@ -50,6 +50,10 @@ Gate: the maintainer approves the schema. After this it changes only by version 
 
 ## Phase 2: registry builder (3 days, no app changes)
 
+Status: built and tested on `feat/registry-builder`. The gate is yours: sign with
+`scripts/sign-registry.sh`, then merge and check the live files.
+
+
 1. Per-app content beside each example: `changelog.md`, `manual.md`, `screenshots/`.
 2. Extend `publish-bundles.mjs` to emit the index, per-app JSON and static pages at
    `/apps/<id>/` (zero JS, strict CSP).

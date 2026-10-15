@@ -1,19 +1,43 @@
-name: Registry spec
+name: Registry
 
+# Two things are checked here: the format (spec/registry) and the published registry
+# (registry/ sources -> web/registry/v1 and web/apps). See docs/registry-format.md.
 on:
   push:
     branches: [main]
     paths:
       - 'spec/registry/**'
-      - 'docs/registry-format.md'
+      - 'registry/**'
+      - 'web/registry/**'
+      - 'web/apps/**'
+      - 'web/sitemap.xml'
+      - 'scripts/build-registry.mjs'
+      - 'scripts/verify-registry.mjs'
+      - 'scripts/lib/**'
+      - 'scripts/test/**'
+      - 'src-tauri/crates/sanctum-bundle/**'
       - 'src-tauri/src/trust.rs'
+      - 'docs/registry-format.md'
       - '.github/workflows/registry-spec.yml'
   pull_request:
     paths:
       - 'spec/registry/**'
-      - 'docs/registry-format.md'
+      - 'registry/**'
+      - 'web/registry/**'
+      - 'web/apps/**'
+      - 'web/sitemap.xml'
+      - 'scripts/build-registry.mjs'
+      - 'scripts/verify-registry.mjs'
+      - 'scripts/lib/**'
+      - 'scripts/test/**'
+      - 'src-tauri/crates/sanctum-bundle/**'
       - 'src-tauri/src/trust.rs'
+      - 'docs/registry-format.md'
       - '.github/workflows/registry-spec.yml'
+  # A signed registry expires (index 90 days, revocations 14). This run fails once either
+  # has lapsed, which is the reminder to run scripts/sign-registry.sh --renew.
+  schedule:
+    - cron: '17 6 * * 1'
 
 permissions:
   contents: read
@@ -21,6 +45,7 @@ permissions:
 jobs:
   spec:
     name: Registry spec and vectors
+    if: github.event_name != 'schedule'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v6
@@ -32,3 +57,40 @@ jobs:
         run: node --test spec/registry/test/*.test.mjs
       - name: Vectors are in sync with the generator
         run: node spec/registry/make-vectors.mjs --check
+
+  published:
+    name: Published registry
+    if: github.event_name != 'schedule'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 22
+      # Builds the Rust CLI and signs synthetic registries with it, so this also proves the
+      # Rust signer and the Node verifier agree.
+      - name: Builder and verifier tests
+        run: node --test scripts/test/*.test.mjs
+      - name: Committed registry matches its sources
+        run: node scripts/build-registry.mjs --check
+      # --allow-stale: an expired file must not block an unrelated pull request. The
+      # scheduled run below is what fails when a signature has lapsed.
+      - name: Committed registry is signed by the Enigma root and every file matches its hash
+        run: node scripts/verify-registry.mjs --allow-stale
+      - name: Public pages contain no em or en dashes
+        run: |
+          if grep -rPn '[\x{2013}\x{2014}]' web/apps registry; then
+            echo "::error::Remove em and en dashes from public copy; rewrite the sentence."
+            exit 1
+          fi
+
+  fresh:
+    name: Registry signatures are not expired
+    if: github.event_name == 'schedule'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 22
+      - run: node scripts/verify-registry.mjs

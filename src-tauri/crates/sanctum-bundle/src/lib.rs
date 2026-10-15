@@ -21,7 +21,10 @@ pub const BUNDLE_FORMAT: &str = "sanctum-bundle/1";
 pub const STATEMENT_SCHEMA: u32 = 1;
 const STATEMENT_DOMAIN: &[u8] = b"sanctum-statement-v1\n";
 const CERT_DOMAIN: &[u8] = b"sanctum-publisher-cert-v1\n";
+const REGISTRY_INDEX_DOMAIN: &[u8] = b"sanctum-registry-index-v1\n";
+const REGISTRY_REVOCATIONS_DOMAIN: &[u8] = b"sanctum-registry-revocations-v1\n";
 const KEY_PREFIX: &str = "ed25519:";
+pub const REGISTRY_SIG_FORMAT: &str = "sanctum-registry-sig/1";
 /// Upper bound on a bundle we will parse. Tools are single HTML files; this is generous.
 pub const MAX_BUNDLE_BYTES: usize = 32 * 1024 * 1024;
 
@@ -293,6 +296,104 @@ pub fn issue_certificate(issuer: &SigningKey, cert: &Certificate) -> Result<Sign
         sig: B64.encode(sig.to_bytes()),
         keyid: key_id(&issuer.verifying_key()),
     })
+}
+
+// ── Registry files ────────────────────────────────────────────────────────────
+
+/// Which registry file a detached signature is for. Each has its own domain prefix, so a
+/// signature for one never verifies as another, or as a bundle statement.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum RegistryFile {
+    Index,
+    Revocations,
+}
+
+impl RegistryFile {
+    fn domain(self) -> &'static [u8] {
+        match self {
+            RegistryFile::Index => REGISTRY_INDEX_DOMAIN,
+            RegistryFile::Revocations => REGISTRY_REVOCATIONS_DOMAIN,
+        }
+    }
+}
+
+/// `index.json.sig` / `revocations.json.sig`: a detached signature over the exact bytes of
+/// the file beside it. See `docs/registry-format.md`.
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+pub struct RegistrySignature {
+    pub format: String,
+    pub keyid: String,
+    pub sig: String,
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub chain: Vec<SignedBlob>,
+}
+
+/// Sign the exact bytes of a registry file. The caller decides what the bytes are; nothing is
+/// parsed or re-serialised here.
+pub fn sign_registry_file(
+    kind: RegistryFile,
+    bytes: &[u8],
+    key: &SigningKey,
+    cert: Option<SignedBlob>,
+) -> RegistrySignature {
+    let sig = key.sign(&signed_message(kind.domain(), bytes));
+    RegistrySignature {
+        format: REGISTRY_SIG_FORMAT.into(),
+        keyid: key_id(&key.verifying_key()),
+        sig: B64.encode(sig.to_bytes()),
+        chain: cert.into_iter().collect(),
+    }
+}
+
+/// Check only that `sig` is a valid signature by its own `keyid` over the file bytes. Whether
+/// that key is trusted is a separate question (anchors, certificates), answered by the
+/// registry client.
+pub fn verify_registry_signature(
+    kind: RegistryFile,
+    bytes: &[u8],
+    sig: &RegistrySignature,
+) -> Result<VerifyingKey, VerifyError> {
+    if sig.format != REGISTRY_SIG_FORMAT {
+        return Err(VerifyError::UnsupportedFormat(sig.format.clone()));
+    }
+    let key = parse_key_id(&sig.keyid).map_err(VerifyError::Malformed)?;
+    let raw = B64
+        .decode(&sig.sig)
+        .map_err(|_| VerifyError::Malformed("signature is not base64url".into()))?;
+    let parsed = ed25519_dalek::Signature::from_slice(&raw)
+        .map_err(|_| VerifyError::Malformed("signature is not 64 bytes".into()))?;
+    key.verify_strict(&signed_message(kind.domain(), bytes), &parsed)
+        .map_err(|_| VerifyError::BadSignature)?;
+    Ok(key)
+}
+
+/// Does `cert` vouch for `signer` and cover `registry_id` in its scope? Used by the signing
+/// CLI to refuse a certificate that verifiers would not accept for this registry.
+pub fn certificate_covers_registry(
+    cert: &SignedBlob,
+    signer: &str,
+    registry_id: &str,
+) -> Result<(), String> {
+    let payload = B64
+        .decode(&cert.payload)
+        .map_err(|_| "certificate payload is not base64url".to_string())?;
+    let c: Certificate =
+        serde_json::from_slice(&payload).map_err(|e| format!("certificate: {e}"))?;
+    if c.subject != signer {
+        return Err("the certificate is for a different key than the one signing".into());
+    }
+    if !c
+        .scope
+        .iter()
+        .any(|p| !p.is_empty() && registry_id.starts_with(p.as_str()))
+    {
+        return Err(format!(
+            "the certificate scope {:?} does not cover {registry_id}; clients would show this \
+             registry as unverified",
+            c.scope
+        ));
+    }
+    Ok(())
 }
 
 // ── Verification ──────────────────────────────────────────────────────────────
@@ -682,5 +783,120 @@ mod tests {
         assert!(parse_version("").is_none());
         assert!(parse_version("1..2").is_none());
         assert!(parse_version("v1").is_none());
+    }
+
+    // ── Registry signatures ───────────────────────────────────────────────────
+
+    /// The test keys in spec/registry are derived from a public string so the Node reference
+    /// and this crate can be compared. Ed25519 is deterministic, so signing the same bytes
+    /// with the same key must give the same signature in both implementations.
+    fn spec_test_key(label: &str) -> SigningKey {
+        let seed = Sha256::digest(format!("sanctum-registry-test-key:{label}").as_bytes());
+        SigningKey::from_bytes(&seed.into())
+    }
+
+    fn spec_vector(path: &str) -> Vec<u8> {
+        let p = std::path::Path::new(env!("CARGO_MANIFEST_DIR"))
+            .join("../../../spec/registry/vectors")
+            .join(path);
+        std::fs::read(&p).unwrap_or_else(|e| panic!("{}: {e}", p.display()))
+    }
+
+    #[test]
+    fn registry_signatures_match_the_node_reference_byte_for_byte() {
+        let root = spec_test_key("root");
+        for (kind, file, sig_file) in [
+            (
+                RegistryFile::Index,
+                "index_root_signed/index.json",
+                "index_root_signed/index.json.sig",
+            ),
+            (
+                RegistryFile::Revocations,
+                "revocations_ok/revocations.json",
+                "revocations_ok/revocations.json.sig",
+            ),
+        ] {
+            let bytes = spec_vector(file);
+            let theirs: RegistrySignature = serde_json::from_slice(&spec_vector(sig_file)).unwrap();
+            let ours = sign_registry_file(kind, &bytes, &root, None);
+            assert_eq!(ours, theirs, "{file}");
+            // And the signature the Node side produced verifies here.
+            assert!(verify_registry_signature(kind, &bytes, &theirs).is_ok());
+        }
+    }
+
+    #[test]
+    fn registry_signatures_are_domain_separated() {
+        let k = keypair();
+        let bytes = b"{\"format\":\"sanctum-registry/1\"}";
+        let sig = sign_registry_file(RegistryFile::Index, bytes, &k, None);
+        assert!(verify_registry_signature(RegistryFile::Index, bytes, &sig).is_ok());
+        assert_eq!(
+            verify_registry_signature(RegistryFile::Revocations, bytes, &sig).unwrap_err(),
+            VerifyError::BadSignature
+        );
+        // Not a bundle statement or a certificate either.
+        for domain in [STATEMENT_DOMAIN, CERT_DOMAIN] {
+            let raw = B64.decode(&sig.sig).unwrap();
+            let s = ed25519_dalek::Signature::from_slice(&raw).unwrap();
+            assert!(k
+                .verifying_key()
+                .verify_strict(&signed_message(domain, bytes), &s)
+                .is_err());
+        }
+    }
+
+    #[test]
+    fn a_changed_byte_or_wrong_format_fails_registry_verification() {
+        let k = keypair();
+        let bytes = b"{\"serial\":7}".to_vec();
+        let sig = sign_registry_file(RegistryFile::Index, &bytes, &k, None);
+        let mut tampered = bytes.clone();
+        tampered[3] ^= 1;
+        assert_eq!(
+            verify_registry_signature(RegistryFile::Index, &tampered, &sig).unwrap_err(),
+            VerifyError::BadSignature
+        );
+        let mut wrong = sig.clone();
+        wrong.format = "sanctum-registry-sig/2".into();
+        assert!(matches!(
+            verify_registry_signature(RegistryFile::Index, &bytes, &wrong),
+            Err(VerifyError::UnsupportedFormat(_))
+        ));
+        let mut short = sig;
+        short.sig = B64.encode([0u8; 10]);
+        assert!(matches!(
+            verify_registry_signature(RegistryFile::Index, &bytes, &short),
+            Err(VerifyError::Malformed(_))
+        ));
+    }
+
+    #[test]
+    fn a_certificate_must_cover_the_registry_id_not_just_apps() {
+        let root = keypair();
+        let publisher = keypair();
+        let issue = |scope: &str| {
+            issue_certificate(
+                &root,
+                &Certificate {
+                    schema: STATEMENT_SCHEMA,
+                    subject: key_id(&publisher.verifying_key()),
+                    name: "P".into(),
+                    not_before: 0,
+                    not_after: NOW + 1000,
+                    scope: vec![scope.into()],
+                },
+            )
+            .unwrap()
+        };
+        let id = "registry:sh.enigma.public";
+        let signer = key_id(&publisher.verifying_key());
+        assert!(certificate_covers_registry(&issue("registry:sh.enigma."), &signer, id).is_ok());
+        assert!(certificate_covers_registry(&issue("sh.enigma."), &signer, id).is_err());
+        assert!(certificate_covers_registry(&issue(""), &signer, id).is_err());
+        // A certificate for another key is not usable by this one.
+        let other = key_id(&keypair().verifying_key());
+        assert!(certificate_covers_registry(&issue("registry:sh.enigma."), &other, id).is_err());
     }
 }

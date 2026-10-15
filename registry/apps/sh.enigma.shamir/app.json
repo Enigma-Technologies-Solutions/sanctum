@@ -1,0 +1,7 @@
+{
+  "app_id": "sh.enigma.shamir",
+  "summary": "Split a secret into shares and combine them back. Runs offline and asks for no access.",
+  "description": "Splits a secret into shares and rebuilds it from any chosen number of them, using Shamir's secret sharing. Everything runs inside the tool window: nothing is stored, downloaded or sent. The default Sanctum share format records how many shares are needed and adds a check to each share, so a wrong, mistyped or mixed share gives a clear error instead of a wrong secret. A plain format is also available. The tool asks Sanctum for no access at all.",
+  "license": "AGPL-3.0-only",
+  "source": "https://github.com/Enigma-Technologies-Solutions/sanctum/tree/main/examples/shamir"
+}

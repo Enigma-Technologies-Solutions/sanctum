@@ -1,0 +1,8 @@
+{
+  "id": "registry:sh.enigma.public",
+  "name": "Enigma Technologies Solutions",
+  "kind": "public",
+  "site_url": "https://sanctum.enigma.sh",
+  "index_days": 90,
+  "revocations_days": 14
+}
