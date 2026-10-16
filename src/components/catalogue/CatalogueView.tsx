@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: AGPL-3.0-only
 // Copyright (C) 2026 Enigma Technologies Solutions
 
+import { PageHeader } from "@/components/PageHeader";
 import { useCallback, useEffect, useState } from "react";
 import { AlertTriangle, BadgeCheck, Download, Loader2, Plus, RefreshCw, Store, Trash2 } from "lucide-react";
 import { Commands } from "@/lib/commands";
@@ -235,22 +236,10 @@ export function CatalogueView({ onLibraryChanged, onOpenVault }: Props) {
   }
 
   return (
-    <div style={{ height: "100%", overflowY: "auto" }}>
-      <div style={{ padding: "20px 24px 16px", borderBottom: "1px solid var(--app-border)" }}>
-        <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 12 }}>
-          <div className="volt-bar" style={{ width: 32 }} />
-          <span style={{ fontFamily: font, fontSize: 11, fontWeight: 600, color: "var(--app-mute)", textTransform: "uppercase", letterSpacing: "0.1em" }}>
-            Catalogue
-          </span>
-        </div>
-        <h1 style={{ fontFamily: "Poppins, system-ui, sans-serif", fontWeight: 700, fontSize: 20, margin: "0 0 4px", letterSpacing: "-0.01em" }}>
-          Find tools
-        </h1>
-        <div className="volt-bar" style={{ width: 48, marginBottom: 12 }} />
-        <p style={{ margin: 0, fontFamily: font, fontSize: 12.5, color: "var(--app-ink-2)", maxWidth: "70ch" }}>{REGISTRY_MEANING}</p>
-      </div>
+    <div style={{ height: "100%", display: "flex", flexDirection: "column" }}>
+      <PageHeader title="Find tools">{REGISTRY_MEANING}</PageHeader>
 
-      <div style={{ padding: "16px 24px 40px", display: "grid", gap: 14 }}>
+      <div style={{ flex: 1, minHeight: 0, overflowY: "auto", alignContent: "start", padding: "16px 24px 40px", display: "grid", gap: 14 }}>
         <div role="status" aria-live="polite">
           {notice && <NoticeView notice={notice} onOpenVault={onOpenVault} />}
         </div>
