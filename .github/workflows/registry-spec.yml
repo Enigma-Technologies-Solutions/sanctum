@@ -13,6 +13,7 @@ on:
       - 'web/sitemap.xml'
       - 'scripts/build-registry.mjs'
       - 'scripts/verify-registry.mjs'
+      - 'workers/**'
       - 'scripts/lib/**'
       - 'scripts/test/**'
       - 'src-tauri/crates/sanctum-bundle/**'
@@ -28,6 +29,7 @@ on:
       - 'web/sitemap.xml'
       - 'scripts/build-registry.mjs'
       - 'scripts/verify-registry.mjs'
+      - 'workers/**'
       - 'scripts/lib/**'
       - 'scripts/test/**'
       - 'src-tauri/crates/sanctum-bundle/**'
@@ -71,6 +73,8 @@ jobs:
       # Rust signer and the Node verifier agree.
       - name: Builder and verifier tests
         run: node --test scripts/test/*.test.mjs
+      - name: Install worker (enigmahq.sh/install) tests
+        run: node --test workers/install/*.test.mjs
       - name: Committed registry matches its sources
         run: node scripts/build-registry.mjs --check
       # --allow-stale: an expired file must not block an unrelated pull request. The

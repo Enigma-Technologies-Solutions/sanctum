@@ -8,6 +8,7 @@ use tauri::Manager;
 
 pub mod commands;
 pub mod db;
+pub mod deeplink;
 pub mod device_broker;
 pub mod models;
 pub mod policy;
@@ -199,6 +200,14 @@ fn error_response(status: u16, msg: &str) -> tauri::http::Response<Vec<u8>> {
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     tauri::Builder::default()
+        // Must be first. A second launch (how Windows and Linux deliver a sanctum:// link)
+        // passes its arguments to this process and exits. The "deep-link" feature of the
+        // plugin forwards the link itself to the deep-link handler set up below; the callback
+        // here also covers arguments the plugin does not recognise, and brings the window up.
+        .plugin(tauri_plugin_single_instance::init(|app, args, _cwd| {
+            deeplink::handle_args(app, &args);
+        }))
+        .plugin(tauri_plugin_deep_link::init())
         .plugin(tauri_plugin_clipboard_manager::init())
         .plugin(tauri_plugin_dialog::init())
         // Updater is registered for Rust-side use only. No capability file
@@ -207,6 +216,7 @@ pub fn run() {
         .plugin(tauri_plugin_updater::Builder::new().build())
         .manage(ActiveToolPaths(Mutex::new(HashMap::new())))
         .manage(smartcard::SmartcardState::new())
+        .manage(deeplink::PendingLink::default())
         // Register sanctum-tool:// custom protocol.
         //
         // Storage isolation: each tool is served from a distinct host
@@ -244,6 +254,7 @@ pub fn run() {
             registry::commands::registry_app_detail,
             registry::commands::install_from_registry,
             registry::commands::install_all_from_registry,
+            deeplink::take_pending_link,
             commands::library::list_tools,
             commands::library::get_tool,
             commands::library::update_metadata,
@@ -282,6 +293,25 @@ pub fn run() {
             });
             app.manage(db::DbState(pool));
             app.manage(AppDataDir(data_dir));
+
+            // sanctum:// links: validated and shown in a confirmation, never acted on here.
+            {
+                use tauri_plugin_deep_link::DeepLinkExt;
+                let handle = app.handle().clone();
+                app.deep_link().on_open_url(move |event| {
+                    let urls: Vec<String> = event.urls().iter().map(|u| u.to_string()).collect();
+                    deeplink::handle_args(&handle, &urls);
+                });
+                // Windows and Linux start the app with the link as an argument.
+                if let Ok(Some(urls)) = app.deep_link().get_current() {
+                    let urls: Vec<String> = urls.iter().map(|u| u.to_string()).collect();
+                    deeplink::handle_args(app.handle(), &urls);
+                }
+                // Development builds are not installed, so nothing has registered the scheme.
+                // Release builds never write that registration themselves.
+                #[cfg(all(debug_assertions, any(target_os = "linux", windows)))]
+                let _ = app.deep_link().register_all();
+            }
 
             Ok(())
         })

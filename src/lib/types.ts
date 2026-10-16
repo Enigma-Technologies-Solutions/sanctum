@@ -321,3 +321,17 @@ export function formatDate(ms: number): string {
     timeStyle: "short",
   }).format(new Date(ms));
 }
+
+/** What a sanctum://install link asked for, already validated by Rust. */
+export interface LinkInstallRequest {
+  appId: string;
+  /** Canonical base URL ending in "/". */
+  registryUrl: string;
+  /** True only when it is exactly the Enigma public registry. */
+  isEnigma: boolean;
+}
+
+/** A link Sanctum received. A refusal carries a fixed message, never text from the link. */
+export type LinkEvent =
+  | { kind: "install"; request: LinkInstallRequest }
+  | { kind: "refused"; message: string; code: string };

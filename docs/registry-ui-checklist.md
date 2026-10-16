@@ -62,3 +62,19 @@ Mark each line pass or fail, and write down anything odd.
 - Colour contrast is not checked by the automated accessibility tests (they cannot measure it).
   Judge it by eye, or with the macOS Accessibility Inspector.
 - Other registries have only been tried with test data.
+
+
+## Install links (needs an installed build; not available in `pnpm tauri dev` on macOS)
+
+- [ ] On each of macOS, Windows, Linux: click `sanctum://install?app=sh.enigma.shamir` in a
+      browser page, an email and a Markdown file. Sanctum comes to the front with a confirmation.
+- [ ] With Sanctum closed: the same click starts Sanctum and the confirmation is shown once.
+- [ ] With the registry not added: the dialog asks first. Cancel: nothing was downloaded.
+- [ ] *Add the Enigma registry*, then *Install*: two clicks, then "It has no access yet". The tool
+      has no approvals in Tool Vault.
+- [ ] A bad link (`sanctum://install`, `sanctum://install?app=x&yes=1`) shows "did not open this link".
+- [ ] A link with another registry address shows the whole address and the signing-key screen.
+- [ ] Two links in a row: the second replaces the first, dialogs do not stack.
+- [ ] The Install button on `sanctum.enigma.sh/apps/sh.enigma.shamir/` does the same thing.
+- [ ] After deploying the worker: `https://enigmahq.sh/install/sh.enigma.shamir` shows the page and
+      its button opens Sanctum. `https://enigmahq.sh/install/nope` is a plain 404.

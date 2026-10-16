@@ -86,7 +86,8 @@ jobs:
             libayatana-appindicator3-dev \
             librsvg2-dev \
             patchelf \
-            libpcsclite-dev
+            libpcsclite-dev \
+            xdg-utils
 
       - name: Install JS dependencies
         run: pnpm install --frozen-lockfile

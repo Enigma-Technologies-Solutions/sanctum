@@ -3,6 +3,11 @@
 
 import { useEffect, useState } from "react";
 import { getVersion } from "@tauri-apps/api/app";
+import { listen } from "@tauri-apps/api/event";
+import { Commands } from "@/lib/commands";
+import type { LinkEvent } from "@/lib/types";
+import { LINK_EVENT } from "@/lib/registry";
+import { LinkInstallDialog } from "@/components/catalogue/LinkInstallDialog";
 import { Library } from "@/components/Library";
 import { UpdateBanner } from "@/components/UpdateBanner";
 import { AppHeader, type View } from "@/components/AppHeader";
@@ -15,6 +20,35 @@ function App() {
   const [version, setVersion] = useState<string | null>(null);
   // Bumped when something was installed from a registry, so the Tool Vault reloads.
   const [libraryKey, setLibraryKey] = useState(0);
+
+  // A sanctum:// link that is waiting for the user's confirmation, and a key that remounts the
+  // Catalogue after the link flow added a registry or installed something.
+  const [link, setLink] = useState<LinkEvent | null>(null);
+  const [catalogueKey, setCatalogueKey] = useState(0);
+
+  useEffect(() => {
+    // The event only says "a link arrived". The link itself is read from Rust, once, so a link
+    // is shown one time and a reload of the window never shows it again.
+    const take = () =>
+      Commands.takePendingLink()
+        .then((e) => {
+          if (e) {
+            setLink(e);
+            setView("catalogue");
+          }
+        })
+        .catch(() => {});
+    void take();
+    let off: (() => void) | undefined;
+    let gone = false;
+    listen(LINK_EVENT, () => void take())
+      .then((u) => (gone ? u() : (off = u)))
+      .catch(() => {});
+    return () => {
+      gone = true;
+      off?.();
+    };
+  }, []);
 
   useEffect(() => {
     getVersion().then(setVersion).catch(() => setVersion(null));
@@ -31,12 +65,25 @@ function App() {
             <Library refreshKey={libraryKey} />
           </div>
           <div hidden={view !== "catalogue"} style={{ height: "100%", display: view === "catalogue" ? "block" : "none" }}>
-            <CatalogueView onLibraryChanged={() => setLibraryKey((k) => k + 1)} onOpenVault={() => setView("vault")} />
+            <CatalogueView key={catalogueKey} onLibraryChanged={() => setLibraryKey((k) => k + 1)} onOpenVault={() => setView("vault")} />
           </div>
           <div hidden={view !== "settings"} style={{ height: "100%", display: view === "settings" ? "block" : "none" }}>
             <SettingsView version={version} />
           </div>
         </main>
+        {link && (
+          // A new link replaces an older one that was never confirmed.
+          <LinkInstallDialog
+            key={JSON.stringify(link)}
+            event={link}
+            onChanged={() => {
+              setLibraryKey((k) => k + 1);
+              setCatalogueKey((k) => k + 1);
+            }}
+            onOpenVault={() => setView("vault")}
+            onClose={() => setLink(null)}
+          />
+        )}
       </div>
     </TooltipProvider>
   );

@@ -33,6 +33,11 @@
     "withGlobalTauri": false
   },
   "plugins": {
+    "deep-link": {
+      "desktop": {
+        "schemes": ["sanctum"]
+      }
+    },
     "updater": {
       "endpoints": [
         "https://github.com/Enigma-Technologies-Solutions/sanctum/releases/latest/download/latest.json"

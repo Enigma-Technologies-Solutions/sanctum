@@ -20,6 +20,12 @@ tauri-plugin-dialog = "2"
 # minisign public key in tauri.conf.json before anything is written to disk —
 # an unsigned or tampered payload is rejected by the plugin, not by us.
 tauri-plugin-updater = "2"
+# sanctum:// links. Only the Rust side receives them (no capability exposes the plugin to a
+# webview); every link ends in a confirmation the user must click. See registry/link.rs.
+tauri-plugin-deep-link = "2"
+# One running Sanctum: a second launch (which is how Windows and Linux deliver a link)
+# hands its arguments to the first and exits.
+tauri-plugin-single-instance = { version = "2", features = ["deep-link"] }
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"
 sha2 = "0.10"
