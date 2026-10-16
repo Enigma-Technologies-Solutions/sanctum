@@ -27,5 +27,17 @@
   </url>
   <!-- registry:end -->
   <!-- blog:begin -->
+  <url>
+    <loc>https://sanctum.enigma.sh/blog/</loc>
+    <lastmod>2026-10-16</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.6</priority>
+  </url>
+  <url>
+    <loc>https://sanctum.enigma.sh/blog/introducing-sanctum/</loc>
+    <lastmod>2026-10-16</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.5</priority>
+  </url>
   <!-- blog:end -->
 </urlset>
