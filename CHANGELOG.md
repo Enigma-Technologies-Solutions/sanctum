@@ -15,6 +15,9 @@ section behind.
 
 ### Added
 
+- First run: an empty Tool Vault now shows a welcome panel with one obvious step, "Browse
+  signed tools". It adds the Enigma registry (one request, only when clicked) and opens the
+  Catalogue. Nothing is installed by it.
 - New brand mark: the "st" monogram replaces the nested squares in the app icon, the header, the
   favicons and every social card. `scripts/gen-brand.mjs` draws the icons, social cards and
   per-tool previews. The website has a Signed tools section and an Install in Sanctum button on

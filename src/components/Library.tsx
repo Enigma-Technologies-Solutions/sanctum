@@ -6,6 +6,7 @@ import { useState, useEffect, useCallback } from "react";
 import type { ToolWithVersion, IngestResult, BundleInstall, PolicyStatus } from "@/lib/types";
 import { Commands } from "@/lib/commands";
 import { ToolCard } from "./ToolCard";
+import { WelcomePanel } from "./WelcomePanel";
 import { IngestBar } from "./IngestBar";
 import { InspectView } from "./InspectView";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -60,7 +61,7 @@ function EmptySlot() {
   );
 }
 
-export function Library({ refreshKey = 0 }: { refreshKey?: number }) {
+export function Library({ refreshKey = 0, onOpenCatalogue }: { refreshKey?: number; onOpenCatalogue?: () => void }) {
   const [tools, setTools] = useState<ToolWithVersion[]>([]);
   const [ingestError, setIngestError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
@@ -192,6 +193,7 @@ export function Library({ refreshKey = 0 }: { refreshKey?: number }) {
       {/* Tool grid */}
       <ScrollArea className="flex-1" style={{ background: "var(--app-surface)" }}>
         <div style={{ padding: "20px 24px 24px" }}>
+          {tools.length === 0 && onOpenCatalogue && <WelcomePanel onOpenCatalogue={onOpenCatalogue} />}
           <section aria-labelledby="your-tools">
             <SectionHeader
               id="your-tools"
