@@ -62,7 +62,14 @@ function App() {
         <main style={{ flex: 1, overflow: "hidden", position: "relative" }}>
           {/* Both screens stay mounted so the Library keeps its inspect view and scroll position. */}
           <div hidden={view !== "vault"} style={{ height: "100%", display: view === "vault" ? "block" : "none" }}>
-            <Library refreshKey={libraryKey} />
+            <Library
+              refreshKey={libraryKey}
+              onOpenCatalogue={() => {
+                // The welcome step may have just added a registry: reload the Catalogue to show it.
+                setCatalogueKey((k) => k + 1);
+                setView("catalogue");
+              }}
+            />
           </div>
           <div hidden={view !== "catalogue"} style={{ height: "100%", display: view === "catalogue" ? "block" : "none" }}>
             <CatalogueView key={catalogueKey} onLibraryChanged={() => setLibraryKey((k) => k + 1)} onOpenVault={() => setView("vault")} />
