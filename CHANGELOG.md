@@ -15,6 +15,9 @@ section behind.
 
 ### Added
 
+- First run: an empty Tool Vault now shows a welcome panel with one obvious step, "Browse
+  signed tools". It adds the Enigma registry (one request, only when clicked) and opens the
+  Catalogue. Nothing is installed by it.
 - `sanctum://install?app=<app_id>` links open Sanctum on a confirmation for that tool. Nothing
   is downloaded, added or installed until you click, and an install gives the tool no access.
   Each tool page on the website has an Install in Sanctum button, and `workers/install/` is a
