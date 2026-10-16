@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: AGPL-3.0-only
 // Copyright (C) 2026 Enigma Technologies Solutions
 
+import { StMark } from "@/components/StMark";
 import { Library as LibraryIcon, Settings as SettingsIcon, Store as StoreIcon } from "lucide-react";
 
 export type View = "vault" | "catalogue" | "settings";
@@ -87,7 +88,8 @@ export function AppHeader({
       </div>
 
       <div style={{ display: "flex", alignItems: "center", gap: "10px", padding: "0 20px", borderRight: "1px solid var(--app-border)", flexShrink: 0 }}>
-        <div style={{ width: "3px", height: "20px", background: "#FBFF00", flexShrink: 0 }} />
+        {/* Sanctum "st" monogram: sharp tile, volt frame (assets/logo) */}
+        <StMark size={28} />
         <div
           style={{
             fontFamily: "Poppins, system-ui, sans-serif",

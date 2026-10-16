@@ -23,7 +23,9 @@ web/
 ├── robots.txt
 ├── sitemap.xml
 └── assets/
-    ├── favicon.svg   # nested-square isolation glyph
+    ├── favicon.svg   # "st" monogram (assets/logo/, scripts/gen-monogram.py)
+    ├── favicon-32.png, favicon-48.png, apple-touch-icon.png, icon-192.png, icon-512.png
+    │                 # drawn by scripts/gen-brand.mjs; favicon.ico lives beside index.html
     ├── og.png        # 1200×630 social card
     ├── fonts.css     # @font-face declarations
     └── fonts/        # Inter (variable), Poppins, Space Mono; latin subsets, 96 KB total
@@ -117,3 +119,17 @@ if Cloudflare is put in front of Pages.
 
 The CSP is deliberately strict. If you ever add analytics or a script tag, **both** the
 meta tag and `_headers` have to be relaxed. Treat that as a decision, not a formality.
+
+
+## Brand images and the blog
+
+- `node scripts/gen-brand.mjs [icons|site|apps|blog]` draws every raster with headless Chrome:
+  the desktop `icon.png`, the favicons, the home page social card, one card per signed tool
+  (`apps/<id>/og.png`, which the registry builder leaves alone) and each blog post's cover and
+  thumbnail. Change the generator or `assets/logo/`, never the PNGs.
+- Posts are `blog-src/<date>-<slug>.md`. `node scripts/build-blog.mjs` writes `web/blog/` and the
+  sitemap block, `--check` is what CI runs, and `--preview DIR` also renders drafts
+  (`draft: "true"`), which are never written to `web/`. Remove the `draft` line to publish, then
+  run `gen-brand.mjs blog` if the title changed.
+- Posts use the same strict Markdown subset as registry manuals: no raw HTML, no images, no
+  em or en dashes.

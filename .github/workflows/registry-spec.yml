@@ -14,6 +14,12 @@ on:
       - 'scripts/build-registry.mjs'
       - 'scripts/verify-registry.mjs'
       - 'workers/**'
+      - 'blog-src/**'
+      - 'web/blog/**'
+      - 'web/index.html'
+      - 'web/assets/**'
+      - 'assets/logo/**'
+      - 'scripts/gen-brand.mjs'
       - 'scripts/lib/**'
       - 'scripts/test/**'
       - 'src-tauri/crates/sanctum-bundle/**'
@@ -30,6 +36,12 @@ on:
       - 'scripts/build-registry.mjs'
       - 'scripts/verify-registry.mjs'
       - 'workers/**'
+      - 'blog-src/**'
+      - 'web/blog/**'
+      - 'web/index.html'
+      - 'web/assets/**'
+      - 'assets/logo/**'
+      - 'scripts/gen-brand.mjs'
       - 'scripts/lib/**'
       - 'scripts/test/**'
       - 'src-tauri/crates/sanctum-bundle/**'
@@ -75,6 +87,8 @@ jobs:
         run: node --test scripts/test/*.test.mjs
       - name: Install worker (enigmahq.sh/install) tests
         run: node --test workers/install/*.test.mjs
+      - name: Committed blog matches blog-src
+        run: node scripts/build-blog.mjs --check
       - name: Committed registry matches its sources
         run: node scripts/build-registry.mjs --check
       # --allow-stale: an expired file must not block an unrelated pull request. The
@@ -83,7 +97,7 @@ jobs:
         run: node scripts/verify-registry.mjs --allow-stale
       - name: Public pages contain no em or en dashes
         run: |
-          if grep -rPn '[\x{2013}\x{2014}]' web/apps registry; then
+          if grep -rPn '[\x{2013}\x{2014}]' web/apps web/blog blog-src registry; then
             echo "::error::Remove em and en dashes from public copy; rewrite the sentence."
             exit 1
           fi

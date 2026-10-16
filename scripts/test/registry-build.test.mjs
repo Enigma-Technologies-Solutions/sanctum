@@ -11,7 +11,7 @@ import { test } from 'node:test';
 import { buildRegistry, diffDir, writeRegistry } from '../lib/registry.mjs';
 import { installLink, renderSite, renderSitemap } from '../lib/site.mjs';
 import { verifyRegistryDir } from '../lib/verify-registry.mjs';
-import { NOW, ONE_PIXEL_PNG, REGISTRY_ID, cli, makeWorld } from './helpers.mjs';
+import { NOW, ONE_PIXEL_PNG, REGISTRY_ID, cli, makeWorld, scratch } from './helpers.mjs';
 
 const DAY = 86_400;
 
@@ -488,6 +488,27 @@ test('each app page has an Install link that opens Sanctum, and only the confirm
 test('installLink is a well-formed link and encodes anything odd', () => {
   assert.equal(installLink('sh.enigma.shamir'), 'sanctum://install?app=sh.enigma.shamir');
   assert.equal(installLink('a b&c=d'), 'sanctum://install?app=a%20b%26c%3Dd');
+});
+
+test('files made by another generator are kept when the site is rewritten, but only where allowed', () => {
+  const w = scratch();
+  try {
+    const dir = join(w.dir, 'site');
+    mkdirSync(join(dir, 'a'), { recursive: true });
+    writeFileSync(join(dir, 'a/og.png'), 'img');
+    writeFileSync(join(dir, 'a/other.txt'), 'x');
+    const files = new Map([['a/index.html', Buffer.from('<p>')]]);
+    const preserve = (rel) => /^[^/]+\/og\.png$/.test(rel);
+    assert.deepEqual(diffDir(dir, files, { preserve }).sort(), ['missing: a/index.html', 'stale: a/other.txt']);
+    writeRegistry(dir, files, { preserve });
+    assert.ok(existsSync(join(dir, 'a/og.png')), 'the social image survives');
+    assert.ok(!existsSync(join(dir, 'a/other.txt')), 'anything else is removed');
+    writeFileSync(join(dir, 'a/deep.png'), 'x');
+    writeFileSync(join(dir, 'og.png'), 'x');
+    assert.deepEqual(diffDir(dir, files, { preserve }).sort(), ['stale: a/deep.png', 'stale: og.png']);
+  } finally {
+    w.cleanup();
+  }
 });
 
 test('page text is escaped', () => {

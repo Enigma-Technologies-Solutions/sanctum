@@ -1,5 +1,10 @@
 # Desktop icon sources
 
+> **Superseded.** The app icon is now the "st" monogram: `assets/logo/app-icon.svg` (made by
+> `scripts/gen-monogram.py`), turned into the files here with `tauri icon`, and `icon.png` is drawn
+> by `scripts/gen-brand.mjs icons`. The notes below describe the previous nested-square icon and are
+> kept for the small-size ideas only.
+
 Rebuild every icon in `src-tauri/icons` from the repo root:
 
     src-tauri/icons/source/build-icons.sh

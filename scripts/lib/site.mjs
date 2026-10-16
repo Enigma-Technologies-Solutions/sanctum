@@ -25,8 +25,9 @@ export function describeAccess(declared) {
 
 const date = (unix) => new Date(unix * 1000).toISOString().slice(0, 10);
 
-function shell({ title, description, canonical, depth, body }) {
+export function shell({ title, description, canonical, depth, body, image, ogType = 'website', siteUrl = 'https://sanctum.enigma.sh', head = '' }) {
   const up = '../'.repeat(depth);
+  const img = image ? `${siteUrl}/${image}` : `${siteUrl}/assets/og.png`;
   return `<!DOCTYPE html>
 <html lang="en">
 <head>
@@ -37,10 +38,24 @@ function shell({ title, description, canonical, depth, body }) {
 <meta http-equiv="Content-Security-Policy" content="${CSP}">
 <meta name="referrer" content="strict-origin-when-cross-origin">
 <link rel="canonical" href="${esc(canonical)}">
+<meta property="og:type" content="${esc(ogType)}">
+<meta property="og:site_name" content="Sanctum">
+<meta property="og:title" content="${esc(title)}">
+<meta property="og:description" content="${esc(description)}">
+<meta property="og:url" content="${esc(canonical)}">
+<meta property="og:image" content="${esc(img)}">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="${esc(title)}">
+<meta name="twitter:description" content="${esc(description)}">
+<meta name="twitter:image" content="${esc(img)}">
 <meta name="theme-color" content="#0A0A09">
 <meta name="color-scheme" content="dark">
 <link rel="icon" href="${up}assets/favicon.svg" type="image/svg+xml">
-<link rel="stylesheet" href="${up}styles.css">
+<link rel="icon" href="${up}favicon.ico" sizes="32x32 48x48">
+<link rel="apple-touch-icon" href="${up}assets/apple-touch-icon.png">
+${head}<link rel="stylesheet" href="${up}styles.css">
 </head>
 <body>
 <a class="skip" href="#main">Skip to content</a>
@@ -50,6 +65,7 @@ function shell({ title, description, canonical, depth, body }) {
     <div class="nav__links">
       <a href="${up}">Home</a>
       <a href="${up}apps/">Signed tools</a>
+      <a href="${up}blog/">Blog</a>
     </div>
     <div class="nav__cta">
       <a class="btn btn--ghost btn--sm nav__gh" href="https://github.com/Enigma-Technologies-Solutions/sanctum" rel="noopener">GitHub</a>
@@ -183,6 +199,8 @@ ${manualHtml ? `\n    <h2 class="apps__sub">Manual</h2>\n    <div class="manual"
     description: entry.summary,
     canonical: `${config.site_url}/apps/${id}/`,
     depth: 2,
+    image: `apps/${id}/og.png`,
+    siteUrl: config.site_url,
     body,
   });
 }

@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<feed xmlns="http://www.w3.org/2005/Atom">
+  <title>Sanctum blog</title>
+  <link href="https://sanctum.enigma.sh/blog/feed.xml" rel="self"/>
+  <link href="https://sanctum.enigma.sh/blog/"/>
+  <id>https://sanctum.enigma.sh/blog/</id>
+  <updated>2026-01-01T00:00:00Z</updated>
+  <author><name>Enigma Technologies Solutions</name></author>
+
+</feed>
