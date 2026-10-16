@@ -12,6 +12,7 @@ import type {
   UpdateInfo,
   PolicyStatus,
   TrustAnchorInfo,
+  LinkEvent,
   RegistryAppDetail,
   RegistryBatchItem,
   RegistryCatalogue,
@@ -25,6 +26,11 @@ import type {
 // All invoke calls are typed. The generic parameter matches the Rust return type.
 
 export const Commands = {
+  /** A sanctum:// link that arrived before the window was listening. Taking it clears it. */
+  takePendingLink(): Promise<LinkEvent | null> {
+    return invoke("take_pending_link");
+  },
+
   /** Ingest raw HTML string into the library. */
   ingestHtml(html: string, sourceFilename?: string): Promise<IngestResult> {
     return invoke("ingest_html", { html, sourceFilename: sourceFilename ?? null });

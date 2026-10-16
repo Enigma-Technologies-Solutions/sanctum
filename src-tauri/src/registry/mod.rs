@@ -31,4 +31,5 @@ pub mod commands;
 pub mod detail;
 pub mod fetch;
 pub mod install;
+pub mod link;
 pub mod store;

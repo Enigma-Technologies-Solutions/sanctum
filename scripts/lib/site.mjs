@@ -120,6 +120,11 @@ function indexPage({ config, index, sitePages }) {
 
 const CHANGE_LABEL = { added: 'Added', changed: 'Changed', fixed: 'Fixed', security: 'Security', removed: 'Removed' };
 
+/** The link that opens Sanctum's install confirmation (src-tauri/src/registry/link.rs). */
+export function installLink(appId) {
+  return `sanctum://install?app=${encodeURIComponent(appId)}`;
+}
+
 function appPage({ config, entry, detail, manualHtml }) {
   const id = entry.app_id;
   const v = entry.versions[0];
@@ -157,7 +162,11 @@ function appPage({ config, entry, detail, manualHtml }) {
         <p class="fine">${esc(describeAccess(v.declared))}</p>
         <p class="fine appdoc__links">Published by ${esc(entry.publisher.name)}${links.length ? ` · ${links.join(' · ')}` : ''}</p>
 ${hashes}
-        <a class="btn btn--volt btn--sm" href="${reg}${esc(v.bundle.path)}" download>Download (${(v.bundle.size / 1024).toFixed(1)} KB)</a>
+        <div class="btn-row">
+          <a class="btn btn--volt btn--sm" href="${esc(installLink(id))}">Install in Sanctum</a>
+          <a class="btn btn--ghost btn--sm" href="${reg}${esc(v.bundle.path)}" download>Download file (${(v.bundle.size / 1024).toFixed(1)} KB)</a>
+        </div>
+        <p class="fine">Install opens Sanctum, which shows this tool and what it asks for, then waits for your click. Nothing is installed from the page itself. Sanctum not installed? <a href="https://github.com/Enigma-Technologies-Solutions/sanctum/releases/latest" rel="noopener">Get Sanctum</a> first.</p>
     </article>
     <p class="notice">Verified means the publisher is who it says and the bytes have not changed. It does not mean safe. A signature never grants access: every tool still starts with nothing approved, and you approve each capability yourself.</p>
 ${shots ? `\n    <h2 class="apps__sub">Screenshots</h2>\n${shots}\n` : ''}

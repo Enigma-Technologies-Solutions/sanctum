@@ -10,6 +10,9 @@ import type {
 } from "./types";
 
 /** The Enigma registry. Its signing key chains to a root compiled into Sanctum. */
+/** Event the Rust side emits when a sanctum:// link arrives (src-tauri/src/deeplink.rs). */
+export const LINK_EVENT = "registry-link";
+
 export const ENIGMA_REGISTRY_URL = "https://sanctum.enigma.sh/registry/v1/";
 
 /** What the interface says wherever a registry or an install is shown. */

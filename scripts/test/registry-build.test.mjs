@@ -9,7 +9,7 @@ import { appendFileSync, existsSync, mkdirSync, readFileSync, readdirSync, rmSyn
 import { join } from 'node:path';
 import { test } from 'node:test';
 import { buildRegistry, diffDir, writeRegistry } from '../lib/registry.mjs';
-import { renderSite, renderSitemap } from '../lib/site.mjs';
+import { installLink, renderSite, renderSitemap } from '../lib/site.mjs';
 import { verifyRegistryDir } from '../lib/verify-registry.mjs';
 import { NOW, ONE_PIXEL_PNG, REGISTRY_ID, cli, makeWorld } from './helpers.mjs';
 
@@ -462,6 +462,32 @@ test('generated pages have no script, no third-party URL and no dashes in copy',
   } finally {
     w.cleanup();
   }
+});
+
+test('each app page has an Install link that opens Sanctum, and only the confirmation can install', () => {
+  const w = makeWorld();
+  try {
+    const site = renderSite(build(w));
+    for (const id of ['sh.test.alpha', 'sh.test.beta']) {
+      const html = site.get(`${id}/index.html`).toString('utf8');
+      assert.ok(html.includes(`href="sanctum://install?app=${id}"`), `${id}: install link`);
+      assert.match(html, /Install in Sanctum/);
+      assert.match(html, /Nothing is installed from the page itself/);
+      // exactly one such link, and no link that names a registry or any other action
+      assert.equal([...html.matchAll(/href="sanctum:/g)].length, 1);
+      assert.ok(!/sanctum:\/\/(?!install\?app=)/.test(html));
+      assert.ok(!/registry=/.test(html.replace(/\/registry\/v1\//g, '')), 'no registry= in the link');
+    }
+    // the download link is still there as the fallback
+    assert.match(site.get('sh.test.alpha/index.html').toString('utf8'), /Download file \(/);
+  } finally {
+    w.cleanup();
+  }
+});
+
+test('installLink is a well-formed link and encodes anything odd', () => {
+  assert.equal(installLink('sh.enigma.shamir'), 'sanctum://install?app=sh.enigma.shamir');
+  assert.equal(installLink('a b&c=d'), 'sanctum://install?app=a%20b%26c%3Dd');
 });
 
 test('page text is escaped', () => {

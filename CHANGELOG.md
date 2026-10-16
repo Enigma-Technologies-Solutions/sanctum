@@ -15,6 +15,11 @@ section behind.
 
 ### Added
 
+- `sanctum://install?app=<app_id>` links open Sanctum on a confirmation for that tool. Nothing
+  is downloaded, added or installed until you click, and an install gives the tool no access.
+  Each tool page on the website has an Install in Sanctum button, and `workers/install/` is a
+  Cloudflare Worker for an `https://enigmahq.sh/install/<app_id>` version that works where
+  custom links are blocked. Format and rules: `docs/deep-link.md`.
 - Settings has an Appearance section: System (default), Light or Dark for the Sanctum
   window. Tools you open keep their own look. The choice is a display preference kept in the
   window's local storage.

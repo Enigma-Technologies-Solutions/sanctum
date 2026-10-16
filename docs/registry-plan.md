@@ -126,6 +126,8 @@ Maintainer check: real desktop window, VoiceOver, Safari.
 
 ## Phase 7: deep link and install redirect (5 days)
 
+**Status:** built (see `docs/deep-link.md`). Needs the maintainer click-through and the worker deploy.
+
 1. Tauri deep-link plugin, single-instance handling, URL scheme registration per OS.
 2. `sanctum://install?registry=...&app=...` always opens a confirmation. Never silent.
 3. Cloudflare worker at `enigmahq.sh/install/<app>` that redirects to the scheme, with a

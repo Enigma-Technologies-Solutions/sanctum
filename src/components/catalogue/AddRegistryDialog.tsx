@@ -16,6 +16,8 @@ interface Props {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onAdded: (registry: RegistrySummary) => void;
+  /** Fill the address field. The user still presses Add. */
+  initialUrl?: string;
 }
 
 type Unknown = { signer: string; registryName: string };
@@ -25,8 +27,8 @@ type Unknown = { signer: string; registryName: string };
  * signed by any other key is refused until the user has seen that key and chosen to trust it:
  * the dialog shows it and asks, and only then sends it back as a pin.
  */
-export function AddRegistryDialog({ open, onOpenChange, onAdded }: Props) {
-  const [url, setUrl] = useState("");
+export function AddRegistryDialog({ open, onOpenChange, onAdded, initialUrl }: Props) {
+  const [url, setUrl] = useState(initialUrl ?? "");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<RegistryCommandError | null>(null);
   const [unknown, setUnknown] = useState<Unknown | null>(null);
