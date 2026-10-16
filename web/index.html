@@ -25,10 +25,15 @@
 <meta property="og:image:width" content="1200">
 <meta property="og:image:height" content="630">
 <meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:image" content="https://sanctum.enigma.sh/assets/og.png">
+<meta name="twitter:title" content="Sanctum: a sandbox for AI-generated HTML tools">
 <meta name="theme-color" content="#0A0A09">
 <meta name="color-scheme" content="dark">
 
 <link rel="icon" href="./assets/favicon.svg" type="image/svg+xml">
+<link rel="icon" href="./favicon.ico" sizes="32x32 48x48">
+<link rel="apple-touch-icon" href="./assets/apple-touch-icon.png">
+<link rel="alternate" type="application/atom+xml" title="Sanctum blog" href="./blog/feed.xml">
 <link rel="preload" href="./assets/fonts/Inter-var.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="preload" href="./assets/fonts/Poppins-700.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="stylesheet" href="./styles.css">
@@ -43,10 +48,12 @@
     <a class="wordmark" href="#top" aria-label="Sanctum home">SANCTUM<span class="wordmark__sq" aria-hidden="true"></span></a>
     <div class="nav__links">
       <a href="#how">How it works</a>
+      <a href="#tools">Signed tools</a>
       <a href="#security">Security</a>
       <a href="#compare">Compare</a>
       <a href="#pricing">Pricing</a>
       <a href="#faq">FAQ</a>
+      <a href="./blog/">Blog</a>
     </div>
     <div class="nav__cta">
       <a class="btn btn--ghost btn--sm nav__gh" href="https://github.com/Enigma-Technologies-Solutions/sanctum" rel="noopener">GitHub</a>
@@ -77,7 +84,7 @@
 
       <div class="btn-row">
         <a class="btn btn--volt" href="https://github.com/Enigma-Technologies-Solutions/sanctum/releases/latest" rel="noopener">Download <svg class="i" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg></a>
-        <a class="btn btn--ghost" href="https://github.com/Enigma-Technologies-Solutions/sanctum" rel="noopener">Source on GitHub</a>
+        <a class="btn btn--ghost" href="./apps/">Browse signed tools</a>
       </div>
 
       <p class="fine">Free for individuals · macOS, Windows, Linux · No account</p>
@@ -266,6 +273,54 @@
         </div>
       </article>
     </div>
+  </div>
+</section>
+
+<!-- ══ Signed tools ══════════════════════════════════════════════════════ -->
+<section class="section" id="tools">
+  <div class="wrap">
+    <div class="shead">
+      <div>
+        <p class="eyebrow">Signed tools</p>
+        <h2 class="h2">Start with tools Enigma signed.</h2>
+      </div>
+      <p class="lede">
+        The Catalogue tab in Sanctum lists tools that are signed by their publisher. Installing
+        one adds it with no access at all, and you approve each permission yourself.
+        <strong>Verified</strong> means the publisher is who it says and the file has not changed.
+        It does not mean the tool is safe.
+      </p>
+    </div>
+
+    <div class="tools__grid">
+      <article class="card tools__card">
+        <figure class="screenshot">
+          <img src="./registry/v1/apps/sh.enigma.shamir/overview.png" width="1600" height="1131" alt="Shamir, a tool that splits a secret into shares and combines them back." loading="lazy">
+        </figure>
+        <div class="tools__body">
+        <h3 class="tools__name">Shamir <span class="tag">signed</span></h3>
+        <p class="tools__desc">Split a secret into shares and combine them back. Runs offline and asks for no access.</p>
+        <div class="btn-row">
+          <a class="btn btn--volt btn--sm" href="sanctum://install?app=sh.enigma.shamir">Install in Sanctum</a>
+          <a class="btn btn--ghost btn--sm" href="./apps/sh.enigma.shamir/">About this tool</a>
+        </div>
+        </div>
+      </article>
+      <article class="card tools__card">
+        <figure class="screenshot">
+          <img src="./registry/v1/apps/sh.enigma.otp-vault/overview.png" width="1600" height="1131" alt="OTP Vault, a tool that keeps one-time codes in Sanctum storage." loading="lazy">
+        </figure>
+        <div class="tools__body">
+        <h3 class="tools__name">OTP Vault <span class="tag">signed</span></h3>
+        <p class="tools__desc">Time-based one-time codes kept in Sanctum storage, and optionally on a smart card. Asks for storage, and for smart card access only if you use it.</p>
+        <div class="btn-row">
+          <a class="btn btn--volt btn--sm" href="sanctum://install?app=sh.enigma.otp-vault">Install in Sanctum</a>
+          <a class="btn btn--ghost btn--sm" href="./apps/sh.enigma.otp-vault/">About this tool</a>
+        </div>
+        </div>
+      </article>
+    </div>
+    <p class="fine tools__note">Install in Sanctum opens the app, which shows the tool and what it asks for, then waits for your click. Sanctum not installed yet? <a href="https://github.com/Enigma-Technologies-Solutions/sanctum/releases/latest" rel="noopener">Download it</a> first.</p>
   </div>
 </section>
 
@@ -524,7 +579,15 @@
       </details>
       <details>
         <summary>Does Sanctum send anything anywhere?</summary>
-        <p>There's no account, telemetry or analytics. The only request Sanctum makes by itself is an update check against its GitHub releases. Updates are signature-checked in Rust against a public key built into the app, and only install when you click to install them.</p>
+        <p>There's no account, telemetry or analytics. The only request Sanctum makes by itself is an update check against its GitHub releases. Updates are signature-checked in Rust against a public key built into the app, and only install when you click to install them. A registry is contacted only when you add it, refresh it or install from it, and an <code>sanctum://</code> link shows a confirmation and does nothing until you click.</p>
+      </details>
+      <details>
+        <summary>What is a registry, and what does “Verified” mean?</summary>
+        <p>A registry is a signed list of tools that Sanctum can browse and install from. The Enigma registry holds tools Enigma signs. Verified means the publisher is who it says and the file has not changed since it was signed. It does not mean the tool is safe, and a signature never grants access: an installed tool still starts with nothing approved.</p>
+      </details>
+      <details>
+        <summary>What happens when I click “Install in Sanctum”?</summary>
+        <p>Sanctum opens and shows the tool, who published it and what it asks for. Nothing is downloaded or installed until you click inside Sanctum. If you have not added the registry yet, Sanctum asks first.</p>
       </details>
       <details>
         <summary>What if a tool needs the network?</summary>
@@ -583,6 +646,7 @@
           <li><a href="#compare">Compare</a></li>
           <li><a href="#pricing">Pricing</a></li>
           <li><a href="#faq">FAQ</a></li>
+          <li><a href="./blog/">Blog</a></li>
         </ul>
       </div>
 

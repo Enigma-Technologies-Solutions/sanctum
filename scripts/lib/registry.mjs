@@ -321,11 +321,12 @@ export function buildRegistry({ sourceDir, bundlesDir, outDir, anchors, now, ren
 // ── Writing ───────────────────────────────────────────────────────────────────
 
 /**
- * Make `dir` contain exactly `files`, plus any `.sig` whose file is unchanged. A signature
+ * Make `dir` contain exactly `files`, plus any `.sig` whose file is unchanged, plus anything
+ * `preserve(rel)` says belongs to another generator (the social images from gen-brand.mjs). A signature
  * beside a file that changed is removed: it no longer matches, and leaving it would make the
  * registry look signed when it is not.
  */
-export function writeRegistry(dir, files) {
+export function writeRegistry(dir, files, { preserve = () => false } = {}) {
   const keep = new Set([...files.keys()]);
   for (const p of listFiles(dir)) {
     const rel = relative(dir, p);
@@ -335,7 +336,7 @@ export function writeRegistry(dir, files) {
       if (!same) rmSync(p);
       continue;
     }
-    if (!keep.has(rel)) rmSync(p);
+    if (!keep.has(rel) && !preserve(rel)) rmSync(p);
   }
   for (const [rel, bytes] of files) {
     const dest = join(dir, rel);
@@ -346,7 +347,7 @@ export function writeRegistry(dir, files) {
 }
 
 /** Differences between a built file set and a directory (signatures ignored). */
-export function diffDir(dir, files, { ignoreSig = true } = {}) {
+export function diffDir(dir, files, { ignoreSig = true, preserve = () => false } = {}) {
   const problems = [];
   for (const [rel, bytes] of files) {
     const p = join(dir, rel);
@@ -356,7 +357,7 @@ export function diffDir(dir, files, { ignoreSig = true } = {}) {
   for (const p of listFiles(dir)) {
     const rel = relative(dir, p);
     if (ignoreSig && rel.endsWith('.sig')) continue;
-    if (!files.has(rel)) problems.push(`stale: ${rel}`);
+    if (!files.has(rel) && !preserve(rel)) problems.push(`stale: ${rel}`);
   }
   return problems;
 }

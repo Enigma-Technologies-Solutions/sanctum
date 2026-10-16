@@ -15,6 +15,10 @@ section behind.
 
 ### Added
 
+- New brand mark: the "st" monogram replaces the nested squares in the app icon, the header, the
+  favicons and every social card. `scripts/gen-brand.mjs` draws the icons, social cards and
+  per-tool previews. The website has a Signed tools section and an Install in Sanctum button on
+  each tool page, a blog (`blog-src/`, built by `scripts/build-blog.mjs`) and a feed.
 - `sanctum://install?app=<app_id>` links open Sanctum on a confirmation for that tool. Nothing
   is downloaded, added or installed until you click, and an install gives the tool no access.
   Each tool page on the website has an Install in Sanctum button, and `workers/install/` is a

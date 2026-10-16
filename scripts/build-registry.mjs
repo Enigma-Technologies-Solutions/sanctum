@@ -22,6 +22,9 @@ import { fileURLToPath } from 'node:url';
 import { buildRegistry, diffDir, readProductionAnchors, writeRegistry } from './lib/registry.mjs';
 import { renderSite, renderSitemap } from './lib/site.mjs';
 
+/** Social images are drawn by scripts/gen-brand.mjs, not by this builder: leave them alone. */
+const isBrandImage = (rel) => /^[^/]+\/og\.png$/.test(rel);
+
 const repo = join(dirname(fileURLToPath(import.meta.url)), '..');
 
 function parseArgs(argv) {
@@ -75,7 +78,7 @@ function main() {
   if (o.check) {
     const problems = [
       ...diffDir(outDir, build.files).map((p) => `registry: ${p}`),
-      ...diffDir(siteDir, site).map((p) => `site: ${p}`),
+      ...diffDir(siteDir, site, { preserve: isBrandImage }).map((p) => `site: ${p}`),
       ...(readFileSync(sitemapPath, 'utf8') === sitemap ? [] : ['sitemap: changed']),
     ];
     if (problems.length) {
@@ -87,7 +90,7 @@ function main() {
   }
 
   writeRegistry(outDir, build.files);
-  writeRegistry(siteDir, site);
+  writeRegistry(siteDir, site, { preserve: isBrandImage });
   if (!existsSync(sitemapPath) || readFileSync(sitemapPath, 'utf8') !== sitemap) writeFileSync(sitemapPath, sitemap);
 
   const state = (k) => (build.changed[k] ? 'CHANGED, needs signing' : 'unchanged');
