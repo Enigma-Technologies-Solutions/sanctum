@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Introducing Sanctum: run the tools AI writes for you, on your terms | Sanctum</title>
+<meta name="description" content="Models now write small HTML tools on request. Sanctum shows what each one uses before it runs, and blocks everything you did not approve.">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'none'; style-src 'self'; font-src 'self'; img-src 'self' data:; connect-src 'none'; form-action 'none'; base-uri 'none'">
+<meta name="referrer" content="strict-origin-when-cross-origin">
+<link rel="canonical" href="https://sanctum.enigma.sh/blog/introducing-sanctum/">
+<meta property="og:type" content="article">
+<meta property="og:site_name" content="Sanctum">
+<meta property="og:title" content="Introducing Sanctum: run the tools AI writes for you, on your terms | Sanctum">
+<meta property="og:description" content="Models now write small HTML tools on request. Sanctum shows what each one uses before it runs, and blocks everything you did not approve.">
+<meta property="og:url" content="https://sanctum.enigma.sh/blog/introducing-sanctum/">
+<meta property="og:image" content="https://sanctum.enigma.sh/blog/introducing-sanctum/cover.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Introducing Sanctum: run the tools AI writes for you, on your terms | Sanctum">
+<meta name="twitter:description" content="Models now write small HTML tools on request. Sanctum shows what each one uses before it runs, and blocks everything you did not approve.">
+<meta name="twitter:image" content="https://sanctum.enigma.sh/blog/introducing-sanctum/cover.png">
+<meta name="theme-color" content="#0A0A09">
+<meta name="color-scheme" content="dark">
+<link rel="icon" href="../../assets/favicon.svg" type="image/svg+xml">
+<link rel="icon" href="../../favicon.ico" sizes="32x32 48x48">
+<link rel="apple-touch-icon" href="../../assets/apple-touch-icon.png">
+<link rel="stylesheet" href="../../styles.css">
+</head>
+<body>
+<a class="skip" href="#main">Skip to content</a>
+<nav class="nav" aria-label="Primary">
+  <div class="wrap nav__inner">
+    <a class="wordmark" href="../../" aria-label="Sanctum home">SANCTUM<span class="wordmark__sq" aria-hidden="true"></span></a>
+    <div class="nav__links">
+      <a href="../../">Home</a>
+      <a href="../../apps/">Signed tools</a>
+      <a href="../../blog/">Blog</a>
+    </div>
+    <div class="nav__cta">
+      <a class="btn btn--ghost btn--sm nav__gh" href="https://github.com/Enigma-Technologies-Solutions/sanctum" rel="noopener">GitHub</a>
+      <a class="btn btn--volt btn--sm" href="https://github.com/Enigma-Technologies-Solutions/sanctum/releases/latest" rel="noopener">Download Sanctum</a>
+    </div>
+  </div>
+</nav>
+
+<main id="main" class="section apps">
+  <div class="wrap">
+    <article class="blog blog--post">
+    <p class="eyebrow"><a href="../">Blog</a></p>
+    <p class="blog__date">October 16, 2026</p>
+    <h1 class="h2 blog__h1">Introducing Sanctum: run the tools AI writes for you, on your terms</h1>
+    <figure class="blog__cover"><img src="./cover.png" width="1200" height="630" alt=""></figure>
+    <div class="manual blog__body">
+<p>Asking a model for a small tool has become ordinary. You describe what you want, and a minute later you have a single HTML file that does it. That is useful. It also means a lot of people are opening code they did not write and did not read.</p>
+<h4>The problem</h4>
+<p>The file is usually a few hundred lines of HTML and JavaScript. Almost nobody reads all of it, and one of those lines could be a <code>fetch</code> to a host you have never heard of. Open it in a browser tab and it runs at once, with normal web permissions. Every request goes out, and you find out what the tool contacted afterwards, if you find out at all.</p>
+<p>A virtual machine isolates the file, but it does not tell you what the file tried to reach, and setting one up for a calculator costs more than the calculator saved you.</p>
+<p>Today we are launching Sanctum to change that.</p>
+<h4>What Sanctum does</h4>
+<p>Sanctum is a desktop app for running single-file HTML tools. When you add one, it:</p>
+<ul><li>stores a copy under its SHA-256 hash, runs only that copy, and checks the hash again on every launch;</li><li>scans the source and lists what the tool uses: the camera, storage, smart cards and every hostname it names;</li><li>asks you to approve each capability, with network access approved one host at a time;</li><li>opens the tool at its own origin, under a Content Security Policy built from your approvals, with the app&#39;s own bridge removed.</li></ul>
+<p>Anything you did not approve stays blocked, including things the scan missed. The scan only fills in the approval screen. The sandbox is what enforces your choices, and it does that whether or not the scan caught anything.</p>
+<p>There is no account and no telemetry. Sanctum is open source under AGPL-3.0 and free for individuals.</p>
+<h4>Signed tools</h4>
+<p>A sandbox helps most when you also know who made the thing inside it. Sanctum now has a Catalogue: a list of tools that their publishers have signed.</p>
+<p>Enigma publishes the first two. Shamir splits a secret into shares and puts it back together from any chosen number of them. OTP Vault keeps one-time codes in Sanctum&#39;s storage, and optionally on a YubiKey. Open the Catalogue tab, or click Install in Sanctum on a tool&#39;s page on the website, and Sanctum shows you the tool, who published it and what it asks for. Nothing is installed until you click.</p>
+<p>Two rules apply to all of it. A signature tells you who published a tool and that the file has not changed since. It does not tell you the tool is safe. And a signature never grants access: an installed tool starts with nothing approved, exactly like one you pasted in.</p>
+<h4>Why it works this way</h4>
+<p>We would rather offer a short list of guarantees that always hold than a long list that depends on a scanner being right. The scanner can be fooled, so it is not the security control. The origin, the policy and the hash check are, and they apply to every tool the same way.</p>
+<h4>What comes next</h4>
+<p>Sanctum only contacts a registry when you ask it to. We are working on update notices and a faster way to withdraw a tool that turns out to be bad. For organizations, we are building signed policy, fleet deployment and audit logs with a first group of design partners. If that is you, write to ultra@enigma.sh.</p>
+<h4>Try it</h4>
+<p>Download Sanctum for macOS, Windows or Linux from <a href="https://github.com/Enigma-Technologies-Solutions/sanctum/releases/latest" rel="noopener noreferrer">the releases page</a>, choose Browse signed tools on the first screen, and install Shamir. Then tell us how it went. Open an issue on <a href="https://github.com/Enigma-Technologies-Solutions/sanctum/issues" rel="noopener noreferrer">GitHub</a> or write to ultra@enigma.sh.</p>
+    </div>
+    <p class="blog__back"><a href="../">Back to the blog</a></p>
+    </article>
+  </div>
+</main>
+
+<footer class="foot">
+  <div class="wrap">
+    <div class="foot__bar">
+      <span class="ets" aria-hidden="true">ETS</span>
+      <span>© 2026 Enigma Technologies Solutions</span>
+      <span class="foot__bar-sp">AGPL-3.0-only</span>
+    </div>
+  </div>
+</footer>
+</body>
+</html>

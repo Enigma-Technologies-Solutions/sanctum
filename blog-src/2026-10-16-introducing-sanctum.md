@@ -6,7 +6,6 @@ excerpt: "Models now write small HTML tools on request. Sanctum shows what each 
 kicker: "Launch"
 cover_title: "Introducing Sanctum"
 cover_sub: "Run the tools AI writes for you, on your terms."
-draft: "true"
 ---
 
 Asking a model for a small tool has become ordinary. You describe what you want, and a minute later you have a single HTML file that does it. That is useful. It also means a lot of people are opening code they did not write and did not read.

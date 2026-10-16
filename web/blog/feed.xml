@@ -4,7 +4,13 @@
   <link href="https://sanctum.enigma.sh/blog/feed.xml" rel="self"/>
   <link href="https://sanctum.enigma.sh/blog/"/>
   <id>https://sanctum.enigma.sh/blog/</id>
-  <updated>2026-01-01T00:00:00Z</updated>
+  <updated>2026-10-16T12:00:00Z</updated>
   <author><name>Enigma Technologies Solutions</name></author>
-
+  <entry>
+    <title>Introducing Sanctum: run the tools AI writes for you, on your terms</title>
+    <link href="https://sanctum.enigma.sh/blog/introducing-sanctum/"/>
+    <id>https://sanctum.enigma.sh/blog/introducing-sanctum/</id>
+    <updated>2026-10-16T12:00:00Z</updated>
+    <summary>Models now write small HTML tools on request. Sanctum shows what each one uses before it runs, and blocks everything you did not approve.</summary>
+  </entry>
 </feed>
