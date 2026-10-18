@@ -52,14 +52,19 @@ Written 2026-10-17 so work can resume from here. Plan for the registry itself is
 ## Checklist to go live
 
 Code and release
-- [ ] Phase 9 security review of the new surface: fetcher, link handling, Markdown rendering,
-      and the two new Tauri plugins (`tauri-plugin-deep-link`, `tauri-plugin-single-instance`,
-      which pulled about 480 lines of new `Cargo.lock`, mostly Linux-only crates).
-- [ ] Bump the version to 0.2.0 in `package.json`, `src-tauri/tauri.conf.json`,
-      `src-tauri/Cargo.toml`; write the CHANGELOG section from `[Unreleased]`.
+- [x] Phase 9 security review of the new surface (self-review, PR #26): `docs/security-review-0.2.0.md`.
+      Two low findings fixed.
+- [ ] Dependency audit before tagging: `cargo install cargo-audit --locked`, then
+      `cd src-tauri && cargo audit` and `pnpm audit --prod`. About 480 lines were added to
+      `Cargo.lock` by `tauri-plugin-deep-link` and `tauri-plugin-single-instance`.
+- [x] Bump the version to 0.2.0 in `package.json`, `src-tauri/tauri.conf.json`,
+      `src-tauri/Cargo.toml` and `Cargo.lock`. Security entries added to `[Unreleased]`.
+- [ ] Release day, one PR: rename `[Unreleased]` to `[0.2.0] - <date>` in `CHANGELOG.md` and fix
+      the compare links, update the pill in `web/index.html`, the version lines in `README.md`
+      and `web/README.md`, and merge PR #23 (the launch post). Do it only after the release
+      exists, because the site deploys on merge.
 - [ ] Run the signed, notarised release (`release.yml`; credential steps are the maintainer's).
 - [ ] Upgrade a real v0.1.0 install to prove the updater end to end (still unproven).
-- [ ] Update the home page pill from `v0.1.0` to `v0.2.0`.
 
 Hands-on checks (list in `docs/registry-ui-checklist.md`)
 - [ ] Windows and Linux link delivery, and single-instance behaviour on a second click.
