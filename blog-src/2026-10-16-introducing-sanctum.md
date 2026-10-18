@@ -10,6 +10,14 @@ cover_sub: "Run the tools AI writes for you, on your terms."
 
 Asking a model for a small tool has become ordinary. You describe what you want, and a minute later you have a single HTML file that does it. That is useful. It also means a lot of people are opening code they did not write and did not read.
 
+## Why we built it
+
+It started with a request from a company. They needed to generate cryptographic keys, and they needed a tool they could trust. That meant three things. They could read the source. They could still use it five years from now, offline, without us. And they could check who it came from.
+
+The tool itself was easy to build, because it is one HTML page. The hard part was everything around it. We could host it, but nobody could promise that the site would still be up in five years, or that nobody would break into it in the meantime. They could download the file, but then a file on a disk has no trust anchor. Nothing says who made it or whether it changed.
+
+We had also been building small tools for small cryptographic tasks, and we wanted to hand people something they could download once and rely on for good. Websites go away. A signed file you keep does not.
+
 ## The problem
 
 The file is usually a few hundred lines of HTML and JavaScript. Almost nobody reads all of it, and one of those lines could be a `fetch` to a host you have never heard of. Open it in a browser tab and it runs at once, with normal web permissions. Every request goes out, and you find out what the tool contacted afterwards, if you find out at all.
@@ -39,9 +47,19 @@ Enigma publishes the first two. Shamir splits a secret into shares and puts it b
 
 Two rules apply to all of it. A signature tells you who published a tool and that the file has not changed since. It does not tell you the tool is safe. And a signature never grants access: an installed tool starts with nothing approved, exactly like one you pasted in.
 
-## Why it works this way
+## Who it is for
+
+Sanctum is for the CTOs and CISOs who need a specific tool and have to know it will keep doing the same thing. Models now write these tools, but they usually come as links or hosted services. A tool you have installed as a signed bundle is different. It is a fixed file. It behaves the same on day one and on day one thousand, and it runs on your own desktop and network, where confidential data has nowhere to go that you did not approve.
+
+## What you can check
 
 We would rather offer a short list of guarantees that always hold than a long list that depends on a scanner being right. The scanner can be fooled, so it is not the security control. The origin, the policy and the hash check are, and they apply to every tool the same way.
+
+You should not have to take our word for any of it.
+
+- **It works offline.** Installed tools run with no network at all unless you approved a host. Sanctum does not phone home, and a network inspector will show you it does not.
+- **A swapped tool is rejected.** The catalogue is signed, and so is each tool. A tampered bundle, or a tool served by someone who took over the download site, fails the check and does not install.
+- **You can read all of it.** Sanctum and the registry format are open source, so anyone can audit what we describe here.
 
 ## What comes next
 
