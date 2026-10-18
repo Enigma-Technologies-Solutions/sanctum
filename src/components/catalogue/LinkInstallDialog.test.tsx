@@ -36,7 +36,7 @@ function show(event: LinkEvent) {
   const user = userEvent.setup();
   const utils = render(
     <TooltipProvider>
-      <LinkInstallDialog event={event} onChanged={onChanged} onOpenVault={onOpenVault} onClose={onClose} />
+      <LinkInstallDialog event={event} onChanged={onChanged} onOpenVault={onOpenVault} onClose={onClose} armDelayMs={0} />
     </TooltipProvider>,
   );
   return { user, onChanged, onOpenVault, onClose, ...utils };
@@ -272,5 +272,20 @@ describe("the dialog", () => {
     expect(screen.getByRole("button", { name: "Cancel" })).toBeDisabled();
     finish({ state: "alreadyInstalled", version: "1.0.2" } as never);
     await waitFor(() => expect(screen.getByRole("heading", { name: /already installed/i })).toBeInTheDocument());
+  });
+});
+
+describe("a dialog that was just swapped in", () => {
+  it("cannot be confirmed until it has been on screen for a moment", async () => {
+    withApps();
+    render(
+      <TooltipProvider>
+        <LinkInstallDialog event={link()} onChanged={vi.fn()} onOpenVault={vi.fn()} onClose={vi.fn()} armDelayMs={300} />
+      </TooltipProvider>,
+    );
+    const install = await screen.findByRole("button", { name: "Install" });
+    expect(install).toBeDisabled();
+    await waitFor(() => expect(install).toBeEnabled(), { timeout: 2000 });
+    expect(NETWORK_OR_WRITE()).toBe(0);
   });
 });
