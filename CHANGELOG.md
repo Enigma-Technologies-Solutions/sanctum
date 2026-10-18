@@ -96,6 +96,14 @@ section behind.
   character, refreshed when a version is added, and a card falls back to the initials tile if
   an icon still fails to load.
 
+### Security
+
+- A confirmation from a `sanctum://` link cannot be clicked in its first moments on screen, so
+  a page that opens links in a loop cannot swap the dialog under your click.
+- Text from a registry (names, descriptions, manuals, changelogs) is shown without direction
+  overrides, zero-width or control characters, so a pinned registry cannot make one name look
+  like another. Review: `docs/security-review-0.2.0.md`.
+
 ## [0.1.0] - 2026-09-21
 
 First release. macOS builds are signed with a Developer ID certificate
