@@ -20,6 +20,12 @@ interface Props {
   onChanged: () => void;
   onOpenVault: () => void;
   onClose: () => void;
+  /**
+   * How long the buttons that move on stay disabled after the dialog appears. A page can fire
+   * links in a loop to swap this dialog just as the user clicks; a short wait means a click
+   * can only land on what was already on screen. Tests set it to 0.
+   */
+  armDelayMs?: number;
 }
 
 type Step =
@@ -50,7 +56,13 @@ type Step =
  * Only the app id and registry address are shown from the link, and both have been validated
  * by Rust. Names and descriptions come from the signed catalogue.
  */
-export function LinkInstallDialog({ event, onChanged, onOpenVault, onClose }: Props) {
+export function LinkInstallDialog({ event, onChanged, onOpenVault, onClose, armDelayMs = 700 }: Props) {
+  const [armed, setArmed] = useState(armDelayMs === 0);
+  useEffect(() => {
+    if (armDelayMs === 0) return;
+    const t = setTimeout(() => setArmed(true), armDelayMs);
+    return () => clearTimeout(t);
+  }, [armDelayMs]);
   const [step, setStep] = useState<Step>(
     event.kind === "refused" ? { k: "refused", message: event.message } : { k: "checking" },
   );
@@ -197,7 +209,7 @@ export function LinkInstallDialog({ event, onChanged, onOpenVault, onClose }: Pr
         actions = (
           <>
             {cancel}
-            <Button onClick={() => void addEnigma()}>Add the Enigma registry</Button>
+            <Button onClick={() => void addEnigma()} disabled={!armed}>Add the Enigma registry</Button>
           </>
         );
       } else {
@@ -220,7 +232,7 @@ export function LinkInstallDialog({ event, onChanged, onOpenVault, onClose }: Pr
         actions = (
           <>
             {cancel}
-            <Button onClick={() => setReviewOpen(true)}>Review and add…</Button>
+            <Button onClick={() => setReviewOpen(true)} disabled={!armed}>Review and add…</Button>
           </>
         );
       }
@@ -276,7 +288,7 @@ export function LinkInstallDialog({ event, onChanged, onOpenVault, onClose }: Pr
         ) : (
           <>
             {cancel}
-            <Button onClick={() => void install(reg, app)}>{action.kind === "update" ? action.label : "Install"}</Button>
+            <Button onClick={() => void install(reg, app)} disabled={!armed}>{action.kind === "update" ? action.label : "Install"}</Button>
           </>
         );
       break;
