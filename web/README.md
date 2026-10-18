@@ -40,15 +40,26 @@ inline with `class="i"` and `aria-hidden="true"`; for list markers, use the `.i-
 
 ## Design
 
-One dark theme (layout ideas borrowed from display.dev's 2026 redesign), in the ETS
-brand. Tokens are at the top of `styles.css`.
+Two themes in the ETS brand (layout ideas borrowed from display.dev's 2026 redesign).
+**Light is the default**: a white page, which also matches the desktop app's own light UI,
+so the mockups look like the product. The original dark theme is kept, unchanged in look,
+under `<html data-theme="dark">`. The page runs no script, so the theme is chosen in
+markup, not toggled. Tokens are at the top of `styles.css`.
 
-| Token | Value | Use |
-|---|---|---|
-| Volt | `#FBFF00` | Primary buttons, the band, checks and "allowed" states. **Always black ink on volt** |
-| Surfaces | `#0A0A09` → `#10100E` → `#151513` → `#1B1B18` | Page → alternate section → card → inset |
-| Ink | `#F5F5F0` / `#A6A69E` / `#6F6F68` | Headings / body / labels |
-| Bad | `#FF6B5B` | "Blocked" states in mockups |
+| Token | Light (default) | Dark | Use |
+|---|---|---|---|
+| Volt | `#FBFF00` | `#FBFF00` | Fills only: buttons, the band, toggles, eyebrow squares. **Always black ink on volt** |
+| Surfaces | `#FFFFFF` → `#F7F7F4` → `#FFFFFF` → `#F2F2EE` | `#0A0A09` → `#10100E` → `#151513` → `#1B1B18` | Page → alternate section → card → inset |
+| Ink | `#0A0A09` / `#45453F` / `#6B6B64` | `#F5F5F0` / `#A6A69E` / `#6F6F68` | Headings / body / labels |
+| `--accent-fg` | ink | volt | Checks, "allowed" labels, numbers: anything that was volt *text* |
+| `--accent-line` | ink | volt | Featured plan border, isolation wall |
+| Bad | `#C2331F` | `#FF6B5B` | "Blocked" states in mockups |
+
+- **Volt is never a text colour on white.** `#FBFF00` on `#FFFFFF` has a contrast ratio of
+  about 1.07. Foreground accents go through `--accent-fg`; the hero emphasis becomes black
+  text on a volt highlighter stroke (`--em-bg`).
+- Light ink values keep body text at 9:1 and labels above 5:1 on white.
+- The "denied" panel on the volt band stays dark in both themes, by design.
 
 - **Poppins** for display headings, **Inter** for body and UI, **Space Mono** for data, code,
   and eyebrow labels only, never UI chrome.
