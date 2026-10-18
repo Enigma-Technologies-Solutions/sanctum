@@ -50,8 +50,8 @@ export function shell({ title, description, canonical, depth, body, image, ogTyp
 <meta name="twitter:title" content="${esc(title)}">
 <meta name="twitter:description" content="${esc(description)}">
 <meta name="twitter:image" content="${esc(img)}">
-<meta name="theme-color" content="#0A0A09">
-<meta name="color-scheme" content="dark">
+<meta name="theme-color" content="#FFFFFF">
+<meta name="color-scheme" content="light">
 <link rel="icon" href="${up}assets/favicon.svg" type="image/svg+xml">
 <link rel="icon" href="${up}favicon.ico" sizes="32x32 48x48">
 <link rel="apple-touch-icon" href="${up}assets/apple-touch-icon.png">
