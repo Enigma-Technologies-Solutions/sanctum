@@ -2,6 +2,7 @@
 // Copyright (C) 2026 Enigma Technologies Solutions
 
 import { invoke } from "@tauri-apps/api/core";
+import { cleanCatalogue, cleanDetail, cleanRegistry } from "@/lib/text";
 import type {
   DetectedCapability,
   BundleInstall,
@@ -58,7 +59,7 @@ export const Commands = {
 
   /** Registries the user added. No network: reads the cached, re-verified catalogue. */
   listRegistries(): Promise<RegistrySummary[]> {
-    return invoke("list_registries");
+    return invoke<RegistrySummary[]>("list_registries").then((rs) => rs.map(cleanRegistry));
   },
 
   /**
@@ -77,12 +78,12 @@ export const Commands = {
 
   /** The cached, re-verified catalogue with install state per app. No network. */
   registryCatalogue(registryId: string): Promise<RegistryCatalogue> {
-    return invoke("registry_catalogue", { registryId });
+    return invoke<RegistryCatalogue>("registry_catalogue", { registryId }).then(cleanCatalogue);
   },
 
   /** An app's changelog, manual, screenshots and icon. Contacts the registry; all verified. */
   registryAppDetail(registryId: string, appId: string): Promise<RegistryAppDetail> {
-    return invoke("registry_app_detail", { registryId, appId });
+    return invoke<RegistryAppDetail>("registry_app_detail", { registryId, appId }).then(cleanDetail);
   },
 
   /**

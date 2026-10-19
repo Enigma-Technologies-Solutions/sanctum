@@ -89,7 +89,7 @@ Actions → *CI* or *Release* → run → artifacts → `linux-arm64`. Those job
 package installs. An arm64 build made on 24.04 will not.
 
 ```bash
-sudo apt install ./Sanctum_0.1.0_arm64.deb
+sudo apt install ./Sanctum_0.2.0_arm64.deb
 ```
 
 **Or build on the Pi itself:**
@@ -124,7 +124,7 @@ needs re-presenting.
 
 ## Status
 
-**v0.1.0** is the first release. [Download it from GitHub Releases](https://github.com/Enigma-Technologies-Solutions/sanctum/releases/latest). macOS builds are signed and notarized; Windows and Linux builds are unsigned.
+**v0.2.0** adds the signed Catalogue, install links and a light, dark or system theme. [Download it from GitHub Releases](https://github.com/Enigma-Technologies-Solutions/sanctum/releases/latest). macOS builds are signed and notarized; Windows and Linux builds are unsigned.
 
 | Feature | Status |
 |---------|--------|

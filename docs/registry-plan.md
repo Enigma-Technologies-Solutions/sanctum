@@ -7,6 +7,18 @@ online. Later, a paid registry of tested tools, with licences issued by Sigil.
 
 Design background is in [registry.md](registry.md). This file is the order of work.
 
+## Where we are (2026-10-17)
+
+| Phase | State |
+|---|---|
+| 0 to 7 | Built, tested, merged to `main` (PRs #10 to #22). Registry is live at `sanctum.enigma.sh/registry/v1/` with screenshots (index serial 2). |
+| Launch site | Merged (#22): `st` brand, Signed tools section, install buttons, blog generator, social images. The launch post is a hidden draft. |
+| 8 updates and revocation | Not started. Not needed for 0.2.0 (see `docs/launch.md`). |
+| 9 release | Not started: security review, version bump to 0.2.0, signed release, upgrade test. |
+
+The full launch state, remaining checklist and decisions waiting on the maintainer are in
+[launch.md](launch.md).
+
 ## Where things live
 
 | Where | What |
