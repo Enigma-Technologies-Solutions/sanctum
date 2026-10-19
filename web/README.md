@@ -82,7 +82,7 @@ markup, not toggled. Tokens are at the top of `styles.css`.
       `github.com/Enigma-Technologies-Solutions/sanctum/releases/latest`, which always
       resolves to the newest published release. Linking the page rather than a file keeps
       it version-proof: installer filenames carry the version number.
-- [x] **Status line:** says v0.1.0 and what is signed. Update it when Windows signing
+- [x] **Status line:** says v0.2.0 and what is signed. Update it when Windows signing
       lands or the version moves.
 - [ ] Confirm the `in development` tags on the Organization plan still match reality:
       `policy.rs` and `registry.rs` are stubs today, and the site says so on purpose.

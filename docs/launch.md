@@ -30,11 +30,9 @@ Written 2026-10-17 so work can resume from here. Plan for the registry itself is
 ## Not on `main` yet
 
 - **PR #23** (`feat/publish-launch-post`, commit `aca1d95`, open): removes `draft: "true"` from
-  `blog-src/2026-10-16-introducing-sanctum.md` and regenerates `web/blog/`. **Do not merge it until
-  0.2.0 is released.** The post describes the Catalogue, install links and "Browse signed tools",
-  which v0.1.0 does not have, and it still lacks the maintainer's own voice (see below). Merging it
-  is what makes the post public; set the post date to the release day first (rename the file and
-  `date:`, then `node scripts/build-blog.mjs` and `node scripts/gen-brand.mjs blog`).
+  `blog-src/2026-10-16-introducing-sanctum.md` and regenerates `web/blog/`. 0.2.0 is
+  released, so merging it is what makes the post public: do it when announcing. The date stays
+  2026-10-16.
 
 ## Decisions waiting on the maintainer
 
@@ -58,24 +56,25 @@ Code and release
       triaged in `docs/security-review-0.2.0.md`. Re-run `cargo audit` on release day.
 - [x] Bump the version to 0.2.0 in `package.json`, `src-tauri/tauri.conf.json`,
       `src-tauri/Cargo.toml` and `Cargo.lock`. Security entries added to `[Unreleased]`.
-- [ ] Release day, one PR: rename `[Unreleased]` to `[0.2.0] - <date>` in `CHANGELOG.md` and fix
-      the compare links, update the pill in `web/index.html`, the version lines in `README.md`
-      and `web/README.md`, and merge PR #23 (the launch post). Do it only after the release
-      exists, because the site deploys on merge.
-- [ ] Run the signed, notarised release (`release.yml`; credential steps are the maintainer's).
-- [ ] Upgrade a real v0.1.0 install to prove the updater end to end (still unproven).
+- [x] Release day PR: CHANGELOG `[0.2.0] - 2026-10-19` with compare links, home page pill, version
+      lines in `README.md` and `web/README.md`.
+- [x] Signed, notarised release published 2026-10-19 (tag `v0.2.0`, dry run green first).
+      `latest.json` lists 15 platforms and every signature matches its `.sig` file.
+- [x] Updater proven: a real v0.1.0 install updated to 0.2.0 and kept its tool and approvals.
 
 Hands-on checks (list in `docs/registry-ui-checklist.md`)
-- [ ] Windows and Linux link delivery, and single-instance behaviour on a second click.
-- [ ] Dark theme on every screen; VoiceOver; Safari/WebKit rendering.
-- [ ] New app icon in the macOS Dock, the Windows taskbar and the Linux launcher.
-- [ ] Deploy the worker (`cd workers/install && npx wrangler deploy`), then check
-      `https://enigmahq.sh/install/sh.enigma.shamir` and a 404 for an invalid id.
-- [ ] Live pages after deploy: home Signed tools section, a tool page's Install button, a
-      pasted tool URL in a social card debugger.
+Passed on macOS (2026-10-19, `Sanctum 0.2.0 checklist.pdf`): first run, theme, catalogue, install
+links, offline and privacy, keyboard, website and brand, the worker, the updater.
+- [ ] Windows and Linux link delivery, and single-instance behaviour on a second click (untested).
+- [ ] Linux AppImage `sanctum://` registration (untested).
+- [ ] VoiceOver (untested; can wait for 0.2.1).
+- [x] Dark theme, the new icon, the worker (`enigmahq.sh/install/...`), live site pages, social cards.
 
 Launch day
-- [ ] Finish the post, set its date, merge PR #23, check `/blog/` and the feed.
+- [x] The post has the maintainer's own motivation, audience and "what you can check" sections. Its
+      date stays 2026-10-16 by decision.
+- [ ] Merge PR #23 (`gh pr merge 23 --merge --admin`) when ready to announce, then check `/blog/`
+      and the feed.
 - [ ] Announce. Watch GitHub issues and the updater.
 
 ## How work was run (so it can be repeated)
