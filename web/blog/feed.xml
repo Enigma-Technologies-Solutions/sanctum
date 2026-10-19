@@ -4,7 +4,13 @@
   <link href="https://sanctum.enigma.sh/blog/feed.xml" rel="self"/>
   <link href="https://sanctum.enigma.sh/blog/"/>
   <id>https://sanctum.enigma.sh/blog/</id>
-  <updated>2026-01-01T00:00:00Z</updated>
+  <updated>2026-10-16T12:00:00Z</updated>
   <author><name>Enigma Technologies Solutions</name></author>
-
+  <entry>
+    <title>Personal software, on your terms</title>
+    <link href="https://sanctum.enigma.sh/blog/introducing-sanctum/"/>
+    <id>https://sanctum.enigma.sh/blog/introducing-sanctum/</id>
+    <updated>2026-10-16T12:00:00Z</updated>
+    <summary>Software is now cheap to build, and a single HTML file is the easiest thing to share. Sanctum runs those files with the access you approve and nothing more.</summary>
+  </entry>
 </feed>

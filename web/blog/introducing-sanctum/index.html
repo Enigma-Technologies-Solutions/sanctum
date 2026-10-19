@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Personal software, on your terms | Sanctum</title>
+<meta name="description" content="Software is now cheap to build, and a single HTML file is the easiest thing to share. Sanctum runs those files with the access you approve and nothing more.">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'none'; style-src 'self'; font-src 'self'; img-src 'self' data:; connect-src 'none'; form-action 'none'; base-uri 'none'">
+<meta name="referrer" content="strict-origin-when-cross-origin">
+<link rel="canonical" href="https://sanctum.enigma.sh/blog/introducing-sanctum/">
+<meta property="og:type" content="article">
+<meta property="og:site_name" content="Sanctum">
+<meta property="og:title" content="Personal software, on your terms | Sanctum">
+<meta property="og:description" content="Software is now cheap to build, and a single HTML file is the easiest thing to share. Sanctum runs those files with the access you approve and nothing more.">
+<meta property="og:url" content="https://sanctum.enigma.sh/blog/introducing-sanctum/">
+<meta property="og:image" content="https://sanctum.enigma.sh/blog/introducing-sanctum/cover.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Personal software, on your terms | Sanctum">
+<meta name="twitter:description" content="Software is now cheap to build, and a single HTML file is the easiest thing to share. Sanctum runs those files with the access you approve and nothing more.">
+<meta name="twitter:image" content="https://sanctum.enigma.sh/blog/introducing-sanctum/cover.png">
+<meta name="theme-color" content="#FFFFFF">
+<meta name="color-scheme" content="light">
+<link rel="icon" href="../../assets/favicon.svg" type="image/svg+xml">
+<link rel="icon" href="../../favicon.ico" sizes="32x32 48x48">
+<link rel="apple-touch-icon" href="../../assets/apple-touch-icon.png">
+<link rel="stylesheet" href="../../styles.css">
+</head>
+<body>
+<a class="skip" href="#main">Skip to content</a>
+<nav class="nav" aria-label="Primary">
+  <div class="wrap nav__inner">
+    <a class="wordmark" href="../../" aria-label="Sanctum home">SANCTUM<span class="wordmark__sq" aria-hidden="true"></span></a>
+    <div class="nav__links">
+      <a href="../../">Home</a>
+      <a href="../../apps/">Signed tools</a>
+      <a href="../../blog/">Blog</a>
+    </div>
+    <div class="nav__cta">
+      <a class="btn btn--ghost btn--sm nav__gh" href="https://github.com/Enigma-Technologies-Solutions/sanctum" rel="noopener">GitHub</a>
+      <a class="btn btn--volt btn--sm" href="https://github.com/Enigma-Technologies-Solutions/sanctum/releases/latest" rel="noopener">Download Sanctum</a>
+    </div>
+  </div>
+</nav>
+
+<main id="main" class="section apps">
+  <div class="wrap">
+    <article class="blog blog--post">
+    <p class="eyebrow"><a href="../">Blog</a></p>
+    <p class="blog__date">October 16, 2026</p>
+    <h1 class="h2 blog__h1">Personal software, on your terms</h1>
+    <figure class="blog__cover"><img src="./cover.png" width="1200" height="630" alt=""></figure>
+    <div class="manual blog__body">
+<p>Software has never been cheaper to make. A person who describes a task to a capable AI model can have a working program a few minutes later, and more and more people are doing exactly that: building small, personal tools for the jobs in front of them, such as a converter, a parser, a calculator, or a utility for a task that no commercial product covers.</p>
+<p>Most of these tools take the same form, a single HTML file, and the reason is portability. An HTML file needs no installer, no build step and no server. It opens on any computer with a browser, it can be sent by email or kept in a folder, and one file can still do real work by itself, from transforming data to running cryptography to keeping its own records. Few other things people build are as easy to hand to someone else.</p>
+<p>That convenience carries a cost that grows with every tool. The file is usually a few hundred lines of HTML and JavaScript that its user neither wrote nor read, and when it is opened in a browser tab it runs at once with ordinary web permissions. A single line could send data to a host the user has never heard of, and the user learns what the tool contacted only afterwards, if at all. A virtual machine can isolate the file, but it does not report what the file tried to reach, and setting one up for a small utility costs more than the utility saves.</p>
+<p>Today we are launching Sanctum to address that. It is a desktop application that runs these tools under rules you set.</p>
+<h4>Why we built Sanctum</h4>
+<p>Sanctum started with a request from a company that needed to generate cryptographic keys with a tool that met three conditions:</p>
+<ul><li>they could inspect the source code and trust it;</li><li>they could keep using it five years later, offline and without our involvement;</li><li>they could verify where it came from.</li></ul>
+<p>The tool itself was simple to write, since it fits in one HTML page, and the difficulty lay in everything around it. A hosted version depends on a website that might not exist in five years or might be compromised in the meantime. A downloaded file removes the dependency on a server but leaves a different gap, because a file on a disk carries no proof of who made it or whether it has changed since.</p>
+<p>We had also been building a set of small tools for cryptographic tasks, and we wanted to give people something they could download once and rely on indefinitely. Websites disappear, whereas a signed file that you keep does not depend on one.</p>
+<h4>What Sanctum does</h4>
+<p>Sanctum is a desktop application for running single-file HTML tools. When you add a tool, it:</p>
+<ul><li>stores a copy under its SHA-256 hash, runs only that copy, and checks the hash again on every launch;</li><li>scans the source and lists what the tool uses, including the camera, storage, smart cards and every hostname it names;</li><li>asks you to approve each capability, with network access approved one host at a time;</li><li>opens the tool at its own origin, under a Content Security Policy built from your approvals, with the application&#39;s own bridge removed.</li></ul>
+<p>Anything you did not approve stays blocked, including capabilities the scan missed, because the sandbox enforces your choices and the scan only fills in the approval screen. There is no account and no telemetry. Sanctum is open source under AGPL-3.0 and free for individuals.</p>
+<h4>Signed tools</h4>
+<p>A sandbox is most useful when you also know who made the tool inside it, so Sanctum now includes a Catalogue of tools that their publishers have signed. Enigma publishes the first two: <a href="https://sanctum.enigma.sh/apps/sh.enigma.shamir/" rel="noopener noreferrer">Shamir</a>, which splits a secret into shares and rebuilds it from any chosen number of them, and <a href="https://sanctum.enigma.sh/apps/sh.enigma.otp-vault/" rel="noopener noreferrer">OTP Vault</a>, which keeps one-time codes in Sanctum&#39;s storage and optionally on a YubiKey. You can open the Catalogue tab, or choose Install in Sanctum on a tool&#39;s page on the website. Either way Sanctum shows the tool, its publisher and what it asks for, and installs nothing until you confirm.</p>
+<p>Two rules govern all of it. A signature tells you who published a tool and that the file has not changed since, but it does not tell you the tool is safe, and it never grants access, so an installed tool starts with nothing approved, exactly like one you pasted in.</p>
+<h4>Who it is for</h4>
+<p>Sanctum is intended for CTOs, CISOs and the teams they lead, who need a specific tool and need to know that it will keep behaving in the same way. Models now write such tools readily, but the results usually arrive as links or hosted services that can change or disappear. A tool installed as a signed bundle is a fixed file. It behaves on day one as it does on day one thousand, and it runs on your own desktop and network, where confidential data has nowhere to go that you did not approve.</p>
+<h4>What you can verify</h4>
+<p>We prefer a short list of guarantees that always hold to a long list that depends on a scanner being right. The scanner can be fooled, so it is not the security control; the origin, the policy and the hash check are, and they apply to every tool in the same way. You should not have to rely on our word for any of it:</p>
+<ul><li><strong>Offline operation.</strong> Installed tools run without a network connection unless you approved a host. Sanctum has no telemetry, and its only request at start is the update check to GitHub releases, which a network inspector will show you.</li><li><strong>Rejection of altered tools.</strong> The catalogue is signed, and so is each tool. A tampered bundle, or one served by someone who has taken over the download site, fails the check and is not installed.</li><li><strong>Open source.</strong> Sanctum and the registry format are open source, so anyone can audit what we describe here.</li></ul>
+<h4>What comes next</h4>
+<p>Sanctum contacts a registry only when you ask it to. We are now working on update notices for catalogue tools and a faster way to withdraw a tool that proves to be harmful. For organizations, we are building signed policy, fleet deployment and audit logs with a first group of design partners; if that describes you, write to ultra@enigma.sh.</p>
+<h4>Try it</h4>
+<p>Download Sanctum for macOS, Windows or Linux from <a href="https://github.com/Enigma-Technologies-Solutions/sanctum/releases/latest" rel="noopener noreferrer">the releases page</a>, choose Browse signed tools on the first screen, and install <a href="https://sanctum.enigma.sh/apps/sh.enigma.shamir/" rel="noopener noreferrer">Shamir</a>. We would like to hear how it went, either as an issue on <a href="https://github.com/Enigma-Technologies-Solutions/sanctum/issues" rel="noopener noreferrer">GitHub</a> or by email at ultra@enigma.sh.</p>
+    </div>
+    <p class="blog__back"><a href="../">Back to the blog</a></p>
+    </article>
+  </div>
+</main>
+
+<footer class="foot">
+  <div class="wrap">
+    <div class="foot__bar">
+      <span class="ets" aria-hidden="true">ETS</span>
+      <span>© 2026 Enigma Technologies Solutions</span>
+      <span class="foot__bar-sp">AGPL-3.0-only</span>
+    </div>
+  </div>
+</footer>
+</body>
+</html>
