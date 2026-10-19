@@ -84,7 +84,18 @@ Left, with the reason:
   and three unsound ones (`anyhow`, `event-listener`, `glib`), all indirect through `tauri`. No
   fix we can apply. Recheck on each Tauri update.
 
+## After release (2026-10-19)
+
+- `cargo audit` and `pnpm audit --prod` were re-run on release day: the same six advisories as
+  above, nothing new. `pnpm audit --prod` is clean.
+- The updater was proven across a version on macOS: a v0.1.0 install updated to 0.2.0 and kept its
+  tool, its approvals and its data.
+- Hands-on checks passed on macOS.
+
 ## Still owed
 
-1. Hands-on checks in `docs/registry-ui-checklist.md`, on Windows and Linux in particular.
-2. Prove the updater across a version: install 0.1.0, upgrade to 0.2.0.
+1. Windows and Linux: link delivery, single instance on a second click, and the Linux AppImage
+   scheme registration, none of which have been run on a real machine.
+2. VoiceOver.
+3. Recheck advisories on each Tauri or updater plugin update, and move off `zip` 4 when the
+   updater does.
