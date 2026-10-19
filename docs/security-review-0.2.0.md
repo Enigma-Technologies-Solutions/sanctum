@@ -17,7 +17,7 @@ before any paid tier.
 | Registry text on screen | `src/lib/text.ts` and its callers | One finding (F2), fixed |
 | New Tauri plugins | `tauri-plugin-deep-link`, `tauri-plugin-single-instance` | No findings. No capability file grants `deep-link:*`; tool windows still have no permissions |
 | Install redirect page | `workers/install/index.mjs` | No findings. Static, strict CSP, no script, no redirect |
-| Dependencies | `Cargo.lock`, `pnpm-lock.yaml` | Not done. See "Still owed" |
+| Dependencies | `Cargo.lock`, `pnpm-lock.yaml` | `cargo audit` and `pnpm audit --prod` run on 2026-10-18. See "Dependency audit" |
 
 ## Findings
 
@@ -58,10 +58,33 @@ character range. The signed format is unchanged, so no signature or vector chang
 - Windows and Linux link delivery and single instance behaviour are untested on real machines.
   Only the macOS installed bundle has been exercised.
 
+## Dependency audit (2026-10-18)
+
+`cargo audit` (653 crates, advisory database of that day) and `pnpm audit --prod`.
+
+Fixed:
+- `rustls` 0.23.43 to 0.23.46 (and `rustls-webpki` to 0.103.15). Four advisories, all in the TLS
+  stack the registry fetcher uses: RUSTSEC-2026-0285, 0346, 0348, 0349. Lockfile only.
+- Eight `pnpm` advisories (postcss, nanoid, braces, source-map-js, postcss-selector-parser)
+  all came through `tailwindcss-animate`, a Tailwind build plugin that was listed as a runtime
+  dependency. It is now a dev dependency. None of it ships in the app, which contains only the
+  CSS Tailwind produced. `pnpm audit --prod` is clean.
+
+Left, with the reason:
+- `zip` 4.6.1 (RUSTSEC-2026-0367, 0368, 0369), pulled in only by `tauri-plugin-updater`. The
+  flaws are in extracting a malicious archive. Sanctum extracts only an update archive after its
+  minisign signature has been checked, so abusing it needs our update signing key. Not
+  reachable by a server, a mirror or a registry. Fix when the updater plugin moves to `zip` 9.
+- `quick-xml` 0.39.4 (RUSTSEC-2026-0194, 0195), pulled in by `plist` inside `tauri`. It reads
+  plist files of the app itself and the system, never data from a registry or a tool. Fix when
+  `tauri` updates it.
+- `rsa` 0.9.10 (RUSTSEC-2023-0071). It is in `Cargo.lock` through the `sqlx` MySQL driver, which
+  Sanctum does not use. `cargo tree` shows no path to it, so it is not compiled.
+- 13 warnings: unmaintained crates (`unic-*`, `proc-macro-error`, `zbus`/`zvariant` on Linux)
+  and three unsound ones (`anyhow`, `event-listener`, `glib`), all indirect through `tauri`. No
+  fix we can apply. Recheck on each Tauri update.
+
 ## Still owed
 
-1. Dependency audit. `cargo audit` and `pnpm audit` have not been run for 0.2.0, and about 480
-   lines were added to `Cargo.lock`. Run `cargo install cargo-audit --locked` once, then
-   `cd src-tauri && cargo audit` and `pnpm audit --prod`.
-2. Hands-on checks in `docs/registry-ui-checklist.md`, on Windows and Linux in particular.
-3. Prove the updater across a version: install 0.1.0, upgrade to 0.2.0.
+1. Hands-on checks in `docs/registry-ui-checklist.md`, on Windows and Linux in particular.
+2. Prove the updater across a version: install 0.1.0, upgrade to 0.2.0.

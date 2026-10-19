@@ -103,6 +103,8 @@ section behind.
 - Text from a registry (names, descriptions, manuals, changelogs) is shown without direction
   overrides, zero-width or control characters, so a pinned registry cannot make one name look
   like another. Review: `docs/security-review-0.2.0.md`.
+- `rustls` is updated to 0.23.46, which fixes four advisories in the TLS stack that registry
+  downloads use.
 
 ## [0.1.0] - 2026-09-21
 

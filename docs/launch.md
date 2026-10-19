@@ -54,9 +54,8 @@ Written 2026-10-17 so work can resume from here. Plan for the registry itself is
 Code and release
 - [x] Phase 9 security review of the new surface (self-review, PR #26): `docs/security-review-0.2.0.md`.
       Two low findings fixed.
-- [ ] Dependency audit before tagging: `cargo install cargo-audit --locked`, then
-      `cd src-tauri && cargo audit` and `pnpm audit --prod`. About 480 lines were added to
-      `Cargo.lock` by `tauri-plugin-deep-link` and `tauri-plugin-single-instance`.
+- [x] Dependency audit (2026-10-18): rustls updated, tailwind plugin moved to dev, the rest
+      triaged in `docs/security-review-0.2.0.md`. Re-run `cargo audit` on release day.
 - [x] Bump the version to 0.2.0 in `package.json`, `src-tauri/tauri.conf.json`,
       `src-tauri/Cargo.toml` and `Cargo.lock`. Security entries added to `[Unreleased]`.
 - [ ] Release day, one PR: rename `[Unreleased]` to `[0.2.0] - <date>` in `CHANGELOG.md` and fix
