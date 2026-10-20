@@ -20,7 +20,12 @@ under its normal rules. No copy and paste.
   clients ([docs](https://learn.chatgpt.com/docs/app-server)). Sanctum starts the user's unmodified
   `codex` binary over stdio and renders the chat itself. Codex owns the OAuth flow, stores and
   refreshes the tokens. **Sanctum never reads, copies or logs a token.**
-- **Off by default.** Sanctum itself still makes no network call. The `codex` process talks to
+- **Everything happens inside the Sanctum window.** The user never runs a command or a script. The
+  Welcome panel (and the empty Tool Vault) offers "Sign in with ChatGPT to build your own app".
+  The click opens the browser, the user signs in on OpenAI's page, and the app takes it from there.
+- **Sanctum ships its own Codex.** Customers are not developers and will not have `codex`
+  installed. Sanctum bundles the unmodified binary as a Tauri sidecar (see "Finding the binary").
+- **Off until chosen.** Sanctum itself still makes no network call. The `codex` process talks to
   OpenAI, only after the user turns the feature on, signs in and sends a prompt.
 - **Generated tools are ordinary unsigned tools.** Same scan, same hidden-character and size checks,
   no approvals at install, origin shown as "Created in Sanctum with Codex". The agent never receives
@@ -37,7 +42,9 @@ Methods, as documented (names to be confirmed against the generated schema in Ph
    opens the URL in the default browser. The user signs in on OpenAI's page.
 4. `account/login/completed` arrives with `{ loginId, success, error? }`. Sanctum shows the plan name.
 5. `account/logout` signs out. `account/login/cancel` aborts a pending login.
-6. `chatgptDeviceCode` is the fallback when the browser callback cannot work (remote desktop, a
+6. Never use `chatgptAuthTokens`. The schema marks it "FOR OPENAI INTERNAL USE ONLY - DO NOT USE",
+   and it would make Sanctum the holder of the token.
+7. `chatgptDeviceCode` is the fallback when the browser callback cannot work (remote desktop, a
    locked-down machine). It shows a code to type on another device.
 
 Codex persists credentials itself. We give it a **dedicated `CODEX_HOME`** under Sanctum's app data
@@ -68,7 +75,8 @@ VM would break the "one desktop app" promise. Containment is OS-level and in two
 - Seatbelt on macOS, Landlock plus seccomp on Linux, a restricted token on Windows.
 - `networkAccess: false` applies to commands the agent runs. It does not block the model
   connection, which belongs to the app-server process.
-- `approvalPolicy: never` means a blocked action fails instead of asking to escalate. There is no
+- `approvalPolicy: "never"` (the schema's values are `untrusted`, `on-failure`, `on-request`,
+  `never`) means a blocked action fails instead of asking to escalate. There is no
   prompt for the user to click through, and nothing for an injected instruction to talk them into.
 - The scratch directory is new per session and holds `app.html`, plus an `AGENTS.md` written by
   Sanctum (see "What the agent is told").
@@ -124,22 +132,40 @@ same approval screen as any other tool, and the user decides.
 
 ## UI
 
-- Library header gets a "Create app" button (Lucide `plus` icon). It is
-  hidden until Settings, Agent, "Enable Create app" is on.
+- **Entry points:** the Welcome panel gets a second action, "Sign in with ChatGPT to build your own
+  app" (Lucide `log-in` icon), beside "Browse signed tools". Once signed in, the same place and the
+  Tool Vault header show "Create app" (Lucide `plus`). The empty-state text mentions it.
 - First use shows one panel: what Codex is, that prompts go to OpenAI, that Sanctum does not see the
   account token, "Sign in with ChatGPT", and a link to the privacy page.
 - Chat view: transcript, composer, a "Codex is working" state with a stop button
   (`turn/interrupt`), the app card above the composer, session list reset on close.
-- If `codex` is not found: explain, link to OpenAI's install page, offer a file picker.
-- Settings, Agent: enable switch, account (plan, sign out), binary path, "Delete agent data".
+- If the bundled Codex fails to start: show the error text and a "Copy details" button. No install
+  instructions, because nothing is expected to be installed.
+- Settings, Agent: account (plan, sign out), Codex version, advanced binary path, "Delete agent data".
+- Offline or sign-in failure: plain message, the rest of Sanctum is unaffected.
 
 ## Finding the binary
 
-GUI apps on macOS do not inherit the shell `PATH`. Look in this order: a path the user picked,
-`/opt/homebrew/bin`, `/usr/local/bin`, `~/.local/bin`, npm and cargo global bin directories, then
-ask a login shell once (`$SHELL -lc 'command -v codex'`). Run `codex --version` and require a
-minimum version recorded in code. Do not bundle Codex in this plan; revisit after Phase 3 (Apache-2.0
-would allow it, but then Sanctum owns shipping its updates).
+**Bundle it.** The sign-in is only "one click" if nothing has to be installed first. Sanctum ships
+the official, unmodified Codex release as a Tauri sidecar (`bundle.externalBin`, one binary per
+target triple, named `codex-<triple>`).
+
+- Codex is Apache-2.0, so redistribution is allowed. Keep its LICENSE and NOTICE in the app.
+- The binary is fetched at build time from OpenAI's tagged release and checked against a pinned
+  SHA-256 in the repo, so a release build can never pick up a different file. It is never patched.
+- On macOS the sidecar must be signed with the Developer ID and notarized with the app. CI already
+  does this for the app; add the sidecar to the same step.
+- Cost: tens of megabytes per platform, and Codex updates ship with Sanctum releases (the updater
+  already exists). A Sanctum release must follow any Codex security fix.
+- Sanctum starts the sidecar only from the Create app code path, never at launch.
+- Settings shows the bundled Codex version. A developer who prefers their own binary can pick a path
+  there (advanced, off the default path).
+- The Codex name and logo are not used as Sanctum's own naming (see Risks).
+
+If OpenAI objects to redistribution, fall back to detecting an installed `codex`: `/opt/homebrew/bin`,
+`/usr/local/bin`, `~/.local/bin`, npm and cargo global bins, then a login shell
+(`$SHELL -lc 'command -v codex'`, because GUI apps do not inherit `PATH`), with a minimum version and
+a file picker. That fallback turns the feature into a developer feature, so it is not the default.
 
 ## Hardening rules for the client
 
@@ -157,24 +183,22 @@ would allow it, but then Sanctum owns shipping its updates).
 
 ## Phases (one small PR each, as before)
 
-**Phase 0, spike (no merge, 1 to 2 days).** Throwaway Rust or Node script on the maintainer's
-machine that: starts `codex app-server` with a dedicated `CODEX_HOME`, signs in with `chatgpt`,
-runs one turn under the layer 1 policy, and captures the real traffic. Answers:
+**Phase 0, no separate spike.** The first slice is built in the app, because the goal is the
+in-app experience and a throwaway script would prove less. Already settled from the schema generated
+by Codex 0.137.0 (`codex app-server generate-json-schema`): the method names above exist, including
+`externalSandbox`; approval values are as listed. Still to learn, with a developer-only trace in
+Phase 1 (off in release builds, tokens redacted): the exact login callback behaviour with a dedicated
+`CODEX_HOME`, which hosts the process contacts, whether `externalSandbox` lets a wrapped process run,
+how a blocked action fails, and how good the HTML is. Phase 5 does not start until the last two are
+answered.
 
-1. Exact method and field names (replace the names above if they differ).
-2. Does the browser callback work with a dedicated `CODEX_HOME`, and what port does it bind?
-3. Which hosts does the app-server contact (use a logging proxy)? Does anything beyond OpenAI appear?
-4. Does `externalSandbox` let a Seatbelt-wrapped app-server run, on macOS?
-5. Does a blocked write or network call fail cleanly under `approvalPolicy: never`?
-6. How good is the HTML on a plain prompt, with and without our `AGENTS.md`?
+**Phase 1, client and sign-in.** `src-tauri/src/agent/`: sidecar supervisor, JSON-RPC framing, typed
+messages from the checked-in schema, a fake app-server for tests, and the sign-in commands
+(`agent_status`, `agent_sign_in`, `agent_sign_out`). UI: the Welcome panel button and a Settings,
+Agent card showing signed-in state and plan. This slice already works end to end with a real login.
 
-Output: a short `docs/create-app-spike.md` with the findings. This is the go/no-go point.
-
-**Phase 1, client.** `src-tauri/src/agent/`: process supervisor, JSON-RPC framing, typed messages
-from the checked-in schema, a fake app-server used by tests. No UI.
-
-**Phase 2, sign-in and chat.** Settings switch, sign-in panel, chat view, layer 1 policy, scratch
-directory, binary discovery. Feature flag off by default.
+**Phase 2, chat.** Chat view, layer 1 policy, scratch directory, "Create app" button in the Tool
+Vault header and empty state. Release builds keep the feature behind a switch until Phase 4.
 
 **Phase 3, from chat to library.** Scan card, preview, add to library, new versions, origin badge,
 cleanup of scratch directories.
@@ -206,19 +230,20 @@ old `codex`, prompt asking the agent to read `~/.ssh` and to call `curl`), then 
   third-party app may use ChatGPT-plan sign-in through it. Ask OpenAI before Phase 2 ships. If the
   answer is no, the only compliant fallback is an API key, which we chose to avoid. Do not release
   without the answer.
-- **Protocol drift.** The app-server surface changes between Codex releases. Mitigation: a pinned
-  schema, a minimum version, one adapter module, and a clear "update Codex" message.
+- **Protocol drift.** The app-server surface changes between Codex releases. Because Sanctum bundles
+  the binary, the pinned schema and the binary always move together, and CI parses fixtures against it.
 - **Quality.** Codex is a general coding agent; the prompt and `AGENTS.md` decide whether it produces
   clean single-file tools. Phase 0 measures this before any UI is built.
 - **Plan limits.** ChatGPT plans have usage limits. Show the plan and a plain error when exhausted
   (`account/rateLimits/read` exists).
 - **Seatbelt is deprecated by Apple** yet still the basis of both Codex's and Claude Code's macOS
   sandboxes. Accept, and track it.
-- **Brand.** Do not use OpenAI or Codex names or logos as part of Sanctum's own naming. The button
+- **Brand.** Do not use OpenAI or Codex names or logos as part of Sanctum's own naming. Bundling also means
+  Sanctum redistributes OpenAI software; include it in the Phase 6 review and in the question to OpenAI. The button
   says "Create app"; text may say it uses Codex.
 
 ## Out of scope
 
-API keys, other vendors, bundling a model or Codex, letting a generated tool call the agent at
+API keys, other vendors, bundling a model, letting a generated tool call the agent at
 runtime, background or scheduled generation, sharing generated tools to the registry (publishing
 still goes through the signing flow).
