@@ -44,7 +44,7 @@ base64 = "0.22"
 # decompression. Redirects and size/time limits are enforced in registry/fetch.rs so they
 # can be tested without a network.
 reqwest = { version = "0.13", default-features = false, features = ["rustls-no-provider", "http2", "system-proxy"] }
-tokio = { version = "1", features = ["time"] }
+tokio = { version = "1", features = ["time", "rt", "sync", "io-util", "process"] }
 # Only to install the ring crypto provider the way the updater does (reqwest is built
 # without a provider). Already in the tree through the updater, so no new compile.
 rustls = { version = "0.23", default-features = false, features = ["ring"] }

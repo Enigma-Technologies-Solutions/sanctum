@@ -6,6 +6,7 @@ use std::path::PathBuf;
 use std::sync::Mutex;
 use tauri::Manager;
 
+pub mod agent;
 pub mod commands;
 pub mod db;
 pub mod deeplink;
