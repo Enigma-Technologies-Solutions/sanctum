@@ -7,6 +7,7 @@ import type { ToolWithVersion, IngestResult, BundleInstall, PolicyStatus } from 
 import { Commands } from "@/lib/commands";
 import { ToolCard } from "./ToolCard";
 import { WelcomePanel } from "./WelcomePanel";
+import { CreateAppCard } from "./CreateAppCard";
 import { IngestBar } from "./IngestBar";
 import { InspectView } from "./InspectView";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -284,6 +285,7 @@ export function Library({ refreshKey = 0, onOpenCatalogue }: { refreshKey?: numb
                 />
               ))}
               {ownTools.length === 0 && <EmptySlot />}
+              <CreateAppCard />
             </div>
           </section>
 

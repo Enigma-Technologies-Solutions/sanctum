@@ -65,6 +65,10 @@ arboard = "3"
 # Signed tool bundles: format and verification. Shared with the signing CLI so there
 # is one implementation of what "verified" means.
 sanctum-bundle = { path = "crates/sanctum-bundle" }
+webbrowser = { version = "1.2.4", features = ["hardened"] }
+# First-use download of Codex: gzip + tar, the same crates the updater already uses.
+flate2 = "1"
+tar = "0.4"
 
 [dev-dependencies]
 ed25519-dalek = { version = "2", features = ["rand_core"] }

@@ -11,13 +11,14 @@ import { SettingsView } from "./SettingsView";
 
 vi.mock("@tauri-apps/plugin-clipboard-manager", () => ({ writeText: vi.fn() }));
 vi.mock("@/lib/commands", () => ({
-  Commands: { checkForUpdate: vi.fn(), installUpdate: vi.fn(), getPolicyStatus: vi.fn(), getTrustAnchors: vi.fn() },
+  Commands: { checkForUpdate: vi.fn(), installUpdate: vi.fn(), getPolicyStatus: vi.fn(), getTrustAnchors: vi.fn(), agentSetup: vi.fn() },
 }));
 
 const C = vi.mocked(Commands) as unknown as Record<string, ReturnType<typeof vi.fn>>;
 
 beforeEach(() => {
   for (const k of Object.keys(C)) C[k].mockResolvedValue(k === "getPolicyStatus" ? { managed: false, error: null, pinnedCount: null } : []);
+  C.agentSetup.mockResolvedValue({ supported: false, installed: false, downloadMb: 0 });
 });
 afterEach(() => {
   localStorage.clear();

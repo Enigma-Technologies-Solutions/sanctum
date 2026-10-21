@@ -10,6 +10,8 @@
 //!   ships in `spec/codex-app-server/`.
 //! - [`account`]: account state and the ChatGPT browser sign-in.
 //! - [`process`]: starting the `codex` binary with a cleared environment and its own home.
+//! - [`install`]: downloading the pinned Codex release on first use and checking it.
+//! - [`commands`]: the Tauri commands the main window calls.
 //!
 //! Rules this module must keep:
 //!
@@ -24,6 +26,8 @@
 //!    same hidden-character cleaning as registry text, at the Commands boundary.
 
 pub mod account;
+pub mod commands;
+pub mod install;
 pub mod process;
 pub mod protocol;
 pub mod rpc;

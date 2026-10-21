@@ -2,6 +2,7 @@
 // Copyright (C) 2026 Enigma Technologies Solutions
 
 import type {
+  AgentAccount,
   RegistryAppDetail,
   RegistryCatalogue,
   RegistrySummary,
@@ -19,6 +20,11 @@ const HIDDEN =
 
 export function cleanText(s: string): string {
   return s.replace(HIDDEN, "");
+}
+
+/** The agent's account text comes from Codex, so it is cleaned like registry text. */
+export function cleanAccount(a: AgentAccount): AgentAccount {
+  return { ...a, email: a.email === null ? null : cleanText(a.email), plan: a.plan === null ? null : cleanText(a.plan) };
 }
 
 const opt = (s: string | null): string | null => (s === null ? null : cleanText(s));

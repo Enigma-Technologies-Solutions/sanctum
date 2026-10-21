@@ -70,4 +70,15 @@ describe("registry text is cleaned where it enters the interface", () => {
     expect(r.name).toBe("R");
     expect(r.publisher).toBe("P");
   });
+  it("the agent's account, from sign-in, status and sign-out", async () => {
+    const dirty = { signedIn: true, email: `me${ZWSP}@example.com`, plan: `Pro${RLO}` };
+    vi.mocked(invoke).mockResolvedValue(dirty);
+    for (const call of [Commands.agentAccount, Commands.agentSignIn, Commands.agentSignOut]) {
+      const a = await call();
+      expect(a.email).toBe("me@example.com");
+      expect(a.plan).toBe("Pro");
+    }
+    vi.mocked(invoke).mockResolvedValue({ signedIn: false, email: null, plan: null });
+    expect(await Commands.agentAccount()).toEqual({ signedIn: false, email: null, plan: null });
+  });
 });

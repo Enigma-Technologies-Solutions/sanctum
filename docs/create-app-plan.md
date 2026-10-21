@@ -23,8 +23,9 @@ under its normal rules. No copy and paste.
 - **Everything happens inside the Sanctum window.** The user never runs a command or a script. The
   Welcome panel (and the empty Tool Vault) offers "Sign in with ChatGPT to build your own app".
   The click opens the browser, the user signs in on OpenAI's page, and the app takes it from there.
-- **Sanctum ships its own Codex.** Customers are not developers and will not have `codex`
-  installed. Sanctum bundles the unmodified binary as a Tauri sidecar (see "Finding the binary").
+- **Sanctum is the only thing a person installs.** Customers are not developers and will not have
+  `codex`. The first time they click Sign in, Sanctum downloads the pinned, unmodified Codex release
+  and checks it (see "Getting Codex").
 - **Off until chosen.** Sanctum itself still makes no network call. The `codex` process talks to
   OpenAI, only after the user turns the feature on, signs in and sends a prompt.
 - **Generated tools are ordinary unsigned tools.** Same scan, same hidden-character and size checks,
@@ -139,33 +140,38 @@ same approval screen as any other tool, and the user decides.
   account token, "Sign in with ChatGPT", and a link to the privacy page.
 - Chat view: transcript, composer, a "Codex is working" state with a stop button
   (`turn/interrupt`), the app card above the composer, session list reset on close.
-- If the bundled Codex fails to start: show the error text and a "Copy details" button. No install
+- If Codex fails to download or start: show the error text and a "Copy details" button. No install
   instructions, because nothing is expected to be installed.
 - Settings, Agent: account (plan, sign out), Codex version, advanced binary path, "Delete agent data".
 - Offline or sign-in failure: plain message, the rest of Sanctum is unaffected.
 
-## Finding the binary
+## Getting Codex
 
-**Bundle it.** The sign-in is only "one click" if nothing has to be installed first. Sanctum ships
-the official, unmodified Codex release as a Tauri sidecar (`bundle.externalBin`, one binary per
-target triple, named `codex-<triple>`).
+**Download it on first use.** Codex is about 100 MB to download and 250 to 340 MB on disk, which is
+ten times the Sanctum installer, so it is not bundled. The first time someone clicks "Sign in with
+ChatGPT", Sanctum downloads the exact release pinned in `src-tauri/src/agent/codex-pins.json` from
+OpenAI's GitHub releases. The screen says so, with the size, before the click.
 
-- Codex is Apache-2.0, so redistribution is allowed. Keep its LICENSE and NOTICE in the app.
-- The binary is fetched at build time from OpenAI's tagged release and checked against a pinned
-  SHA-256 in the repo, so a release build can never pick up a different file. It is never patched.
-- On macOS the sidecar must be signed with the Developer ID and notarized with the app. CI already
-  does this for the app; add the sidecar to the same step.
-- Cost: tens of megabytes per platform, and Codex updates ship with Sanctum releases (the updater
-  already exists). A Sanctum release must follow any Codex security fix.
-- Sanctum starts the sidecar only from the Create app code path, never at launch.
-- Settings shows the bundled Codex version. A developer who prefers their own binary can pick a path
-  there (advanced, off the default path).
+- `scripts/pin-codex.py <version>` writes the pins: for each platform, the release URL, the size and
+  SHA-256 of the archive (checked against the digest GitHub publishes) and of the one program inside.
+  Review the diff like code. A new Codex version is a Sanctum release, and
+  `spec/codex-app-server/` is regenerated from the same version; a test fails if they differ.
+- Download rules (`agent/install.rs`): github.com only, redirects only to github.com or
+  githubusercontent.com over https, exactly the pinned size and hash, a stall and a total timeout, and
+  cancel at any moment. Exactly one file is taken out of the archive, chosen by name from the pin;
+  the archive decides no paths. The program must match its own pinned hash, and is hashed again
+  before every start, so a changed file is never run.
+- It is saved under `<app data>/agent/bin/<version>/`. An older version is deleted after a new one
+  installs. Nothing is downloaded until the click, so Sanctum stays network-silent otherwise.
+- Codex is Apache-2.0, so redistribution is allowed. Still to do: ship its LICENSE and NOTICE in the
+  app's licences page.
 - The Codex name and logo are not used as Sanctum's own naming (see Risks).
-
-If OpenAI objects to redistribution, fall back to detecting an installed `codex`: `/opt/homebrew/bin`,
-`/usr/local/bin`, `~/.local/bin`, npm and cargo global bins, then a login shell
-(`$SHELL -lc 'command -v codex'`, because GUI apps do not inherit `PATH`), with a minimum version and
-a file picker. That fallback turns the feature into a developer feature, so it is not the default.
+- A development build can use its own copy through `SANCTUM_CODEX_BIN`; release builds ignore it.
+- Platforms: macOS (both chips), Linux (x86_64 and arm64, static musl builds), Windows x86_64.
+  Elsewhere the Welcome button is hidden and Settings says it is not available yet.
+- Still to measure: whether macOS Gatekeeper accepts the downloaded program (it is fetched by
+  Sanctum, so it carries no quarantine flag, but check on a clean Mac), Windows SmartScreen, and
+  how Codex finds `bwrap` on Linux (needed for Phase 5).
 
 ## Hardening rules for the client
 
@@ -192,10 +198,19 @@ Phase 1 (off in release builds, tokens redacted): the exact login callback behav
 how a blocked action fails, and how good the HTML is. Phase 5 does not start until the last two are
 answered.
 
-**Phase 1, client and sign-in.** `src-tauri/src/agent/`: sidecar supervisor, JSON-RPC framing, typed
+**Phase 1, client and sign-in.** `src-tauri/src/agent/`: process supervisor, JSON-RPC framing, typed
 messages from the checked-in schema, a fake app-server for tests, and the sign-in commands
 (`agent_status`, `agent_sign_in`, `agent_sign_out`). UI: the Welcome panel button and a Settings,
 Agent card showing signed-in state and plan. This slice already works end to end with a real login.
+
+Status: the client merged in #33. The commands are `agent_setup`, `agent_account`, `agent_sign_in`,
+`agent_cancel_sign_in` and `agent_sign_out`, all main-window only. Sign-in downloads Codex the first
+time (progress arrives as `agent-download` events), starts it, opens the browser and waits. Looking
+at the setup reads files only. The Codex process starts when the person clicks Sign in, or opens
+Settings with Codex already downloaded, never at launch, and stops when Sanctum quits. Checked against
+the real Codex 0.163.0 for the handshake, `account/read`, `account/login/start` and cancel; a full
+sign-in has not been tried yet. Its browser callback listens on a fixed local port (1455), so a
+second Codex signing in at the same time would collide.
 
 **Phase 2, chat.** Chat view, layer 1 policy, scratch directory, "Create app" button in the Tool
 Vault header and empty state. Release builds keep the feature behind a switch until Phase 4.
@@ -230,8 +245,8 @@ old `codex`, prompt asking the agent to read `~/.ssh` and to call `curl`), then 
   third-party app may use ChatGPT-plan sign-in through it. Ask OpenAI before Phase 2 ships. If the
   answer is no, the only compliant fallback is an API key, which we chose to avoid. Do not release
   without the answer.
-- **Protocol drift.** The app-server surface changes between Codex releases. Because Sanctum bundles
-  the binary, the pinned schema and the binary always move together, and CI parses fixtures against it.
+- **Protocol drift.** The app-server surface changes between Codex releases. Because Sanctum pins
+  the exact binary, the pinned schema and the binary always move together, and CI parses fixtures against it.
 - **Quality.** Codex is a general coding agent; the prompt and `AGENTS.md` decide whether it produces
   clean single-file tools. Phase 0 measures this before any UI is built.
 - **Plan limits.** ChatGPT plans have usage limits. Show the plan and a plain error when exhausted

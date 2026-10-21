@@ -2,8 +2,10 @@
 // Copyright (C) 2026 Enigma Technologies Solutions
 
 import { invoke } from "@tauri-apps/api/core";
-import { cleanCatalogue, cleanDetail, cleanRegistry } from "@/lib/text";
+import { cleanAccount, cleanCatalogue, cleanDetail, cleanRegistry } from "@/lib/text";
 import type {
+  AgentAccount,
+  AgentSetup,
   DetectedCapability,
   BundleInstall,
   IngestResult,
@@ -30,6 +32,34 @@ export const Commands = {
   /** A sanctum:// link that arrived before the window was listening. Taking it clears it. */
   takePendingLink(): Promise<LinkEvent | null> {
     return invoke("take_pending_link");
+  },
+
+  /** Whether the agent can be set up here and whether Codex is already downloaded. Looks at files only. */
+  agentSetup(): Promise<AgentSetup> {
+    return invoke("agent_setup");
+  },
+
+  /** The signed-in account. Starts the local Codex process if needed; downloads nothing. */
+  agentAccount(): Promise<AgentAccount> {
+    return invoke<AgentAccount>("agent_account").then(cleanAccount);
+  },
+
+  /**
+   * Sign in with ChatGPT. The first time it downloads Codex (progress arrives as `agent-download`
+   * events), then opens the browser and waits until the person finishes there. Resolves at once if
+   * already signed in. Rejects with an AgentCommandError.
+   */
+  agentSignIn(): Promise<AgentAccount> {
+    return invoke<AgentAccount>("agent_sign_in").then(cleanAccount);
+  },
+
+  /** Stops a download, or a sign-in that is waiting for the browser. */
+  agentCancelSignIn(): Promise<void> {
+    return invoke("agent_cancel_sign_in");
+  },
+
+  agentSignOut(): Promise<AgentAccount> {
+    return invoke<AgentAccount>("agent_sign_out").then(cleanAccount);
   },
 
   /** Ingest raw HTML string into the library. */

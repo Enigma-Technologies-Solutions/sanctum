@@ -245,6 +245,36 @@ export interface RegistryCommandError {
   registryName: string | null;
 }
 
+/** Whether the agent can be set up here. Mirrors `AgentSetup` in src-tauri/src/agent/commands.rs. */
+export interface AgentSetup {
+  /** Sanctum has a Codex build for this computer. */
+  supported: boolean;
+  /** Codex is already downloaded. */
+  installed: boolean;
+  /** Size of the first-use download in megabytes. */
+  downloadMb: number;
+}
+
+/** Progress of the first-use download of Codex (the `agent-download` event). */
+export interface AgentDownload {
+  done: number;
+  total: number;
+}
+
+/** Who is signed in to the agent (Codex). Mirrors `AgentAccount` in src-tauri/src/agent/commands.rs. */
+export interface AgentAccount {
+  signedIn: boolean;
+  email: string | null;
+  /** Plan name such as "Pro", ready to show. */
+  plan: string | null;
+}
+
+/** A rejected agent command. `code` is stable; `message` is for people. */
+export interface AgentCommandError {
+  code: string;
+  message: string;
+}
+
 /** What a signature does and does not mean. Shown wherever a publisher badge appears. */
 export const SIGNATURE_MEANING =
   "A signature says who published this file and that it has not been changed. " +
