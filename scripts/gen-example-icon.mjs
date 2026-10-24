@@ -18,6 +18,7 @@ const root = join(dirname(fileURLToPath(import.meta.url)), "..");
 const EXAMPLES = {
   "otp-vault": { text: "otp", file: "examples/otp-vault/index.html" },
   shamir: { text: "sss", file: "examples/shamir/src/app.template.html" },
+  "pdf-watermark": { text: "pdf", file: "examples/pdf-watermark/src/app.template.html" },
 };
 
 // Same construction as Confiel's favicon (rounded tile, inset outline, lowercase letters),

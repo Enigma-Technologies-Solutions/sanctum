@@ -1,0 +1,653 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'unsafe-inline'; style-src 'unsafe-inline'; img-src data:; base-uri 'none'; form-action 'none'">
+<meta name="referrer" content="no-referrer">
+<meta name="theme-color" content="#0a0a0a">
+<title>Enigma PDF Watermark for Sanctum</title>
+<meta name="description" content="Put a visible, traceable watermark on PDFs before you share them. Every file gets its own ID. Runs offline and asks for no access.">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32' width='32' height='32'%3E%3Crect width='32' height='32' rx='6' fill='%230A0A0A'/%3E%3Crect x='3' y='3' width='26' height='26' rx='5' fill='none' stroke='%23FBFF00' stroke-width='1.5'/%3E%3Ctext x='16' y='20.5' text-anchor='middle' font-family='Poppins,Helvetica,Arial,sans-serif' font-size='10' font-weight='700' fill='%23FFFFFF' letter-spacing='-0.3'%3Epdf%3C/text%3E%3C/svg%3E">
+<style>
+  :root{
+    --ink:#000000; --panel:#111111; --paper:#FFFFFF; --volt:#FBFF00;
+    --ash:#8A8A8A; --line:rgba(255,255,255,.12); --line-strong:rgba(255,255,255,.24); --field:rgba(255,255,255,.5);
+    --danger:#FF5A4E; --ok:#7CFF8A;
+    --display:'Poppins',system-ui,-apple-system,'Segoe UI',Roboto,sans-serif;
+    --body:'Inter',system-ui,-apple-system,'Segoe UI',Roboto,'Helvetica Neue',Arial,sans-serif;
+    --mono:'Space Mono',ui-monospace,SFMono-Regular,Menlo,Consolas,'Liberation Mono',monospace;
+    --gap:clamp(16px,4vw,48px);
+    color-scheme:dark;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;background:#0A0A0A;color:var(--paper)}
+  body{font-family:var(--body);font-size:15px;line-height:1.6;-webkit-font-smoothing:antialiased;min-height:100vh;
+    padding:env(safe-area-inset-top,0) 0 env(safe-area-inset-bottom,0)}
+  [hidden]{display:none!important}
+  code{font-family:var(--mono);font-size:.92em}
+  .wrap{max-width:980px;margin:0 auto;padding:0 var(--gap)}
+  .i{width:16px;height:16px;flex:none;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+
+  header.bar{position:sticky;top:0;z-index:40;background:rgba(0,0,0,.88);backdrop-filter:blur(8px);border-bottom:1px solid var(--line)}
+  .bar-in{display:flex;align-items:center;gap:16px;min-height:60px;padding-block:8px}
+  .mark{display:flex;align-items:center;gap:12px}
+  .ets-badge{display:inline-flex;align-items:center;justify-content:center;width:42px;height:28px;background:var(--paper)}
+  .ets{font-family:var(--body);font-weight:800;font-size:13px;color:#000;letter-spacing:.01em;line-height:1}
+  .wordmark{font-family:var(--mono);font-size:12px;letter-spacing:.16em;text-transform:uppercase}
+  .wordmark b{color:var(--ash);font-weight:400}
+
+  .hero{padding:clamp(36px,7vw,80px) 0 clamp(24px,4vw,40px)}
+  .eyebrow{font-family:var(--mono);font-size:11px;letter-spacing:.28em;text-transform:uppercase;color:var(--ash);margin:0 0 18px}
+  h1{font-family:var(--display);font-weight:800;font-size:clamp(38px,8.5vw,88px);line-height:.95;letter-spacing:-.02em;margin:0}
+  .dash{display:inline-block;width:.46em;height:.13em;background:var(--volt);vertical-align:.3em;margin:0 .04em}
+  .lede{max-width:640px;margin:24px 0 0;font-size:16px}
+  .lede span{color:var(--ash)}
+
+  .facts{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:1px;background:var(--line);border:1px solid var(--line);margin:0 0 8px}
+  @media (max-width:760px){.facts{grid-template-columns:minmax(0,1fr)}}
+  .fact{background:var(--panel);padding:16px 18px;font-size:13.5px}
+  .fact h3{font-family:var(--mono);font-size:11px;letter-spacing:.2em;text-transform:uppercase;margin:0 0 8px;display:flex;gap:8px;align-items:center}
+  .fact p{margin:0;color:var(--ash)}
+
+  section.block{padding:clamp(24px,4vw,40px) 0;border-top:1px solid var(--line)}
+  .kicker{font-family:var(--mono);font-size:11px;letter-spacing:.26em;text-transform:uppercase;color:var(--ash);margin:0 0 12px;display:flex;gap:12px;align-items:center}
+  .kicker::before{content:"";width:28px;height:2px;background:var(--volt)}
+  h2{font-family:var(--display);font-weight:700;font-size:clamp(22px,3.4vw,32px);line-height:1.1;letter-spacing:-.015em;margin:0 0 6px}
+  .muted{color:var(--ash)}
+  .small{font-size:13px}
+
+  .cols{display:grid;grid-template-columns:minmax(0,1.35fr) minmax(0,1fr);gap:24px;align-items:start}
+  @media (max-width:860px){.cols{grid-template-columns:minmax(0,1fr)}}
+  .card{border:1px solid var(--line);background:var(--panel);padding:clamp(16px,3vw,28px);min-width:0}
+  label.f{display:block;margin:0 0 14px}
+  .lab{display:flex;justify-content:space-between;gap:10px;font-family:var(--mono);font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--ash);margin-bottom:6px}
+  .lab output{color:var(--paper)}
+  input[type=text],textarea{width:100%;background:#000;color:var(--paper);border:1px solid var(--field);border-radius:0;padding:10px 12px;font:inherit;font-size:14px;outline:none}
+  textarea{font-family:var(--mono);font-size:13px;resize:vertical;line-height:1.5;min-height:76px}
+  input:focus,textarea:focus{border-color:var(--volt);box-shadow:0 0 0 1px var(--volt)}
+  input[aria-invalid="true"]{border-color:var(--danger)}
+  input[type=range]{width:100%;accent-color:var(--volt);margin:2px 0}
+  input[type=checkbox]{accent-color:var(--volt);width:16px;height:16px;margin:4px 0 0}
+  .row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+  .pair{display:grid;grid-template-columns:1fr 1fr;gap:14px 18px}
+  @media (max-width:520px){.pair{grid-template-columns:1fr}}
+  button{font-family:var(--body)}
+  button.btn{background:var(--volt);color:#000;border:1px solid var(--volt);border-radius:0;padding:10px 16px;font-weight:700;
+    font-size:12px;letter-spacing:.1em;text-transform:uppercase;cursor:pointer;display:inline-flex;gap:8px;align-items:center;justify-content:center;line-height:1.2}
+  button.btn:hover:not(:disabled){background:#fff;border-color:#fff}
+  button.ghost{background:transparent;color:var(--paper);border:1px solid var(--field)}
+  button.btn:disabled,button.ghost:disabled{background:transparent;color:var(--ash);border-color:var(--line-strong);cursor:not-allowed}
+  button.ghost:hover:not(:disabled){border-color:var(--volt);background:rgba(251,255,0,.08)}
+  button.sm{padding:6px 10px;font-size:11px}
+  button:focus-visible,summary:focus-visible,input:focus-visible{outline:2px solid var(--volt);outline-offset:2px}
+  .seg{display:inline-flex;border:1px solid var(--field);flex-wrap:wrap}
+  .seg button{background:transparent;color:var(--ash);border:0;padding:0 14px;min-height:34px;font-family:var(--mono);font-size:11px;letter-spacing:.12em;text-transform:uppercase;cursor:pointer;display:inline-flex;align-items:center;gap:8px}
+  .seg button + button{border-left:1px solid var(--field)}
+  .seg button[aria-pressed="true"]{background:var(--paper);color:#000}
+  .seg{margin-bottom:8px}
+  .swatch{width:10px;height:10px;border:1px solid currentColor;display:inline-block}
+  details{border:1px solid var(--line);padding:10px 12px;margin:0 0 14px}
+  details summary{padding:6px 0;cursor:pointer;font-family:var(--mono);font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--ash)}
+  details[open] > summary{margin-bottom:12px;color:var(--paper)}
+  .hint{font-size:12.5px;color:var(--ash);margin:6px 0 14px}
+  .check{display:flex;gap:10px;align-items:flex-start;margin:0 0 12px;font-size:14px}
+  .check small{display:block;color:var(--ash);font-size:12.5px}
+
+  .banner{border:1px solid var(--line-strong);color:var(--ash);padding:12px 16px;margin:0 0 16px;font-size:13px;display:flex;gap:10px;align-items:flex-start}
+  .banner .i{margin-top:3px}
+  .banner.bad{border-color:var(--danger);color:var(--danger)}
+  .banner.warn{border-color:rgba(251,255,0,.5);color:var(--paper)}
+  .msg{min-height:1.5em;margin:12px 0 0;font-size:13px}
+  .msg.ok{color:var(--ok)}
+  .msg.err{color:var(--danger)}
+
+  .preview{display:block;width:100%;max-width:300px;height:auto;border:1px solid var(--line-strong);background:#fff;margin:0 auto}
+  .preview-note{text-align:center}
+
+  .picker{display:flex;gap:16px;flex-wrap:wrap;align-items:center;border:1px dashed var(--field);padding:22px;margin:0 0 20px}
+  .picker input[type=file]{position:absolute;width:1px;height:1px;opacity:0;pointer-events:none}
+  .picker:focus-within{border-color:var(--volt)}
+
+  ul.files{list-style:none;margin:0 0 16px;padding:0;display:grid;gap:10px}
+  .file{border:1px solid var(--line-strong);background:#000;padding:12px 14px;display:grid;gap:8px}
+  .file-head{display:flex;justify-content:space-between;gap:12px;align-items:flex-start;flex-wrap:wrap}
+  .file-name{font-weight:600;overflow-wrap:anywhere;min-width:0}
+  .file-meta{font-family:var(--mono);font-size:12px;color:var(--ash)}
+  .status{font-family:var(--mono);font-size:11px;letter-spacing:.14em;text-transform:uppercase;white-space:nowrap}
+  .status.done{color:var(--ok)}
+  .status.failed{color:var(--danger)}
+  progress{width:100%;height:6px;appearance:none;-webkit-appearance:none;border:0;background:var(--line-strong)}
+  progress::-webkit-progress-bar{background:var(--line-strong)}
+  progress::-webkit-progress-value{background:var(--volt)}
+  progress::-moz-progress-bar{background:var(--volt)}
+  .ids{display:flex;gap:6px 18px;flex-wrap:wrap;font-family:var(--mono);font-size:12px;color:var(--ash)}
+  .ids b{color:var(--paper);font-weight:700;user-select:all;-webkit-user-select:all}
+  .why{font-size:13px;color:var(--danger);margin:0}
+  .empty{border:1px solid var(--line);padding:22px;color:var(--ash);font-size:14px;margin:0 0 16px}
+  .actions{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+  footer{border-top:1px solid var(--line);padding:24px 0 40px;color:var(--ash);font-size:12.5px}
+  .sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+</style>
+</head>
+<body>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false">
+  <symbol id="i-shield" viewBox="0 0 24 24"><path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"/><path d="m9 12 2 2 4-4"/></symbol>
+  <symbol id="i-lock" viewBox="0 0 24 24"><rect width="18" height="11" x="3" y="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></symbol>
+  <symbol id="i-info" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/></symbol>
+  <symbol id="i-upload" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" x2="12" y1="3" y2="15"/></symbol>
+  <symbol id="i-download" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" x2="12" y1="15" y2="3"/></symbol>
+  <symbol id="i-archive" viewBox="0 0 24 24"><rect width="20" height="5" x="2" y="3" rx="1"/><path d="M4 8v11a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8"/><path d="M10 12h4"/></symbol>
+  <symbol id="i-trash" viewBox="0 0 24 24"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/><line x1="10" x2="10" y1="11" y2="17"/><line x1="14" x2="14" y1="11" y2="17"/></symbol>
+  <symbol id="i-stamp" viewBox="0 0 24 24"><path d="M5 22h14"/><path d="M19.27 13.73A2.5 2.5 0 0 0 17.5 13h-11A2.5 2.5 0 0 0 4 15.5V17a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-1.5c0-.66-.26-1.3-.73-1.77Z"/><path d="M14 13V8.5C14 7 15 7 15 5a3 3 0 0 0-3-3c-1.66 0-3 1-3 3s1 2 1 3.5V13"/></symbol>
+  <symbol id="i-x" viewBox="0 0 24 24"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></symbol>
+</svg>
+
+<header class="bar">
+  <div class="wrap bar-in">
+    <div class="mark">
+      <span class="ets-badge" aria-hidden="true"><span class="ets">ETS</span></span>
+      <span class="wordmark">Enigma <b>/</b> PDF Watermark</span>
+    </div>
+  </div>
+</header>
+
+<main class="wrap">
+  <div class="hero">
+    <p class="eyebrow">Tool for Sanctum</p>
+    <h1>Mark every<span class="dash" aria-hidden="true"></span>copy.</h1>
+    <p class="lede">Put a visible watermark on PDFs before you share them, with an ID that is different for each file and a name on every page. <span>Passports, visas, contracts. It all happens in this window.</span></p>
+  </div>
+
+  <div class="facts" role="list" aria-label="What this tool does with your files">
+    <div class="fact" role="listitem"><h3><svg class="i" aria-hidden="true"><use href="#i-lock"/></svg>Stays here</h3><p>Your PDFs are read and rewritten in this window. Nothing is uploaded, stored or sent anywhere.</p></div>
+    <div class="fact" role="listitem"><h3><svg class="i" aria-hidden="true"><use href="#i-shield"/></svg>Asks for nothing</h3><p>No network, no devices, no storage. The approval screen in Sanctum is empty.</p></div>
+    <div class="fact" role="listitem"><h3><svg class="i" aria-hidden="true"><use href="#i-info"/></svg>Deterrence only</h3><p>Someone with a PDF editor can remove these marks, and a printout or screenshot drops the hidden ones.</p></div>
+  </div>
+
+  <section class="block" aria-labelledby="h-files">
+    <p class="kicker">Step 1</p>
+    <h2 id="h-files">Choose your PDFs</h2>
+    <p class="muted small" style="margin:0 0 18px">Pick as many as you like. Each file is marked on its own.</p>
+    <div class="picker">
+      <button class="btn" type="button" id="choose"><svg class="i" aria-hidden="true"><use href="#i-upload"/></svg>Choose PDF files</button>
+      <input type="file" id="picker" accept=".pdf,application/pdf" multiple aria-label="PDF files" tabindex="-1">
+      <span class="muted small">Up to 200 MB each. Password protected files must be unlocked first.</span>
+    </div>
+  </section>
+
+  <section class="block" aria-labelledby="h-mark">
+    <p class="kicker">Step 2</p>
+    <h2 id="h-mark">Set the watermark</h2>
+    <p class="muted small" style="margin:0 0 22px">The preview shows how the tiling lies on a page. The ID shown is an example.</p>
+    <div class="cols">
+      <div class="card">
+        <label class="f" for="recipient">
+          <span class="lab">Who is this copy for?</span>
+          <input type="text" id="recipient" maxlength="80" autocomplete="off" spellcheck="false" aria-describedby="recipient-hint" aria-required="true" placeholder="A name or a case number">
+        </label>
+        <p class="hint" id="recipient-hint" style="margin-top:-6px">Required. It is printed on every page, so a leaked copy leads back to the person it was made for.</p>
+
+        <div class="f" role="group" aria-labelledby="lab-color">
+          <span class="lab" id="lab-color">Colour</span>
+          <div class="seg" id="colors">
+            <button type="button" data-color="red" aria-pressed="true"><span class="swatch" style="background:#c71a1a"></span>Red</button>
+            <button type="button" data-color="black" aria-pressed="false"><span class="swatch" style="background:#000"></span>Black</button>
+            <button type="button" data-color="grey" aria-pressed="false"><span class="swatch" style="background:#595959"></span>Grey</button>
+            <button type="button" data-color="blue" aria-pressed="false"><span class="swatch" style="background:#1a40b3"></span>Blue</button>
+          </div>
+        </div>
+
+        <div class="pair">
+          <label class="f"><span class="lab">Strength <output id="o-opacity"></output></span><input type="range" id="opacity" aria-label="Strength"></label>
+          <label class="f"><span class="lab">Angle <output id="o-rotation"></output></span><input type="range" id="rotation" aria-label="Angle"></label>
+          <label class="f"><span class="lab">Text size <output id="o-fontSize"></output></span><input type="range" id="fontSize" aria-label="Text size"></label>
+          <label class="f"><span class="lab">Spacing <output id="o-spacing"></output></span><input type="range" id="spacing" aria-label="Spacing"></label>
+        </div>
+
+        <label class="check"><input type="checkbox" id="corners" checked><span>Corner stamps<small>The ID and page number at the top left and bottom right of every page.</small></span></label>
+        <label class="check"><input type="checkbox" id="band"><span>Bottom band<small>A light strip along the bottom edge that says who the copy was shared with.</small></span></label>
+        <label class="check"><input type="checkbox" id="zones"><span>Sensitive zones<small>Closer marks over the bottom quarter of each page, where the machine readable lines of a passport usually are. The text stays readable.</small></span></label>
+
+        <details>
+          <summary>Wording</summary>
+          <label class="f" for="template"><span class="lab">Text on the tiles</span></label>
+          <textarea id="template" maxlength="300" rows="3" spellcheck="false" aria-describedby="template-hint"></textarea>
+          <p class="hint" id="template-hint">Use {UID}, {DATE}, {RECIPIENT}, {PAGE} and {PAGES}. Letters outside the standard Latin set are replaced with a question mark, because the built in PDF font cannot draw them.</p>
+          <button class="btn ghost sm" type="button" id="reset-template">Use the standard wording</button>
+        </details>
+      </div>
+
+      <div class="card">
+        <canvas class="preview" id="preview" width="300" height="424" role="img" aria-label="Preview of the watermark on an A4 page"></canvas>
+        <p class="hint preview-note" id="preview-note">A4 page, as a viewer shows it.</p>
+      </div>
+    </div>
+  </section>
+
+  <section class="block" aria-labelledby="h-queue">
+    <p class="kicker">Step 3</p>
+    <h2 id="h-queue">Mark and save</h2>
+    <p class="muted small" style="margin:0 0 18px">Marked files are saved to your Downloads folder. The original files are never changed.</p>
+    <div id="notes"></div>
+    <p class="empty" id="empty">No files yet. Choose PDFs in step 1.</p>
+    <ul class="files" id="files" aria-label="Files"></ul>
+    <div class="actions">
+      <button class="btn" type="button" id="run" disabled><svg class="i" aria-hidden="true"><use href="#i-stamp"/></svg>Watermark all</button>
+      <button class="btn ghost" type="button" id="zip" disabled><svg class="i" aria-hidden="true"><use href="#i-archive"/></svg>Save all as ZIP</button>
+      <button class="btn ghost" type="button" id="clear" disabled><svg class="i" aria-hidden="true"><use href="#i-trash"/></svg>Clear all</button>
+    </div>
+    <label class="check" style="margin:16px 0 0"><input type="checkbox" id="receipt" checked><span>Put a receipt in the ZIP<small>A small <code>receipt.json</code> with each ID, recipient and file fingerprint. It holds no document content.</small></span></label>
+    <p class="msg" id="msg" role="status" aria-live="polite"></p>
+  </section>
+</main>
+
+<footer>
+  <div class="wrap">Enigma PDF Watermark <span id="ver"></span>. Part of Sanctum, AGPL-3.0. Uses pdf-lib (MIT) to write the PDFs. Icons from Lucide (ISC).</div>
+</footer>
+
+<script>
+/*__PDFLIB__*/
+</script>
+<script>
+/*__WATERMARK_CORE__*/
+</script>
+<script>
+(function () {
+  "use strict";
+  var WC = globalThis.WatermarkCore;
+  var PDFLib = globalThis.PDFLib;
+  var $ = function (id) { return document.getElementById(id); };
+
+  var DOWNLOAD_LIMIT = 25;
+  var state = {
+    settings: WC.normalizeSettings({}),
+    files: [],
+    nextId: 1,
+    running: false,
+    saves: 0,
+  };
+
+  // ---------------------------------------------------------------- tiny DOM helper
+  // Text is always set as text, never as markup: file names come from the person's disk.
+  function h(tag, attrs) {
+    var el = document.createElement(tag);
+    if (attrs) for (var k in attrs) {
+      if (k === "class") el.className = attrs[k];
+      else if (k === "text") el.textContent = attrs[k];
+      else el.setAttribute(k, attrs[k]);
+    }
+    for (var i = 2; i < arguments.length; i++) {
+      var c = arguments[i];
+      if (c) el.appendChild(typeof c === "string" ? document.createTextNode(c) : c);
+    }
+    return el;
+  }
+  // The names are fixed words from the sprite above, never text from a file.
+  var ICONS = { download: 1, x: 1, info: 1 };
+  function icon(name) {
+    if (!ICONS[name]) throw new Error("unknown icon");
+    var box = document.createElement("span");
+    box.innerHTML = '<svg class="i" aria-hidden="true"><use href="#i-' + name + '"/></svg>';
+    return box.firstChild;
+  }
+
+  function say(text, kind) {
+    var m = $("msg");
+    m.textContent = text;
+    m.className = "msg" + (kind ? " " + kind : "");
+  }
+
+  // ---------------------------------------------------------------- settings controls
+  var RANGES = {
+    opacity: { scale: 100, unit: "%", min: 5, max: 60, step: 1 },
+    rotation: { scale: 1, unit: "°", min: -90, max: 90, step: 5 },
+    fontSize: { scale: 1, unit: " pt", min: 8, max: 60, step: 1 },
+    spacing: { scale: 1, unit: " pt", min: 10, max: 300, step: 5 },
+  };
+
+  function readSettings() {
+    var s = state.settings;
+    s.recipient = $("recipient").value;
+    s.template = $("template").value;
+    s.corners = $("corners").checked;
+    s.band = $("band").checked;
+    s.zones = $("zones").checked;
+    Object.keys(RANGES).forEach(function (k) {
+      s[k] = Number($(k).value) / RANGES[k].scale;
+    });
+    state.settings = WC.normalizeSettings(s);
+    // Keep the typed text as typed. Normalising trims it, which would fight the person typing.
+  }
+
+  function showValues() {
+    Object.keys(RANGES).forEach(function (k) {
+      $("o-" + k).textContent = Math.round(Number($(k).value)) + RANGES[k].unit;
+    });
+  }
+
+  function initControls() {
+    var d = state.settings;
+    Object.keys(RANGES).forEach(function (k) {
+      var r = RANGES[k];
+      var el = $(k);
+      el.min = r.min; el.max = r.max; el.step = r.step;
+      el.value = Math.round(d[k] * r.scale);
+      el.addEventListener("input", function () { showValues(); changed(); });
+    });
+    $("template").value = d.template;
+    $("corners").checked = d.corners;
+    $("band").checked = d.band;
+    $("zones").checked = d.zones;
+    ["recipient", "template", "corners", "band", "zones"].forEach(function (id) {
+      $(id).addEventListener("input", changed);
+      $(id).addEventListener("change", changed);
+    });
+    $("colors").addEventListener("click", function (e) {
+      var b = e.target.closest("button[data-color]");
+      if (!b) return;
+      state.settings.color = b.getAttribute("data-color");
+      Array.prototype.forEach.call($("colors").children, function (x) {
+        x.setAttribute("aria-pressed", String(x === b));
+      });
+      changed();
+    });
+    $("reset-template").addEventListener("click", function () {
+      $("template").value = WC.DEFAULT_TEMPLATE;
+      changed();
+    });
+    showValues();
+    $("ver").textContent = "v" + WC.VERSION;
+  }
+
+  var staleNote = false;
+  function changed() {
+    var color = state.settings.color;
+    readSettings();
+    state.settings.color = color;
+    drawPreview();
+    updateButtons();
+    var any = state.files.some(function (f) { return f.status === "done" && f.usedKey !== settingsKey(); });
+    if (any !== staleNote) { staleNote = any; renderNotes(); }
+    if ($("recipient").getAttribute("aria-invalid") === "true" && state.settings.recipient) {
+      $("recipient").removeAttribute("aria-invalid");
+    }
+  }
+
+  function settingsKey() {
+    var s = state.settings;
+    return JSON.stringify([s.recipient, s.template, s.color, s.opacity, s.rotation, s.fontSize, s.spacing, s.corners, s.band, s.zones]);
+  }
+
+  // ---------------------------------------------------------------- preview
+  var SAMPLE_UID = "K7M2Q9XA4D-3F9A";
+
+  function drawPreview() {
+    var cv = $("preview");
+    var ctx = cv.getContext("2d");
+    var W = 595, H = 842, k = cv.width / W;
+    var s = WC.normalizeSettings(state.settings);
+    ctx.setTransform(1, 0, 0, 1, 0, 0);
+    ctx.fillStyle = "#fff";
+    ctx.fillRect(0, 0, cv.width, cv.height);
+    // A few lines of grey, so the marks are seen over something.
+    ctx.fillStyle = "#d9d9d9";
+    for (var y = 70; y < 760; y += 22) ctx.fillRect(48 * k, y * k, (W - 96 - ((y * 7) % 120)) * k, 7 * k);
+    ctx.fillStyle = "#c5c5e0";
+    ctx.fillRect(48 * k, 70 * k, 90 * k, 110 * k);
+
+    var rec = s.recipient || "Case 4471";
+    var line = WC.sanitize(WC.fill(s.template, { UID: SAMPLE_UID, DATE: WC.isoDate(new Date()), RECIPIENT: rec, PAGE: 1, PAGES: 1 })).text;
+    ctx.font = "bold " + s.fontSize * k + "px Helvetica, Arial, sans-serif";
+    var tw = ctx.measureText(line).width / k;
+    var lay = WC.pageTiles(W, H, tw, s.fontSize, s.spacing, s.rotation, s.zones);
+    var c = WC.COLORS[s.color];
+    ctx.fillStyle = "rgba(" + Math.round(c[0] * 255) + "," + Math.round(c[1] * 255) + "," + Math.round(c[2] * 255) + "," + s.opacity + ")";
+    ctx.textBaseline = "alphabetic";
+    for (var i = 0; i < lay.tiles.length; i++) {
+      var t = lay.tiles[i];
+      ctx.setTransform(1, 0, 0, 1, 0, 0);
+      ctx.translate(t.x * k, (H - t.y) * k);
+      ctx.rotate((-s.rotation * Math.PI) / 180);
+      ctx.fillText(line, 0, 0);
+    }
+    ctx.setTransform(1, 0, 0, 1, 0, 0);
+    if (s.zones) {
+      var zy = H * (1 - WC.ZONE_FRACTION) * k;
+      ctx.strokeStyle = "rgba(0,0,0,.35)";
+      ctx.setLineDash([4, 3]);
+      ctx.beginPath(); ctx.moveTo(0, zy); ctx.lineTo(cv.width, zy); ctx.stroke();
+      ctx.setLineDash([]);
+    }
+    if (s.band) {
+      ctx.fillStyle = "rgba(235,235,235,.9)";
+      ctx.fillRect(0, (H - WC.BAND_HEIGHT) * k, cv.width, WC.BAND_HEIGHT * k);
+      ctx.fillStyle = "#1a1a1a";
+      ctx.font = "bold " + 10 * k + "px Helvetica, Arial, sans-serif";
+      var bt = WC.sanitize("Shared with: " + rec + " • " + SAMPLE_UID).text;
+      ctx.fillText(bt, Math.max(4, (cv.width - ctx.measureText(bt).width) / 2), (H - 8) * k);
+    }
+    if (s.corners) {
+      ctx.font = "bold " + 8 * k + "px Helvetica, Arial, sans-serif";
+      var st = SAMPLE_UID + " • Page 1 of 1";
+      var sw = ctx.measureText(st).width;
+      ctx.fillStyle = "rgba(255,255,255,.75)";
+      ctx.fillRect(6 * k, 4 * k, sw + 8 * k, 12 * k);
+      ctx.fillRect(cv.width - sw - 14 * k, (H - (s.band ? WC.BAND_HEIGHT : 0) - 16) * k, sw + 8 * k, 12 * k);
+      ctx.fillStyle = "rgba(0,0,0,.9)";
+      ctx.fillText(st, 10 * k, 13 * k);
+      ctx.fillText(st, cv.width - sw - 10 * k, (H - (s.band ? WC.BAND_HEIGHT : 0) - 7) * k);
+    }
+    $("preview-note").textContent = lay.gap > s.spacing
+      ? "A4 page. The spacing was widened here so the page does not get too many tiles."
+      : "A4 page, as a viewer shows it.";
+  }
+
+  // ---------------------------------------------------------------- files
+  function addFiles(list) {
+    var added = 0, skipped = [];
+    Array.prototype.forEach.call(list, function (file) {
+      var isPdf = file.type === "application/pdf" || /\.pdf$/i.test(file.name);
+      if (!isPdf) { skipped.push(file.name + " is not a PDF"); return; }
+      if (file.size > WC.MAX_FILE_BYTES) { skipped.push(file.name + " is larger than 200 MB"); return; }
+      if (file.size === 0) { skipped.push(file.name + " is empty"); return; }
+      state.files.push({ id: state.nextId++, file: file, name: file.name, size: file.size, status: "waiting", progress: 0, result: null, error: null, usedKey: null });
+      added++;
+    });
+    renderFiles();
+    updateButtons();
+    if (skipped.length) say("Skipped: " + skipped.join("; ") + ".", "err");
+    else if (added) say(added + (added === 1 ? " file added." : " files added."), "ok");
+  }
+
+  function statusText(f) {
+    if (f.status === "working") return "Working " + Math.round(f.progress) + "%";
+    if (f.status === "done") return "Done";
+    if (f.status === "failed") return "Failed";
+    return "Waiting";
+  }
+
+  function renderFiles() {
+    var ul = $("files");
+    ul.textContent = "";
+    $("empty").hidden = state.files.length > 0;
+    state.files.forEach(function (f) {
+      var li = h("li", { class: "file", "data-id": String(f.id) });
+      var head = h("div", { class: "file-head" },
+        h("div", {}, h("div", { class: "file-name", text: f.name }), h("div", { class: "file-meta", text: WC.formatBytes(f.size) + (f.result ? ", " + f.result.pages + (f.result.pages === 1 ? " page" : " pages") : "") })),
+        h("span", { class: "status " + f.status, text: statusText(f) }));
+      li.appendChild(head);
+      if (f.status === "working") {
+        var p = h("progress", { max: "100", value: String(Math.round(f.progress)), "aria-label": "Progress for " + f.name });
+        li.appendChild(p);
+      }
+      if (f.status === "failed") li.appendChild(h("p", { class: "why", text: f.error }));
+      if (f.status === "done" && f.result) {
+        li.appendChild(h("div", { class: "ids" },
+          h("span", {}, "ID ", h("b", { text: f.result.uid })),
+          h("span", {}, "Fingerprint ", h("b", { text: f.result.fingerprint })),
+          h("span", {}, "For ", h("b", { text: f.result.settings.recipient }))));
+        if (f.result.replaced > 0) {
+          li.appendChild(h("p", { class: "file-meta", text: f.result.replaced + (f.result.replaced === 1 ? " character" : " characters") + " could not be drawn and became a question mark." }));
+        }
+      }
+      var row = h("div", { class: "actions" });
+      if (f.status === "done") {
+        var dl = h("button", { class: "btn sm", type: "button", "aria-label": "Save " + f.result.outputName }, icon("download"), "Save");
+        dl.addEventListener("click", function () { saveOne(f); });
+        row.appendChild(dl);
+      }
+      var rm = h("button", { class: "btn ghost sm", type: "button", "aria-label": "Remove " + f.name }, icon("x"), "Remove");
+      rm.disabled = f.status === "working";
+      rm.addEventListener("click", function () {
+        state.files = state.files.filter(function (x) { return x !== f; });
+        renderFiles(); updateButtons(); changed();
+      });
+      row.appendChild(rm);
+      li.appendChild(row);
+      ul.appendChild(li);
+    });
+  }
+
+  // Updates one row's progress without rebuilding the list, so buttons keep focus.
+  function updateProgress(f) {
+    var li = document.querySelector('li[data-id="' + f.id + '"]');
+    if (!li) return;
+    var bar = li.querySelector("progress");
+    if (bar) bar.value = Math.round(f.progress);
+    var st = li.querySelector(".status");
+    if (st) st.textContent = statusText(f);
+  }
+
+  function renderNotes() {
+    var box = $("notes");
+    box.textContent = "";
+    if (staleNote) {
+      box.appendChild(h("div", { class: "banner warn", role: "status" }, icon("info"),
+        h("span", { text: "The settings changed after some files were marked. Remove those files and add them again to mark them with the new settings." })));
+    }
+  }
+
+  function updateButtons() {
+    var pending = state.files.some(function (f) { return f.status === "waiting" || f.status === "failed"; });
+    var done = state.files.some(function (f) { return f.status === "done"; });
+    $("run").disabled = state.running || !pending;
+    $("zip").disabled = state.running || !done;
+    $("clear").disabled = state.running || state.files.length === 0;
+  }
+
+  // ---------------------------------------------------------------- work
+  function tick() { return new Promise(function (r) { setTimeout(r, 0); }); }
+
+  async function runAll() {
+    readSettings();
+    if (!state.settings.recipient) {
+      var r = $("recipient");
+      r.setAttribute("aria-invalid", "true");
+      r.focus();
+      say("Enter who this copy is for first. It goes on every page.", "err");
+      return;
+    }
+    state.running = true;
+    updateButtons();
+    var key = settingsKey();
+    var settings = JSON.parse(JSON.stringify(state.settings));
+    var todo = state.files.filter(function (f) { return f.status === "waiting" || f.status === "failed"; });
+    var ok = 0, bad = 0;
+    var taken = {};
+    state.files.forEach(function (f) { if (f.result) taken[f.result.outputName.toLowerCase()] = true; });
+    for (var i = 0; i < todo.length; i++) {
+      var f = todo[i];
+      f.status = "working"; f.progress = 0; f.error = null;
+      renderFiles();
+      say("Marking " + f.name + " (" + (i + 1) + " of " + todo.length + ")");
+      try {
+        var bytes = new Uint8Array(await f.file.arrayBuffer());
+        var res = await WC.watermark(PDFLib, bytes, settings, function (done, total) {
+          f.progress = (done / total) * 100;
+          updateProgress(f);
+        });
+        res.outputName = WC.outputName(f.name, res.uid, taken);
+        res.originalName = f.name;
+        taken[res.outputName.toLowerCase()] = true;
+        f.result = res; f.status = "done"; f.usedKey = key; ok++;
+      } catch (e) {
+        f.status = "failed";
+        f.error = e && e.name === "WatermarkError" ? e.message : "Something went wrong while marking this file.";
+        bad++;
+      }
+      renderFiles();
+      await tick();
+    }
+    state.running = false;
+    updateButtons();
+    changed();
+    say(ok + (ok === 1 ? " file marked" : " files marked") + (bad ? ", " + bad + " failed." : "."), bad ? "err" : "ok");
+  }
+
+  // ---------------------------------------------------------------- saving
+  // A tool cannot write to disk. It builds the file and clicks a download link; Sanctum puts the
+  // file in the Downloads folder. The page cannot see whether that worked, so it says where to look.
+  function saveBytes(name, bytes, type) {
+    var url = URL.createObjectURL(new Blob([bytes], { type: type }));
+    var a = document.createElement("a");
+    a.href = url; a.download = name; a.rel = "noopener";
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    setTimeout(function () { URL.revokeObjectURL(url); }, 10000);
+  }
+
+  function saveOne(f) {
+    if (state.saves >= DOWNLOAD_LIMIT) {
+      say("This window can save " + DOWNLOAD_LIMIT + " files. Use Save all as ZIP, or reopen the tool.", "err");
+      return;
+    }
+    state.saves++;
+    saveBytes(f.result.outputName, f.result.bytes, "application/pdf");
+    say("Saving " + f.result.outputName + ". Look in your Downloads folder.", "ok");
+  }
+
+  function saveZip() {
+    var done = state.files.filter(function (f) { return f.status === "done"; });
+    if (!done.length) return;
+    if (state.saves >= DOWNLOAD_LIMIT) {
+      say("This window can save " + DOWNLOAD_LIMIT + " files. Reopen the tool to save more.", "err");
+      return;
+    }
+    try {
+      var entries = done.map(function (f) { return { name: f.result.outputName, bytes: f.result.bytes }; });
+      if ($("receipt").checked) {
+        entries.push({ name: "receipt.json", bytes: new TextEncoder().encode(WC.receipt(done.map(function (f) { return f.result; }))) });
+      }
+      var name = "watermarked-" + WC.isoDate(new Date()) + ".zip";
+      state.saves++;
+      saveBytes(name, WC.makeZip(entries), "application/zip");
+      say("Saving " + name + " with " + done.length + (done.length === 1 ? " file" : " files") + ". Look in your Downloads folder.", "ok");
+    } catch (e) {
+      say(e && e.name === "WatermarkError" ? e.message : "The ZIP could not be made.", "err");
+    }
+  }
+
+  // ---------------------------------------------------------------- start
+  initControls();
+  $("choose").addEventListener("click", function () { $("picker").click(); });
+  $("picker").addEventListener("change", function (e) {
+    addFiles(e.target.files);
+    e.target.value = "";
+  });
+  $("run").addEventListener("click", function () { void runAll(); });
+  $("zip").addEventListener("click", saveZip);
+  $("clear").addEventListener("click", function () {
+    state.files = [];
+    renderFiles(); updateButtons(); changed();
+    say("Cleared. The marked files are gone from this window.", "ok");
+  });
+  readSettings();
+  renderFiles();
+  updateButtons();
+  drawPreview();
+})();
+</script>
+</body>
+</html>

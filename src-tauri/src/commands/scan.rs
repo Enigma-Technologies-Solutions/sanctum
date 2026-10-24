@@ -543,6 +543,18 @@ mod tests {
         assert!(icon.starts_with("data:image/svg+xml"), "{icon}");
     }
 
+    /// The PDF watermark example reads files the person picks and hands the result back as a
+    /// download. None of that is a capability, so its approval screen must stay empty, even though
+    /// the page carries pdf-lib, which mentions a URL and `Math.random` in its own text.
+    #[test]
+    fn pdf_watermark_example_asks_for_nothing() {
+        let html = include_str!("../../../examples/pdf-watermark/index.html");
+        let caps = scan_html(html);
+        assert!(caps.is_empty(), "unexpected capabilities: {caps:?}");
+        let icon = extract_icon(html).expect("example has a complete icon");
+        assert!(icon.starts_with("data:image/svg+xml"), "{icon}");
+    }
+
     /// The OTP vault example asks for exactly two things: its own storage and
     /// the YubiKey OATH applet. A regression here changes what users are asked
     /// to approve, so it is pinned.
