@@ -27,7 +27,7 @@ jobs:
     name: Checksums and provenance
     runs-on: ubuntu-latest
     # Attest only files whose tests pass and whose generated output matches its sources.
-    needs: shamir
+    needs: [shamir, pdf-watermark]
     permissions:
       contents: read
       id-token: write      # Sigstore signing identity for the attestation
@@ -123,5 +123,57 @@ jobs:
               echo "::error file=$file::Forbidden string found: $s"
               bad=1
             fi
+          done
+          exit "$bad"
+
+  # The PDF watermark tool is built the same way, with pdf-lib inlined from vendor/. The
+  # capability check runs on the code we wrote, not on pdf-lib, which mentions a URL and
+  # Math.random in its own text. What Sanctum itself finds in the built file is pinned by a
+  # Rust test (`pdf_watermark_example_asks_for_nothing`).
+  pdf-watermark:
+    name: PDF watermark tests, build and capability check
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 22
+
+      - name: Run PDF watermark tests
+        run: node --test examples/pdf-watermark/test/*.test.mjs
+
+      - name: Check index.html matches its sources
+        run: |
+          set -euo pipefail
+          node examples/pdf-watermark/build.mjs --out "$RUNNER_TEMP/pdf-watermark-index.html"
+          if ! cmp examples/pdf-watermark/index.html "$RUNNER_TEMP/pdf-watermark-index.html"; then
+            echo "::error file=examples/pdf-watermark/index.html::index.html is out of date. Run 'node examples/pdf-watermark/build.mjs' and commit the result."
+            exit 1
+          fi
+
+      - name: Check the PDF watermark code uses no extra capabilities
+        run: |
+          set -euo pipefail
+          bad=0
+          for file in examples/pdf-watermark/src/app.template.html examples/pdf-watermark/src/watermark-core.js; do
+            # Sanctum's scanner ignores exactly xmlns="http://www.w3.org/2000/svg" (an XML
+            # name, not an address). Strip the same thing so the icon can use it.
+            scan=$(mktemp)
+            sed -E "s#xmlns=['\"]http://www\.w3\.org/2000/svg['\"]##g" "$file" > "$scan"
+            for s in getUserMedia navigator.usb navigator.serial navigator.hid \
+                     navigator.bluetooth navigator.geolocation Notification \
+                     localStorage sessionStorage indexedDB caches.open 'fetch(' \
+                     XMLHttpRequest 'new WebSocket' 'new EventSource' \
+                     sanctum.smartcard 'http://' 'https://' Math.random 'eval(' \
+                     'new Function' importScripts 'new Worker'; do
+              if grep -nF -e "$s" "$scan"; then
+                echo "::error file=$file::Forbidden string found: $s"
+                bad=1
+              fi
+            done
           done
           exit "$bad"
