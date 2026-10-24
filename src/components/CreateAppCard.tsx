@@ -1,21 +1,35 @@
 // SPDX-License-Identifier: AGPL-3.0-only
 // Copyright (C) 2026 Enigma Technologies Solutions
 
-import { Loader2, LogIn, PencilRuler } from "lucide-react";
-import { downloadLabel, signInNote, useAgent } from "@/lib/agent";
+import { useEffect, useState } from "react";
+import { ArrowRight, PencilRuler } from "lucide-react";
+import { Commands } from "@/lib/commands";
+import { asAgentError, downloadNote } from "@/lib/agent";
+import type { AgentSetup } from "@/lib/types";
 import { Button } from "@/components/ui/button";
 
 const font = "'Inter', system-ui, sans-serif";
 
 /**
- * A card in "Your tools" for making a tool of your own. For now it only signs you in to ChatGPT
- * (the first sign-in downloads Codex, which the note says before anything is clicked). It is not
- * shown on a computer Sanctum has no Codex build for. Nothing runs and nothing is downloaded
- * until the button is clicked.
+ * A card in "Your tools" for making a tool of your own. It opens the Create window, where the
+ * sign-in and the chat live, so the conversation stays open while you use the rest of Sanctum.
+ * Not shown on a computer Sanctum has no Codex build for. Looking reads files only: nothing is
+ * downloaded or started until the person opens the window.
  */
 export function CreateAppCard() {
-  const agent = useAgent({ readAccount: false });
-  if (!agent.setup?.supported) return null;
+  const [setup, setSetup] = useState<AgentSetup | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  useEffect(() => {
+    let live = true;
+    Commands.agentSetup()
+      .then((s) => live && setSetup(s))
+      .catch(() => {});
+    return () => {
+      live = false;
+    };
+  }, []);
+  if (!setup?.supported) return null;
+  const note = downloadNote(setup);
 
   return (
     <div className="tool-card" data-testid="create-app-card">
@@ -41,41 +55,25 @@ export function CreateAppCard() {
             Create your own app
           </h3>
         </div>
-
-        {agent.account?.signedIn ? (
-          <p role="status" style={{ margin: 0, fontFamily: font, fontSize: 13, color: "var(--app-ink-2)", lineHeight: 1.5 }}>
-            Signed in to ChatGPT as {agent.account.email}
-            {agent.account.plan ? ` (${agent.account.plan})` : ""}.
-          </p>
-        ) : agent.signingIn ? (
-          <>
-            <p role="status" style={{ margin: 0, display: "flex", alignItems: "center", gap: 8, fontFamily: font, fontSize: 13, color: "var(--app-ink-2)" }}>
-              <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" />
-              {agent.phase === "downloading" ? downloadLabel(agent.download) : "Finish signing in in your browser…"}
-            </p>
-            <div>
-              <Button variant="ghost" size="sm" onClick={agent.cancel}>
-                Cancel
-              </Button>
-            </div>
-          </>
-        ) : (
-          <>
-            <p style={{ margin: 0, fontFamily: font, fontSize: 13, color: "var(--app-ink-2)", lineHeight: 1.5 }}>
-              {signInNote(agent.setup)}
-            </p>
-            <div>
-              <Button variant="outline" onClick={() => void agent.signIn()}>
-                <LogIn className="h-4 w-4" aria-hidden="true" />
-                Sign in with ChatGPT
-              </Button>
-            </div>
-          </>
-        )}
-
-        {agent.error && (
+        <p style={{ margin: 0, fontFamily: font, fontSize: 13, color: "var(--app-ink-2)", lineHeight: 1.5 }}>
+          Describe a tool in plain words and Codex writes it for you, using your ChatGPT account.
+          {note ? ` ${note}` : ""}
+        </p>
+        <div>
+          <Button
+            variant="outline"
+            onClick={() => {
+              setError(null);
+              Commands.agentOpenCreateWindow().catch((e: unknown) => setError(asAgentError(e).message));
+            }}
+          >
+            Start building
+            <ArrowRight className="h-4 w-4" aria-hidden="true" />
+          </Button>
+        </div>
+        {error && (
           <div role="alert" style={{ fontFamily: font, fontSize: 12, color: "var(--danger-ink)" }}>
-            {agent.error}
+            {error}
           </div>
         )}
       </div>

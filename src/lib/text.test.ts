@@ -81,4 +81,37 @@ describe("registry text is cleaned where it enters the interface", () => {
     vi.mocked(invoke).mockResolvedValue({ signedIn: false, email: null, plan: null });
     expect(await Commands.agentAccount()).toEqual({ signedIn: false, email: null, plan: null });
   });
+  it("what Codex says when a session opens, and how a turn ended", async () => {
+    vi.mocked(invoke).mockResolvedValue({ model: `gpt${ZWSP}-x`, version: `0.1${RLO}`, directory: `~/a${ZWSP}b`, sources: [] });
+    expect(await Commands.agentChatStart()).toEqual({ model: "gpt-x", version: "0.1", directory: "~/ab", sources: [] });
+    vi.mocked(invoke).mockResolvedValue({ model: null, version: null, directory: "~/w", sources: [] });
+    expect(await Commands.agentChatStart()).toEqual({ model: null, version: null, directory: "~/w", sources: [] });
+    // The name of a library app is text somebody else wrote.
+    vi.mocked(invoke).mockResolvedValue({
+      model: null, version: null, directory: "~/w",
+      sources: [{ kind: "app", title: `Ti${RLO}mer${ZWSP}`, detail: `Ver${ZWSP}sion 2`, toolId: "t" }],
+    });
+    const st = await Commands.agentChatStart("t");
+    expect([st.sources[0].title, st.sources[0].detail, st.sources[0].toolId]).toEqual(["Timer", "Version 2", "t"]);
+    expect(vi.mocked(invoke)).toHaveBeenLastCalledWith("agent_chat_start", { source: "t" });
+    vi.mocked(invoke).mockResolvedValue([{ sha: "a", number: 1, size: 1, at: 0, loaded: false, current: true, name: `Ti${ZWSP}mer` }]);
+    expect((await Commands.agentDraftHistory())[0].name).toBe("Timer");
+    vi.mocked(invoke).mockResolvedValue({ status: "failed", error: `no${ZWSP}pe`, refused: 0, draft: null });
+    expect((await Commands.agentChatSend("x")).error).toBe("nope");
+  });
+  it("a draft's own title and description, and the name of what was added", async () => {
+    vi.mocked(invoke).mockResolvedValue({
+      name: `Ti${RLO}mer`, description: `Cou${ZWSP}nts`, size: 1, capabilities: [], savesAs: "version", toolName: `Ti${ZWSP}mer`,
+    });
+    const r = await Commands.agentScanDraft();
+    expect([r.name, r.description, r.toolName]).toEqual(["Timer", "Counts", "Timer"]);
+    vi.mocked(invoke).mockResolvedValue({
+      name: "x", description: "", size: 1, capabilities: [], savesAs: "new", toolName: null,
+    });
+    expect((await Commands.agentScanDraft()).toolName).toBeNull();
+    vi.mocked(invoke).mockResolvedValue({ outcome: "added", versionNum: 1, tool: { id: "t", name: `Ti${ZWSP}mer`, origin: "agent" } });
+    const a = await Commands.agentAddDraft();
+    expect(a.tool.name).toBe("Timer");
+    expect(a.tool.origin).toBe("agent");
+  });
 });

@@ -7,6 +7,7 @@ import { type ToolWithVersion, shortSha, formatBytes } from "@/lib/types";
 import { Commands } from "@/lib/commands";
 import { PermissionBadge } from "./PermissionBadge";
 import { PublisherBadge } from "./PublisherBadge";
+import { OriginBadge } from "./OriginBadge";
 import { CardMenu } from "./CardMenu";
 import { Button } from "@/components/ui/button";
 import {
@@ -147,6 +148,7 @@ export function ToolCard({ item, onRun, onInspect, onDeleted, onUpdated }: ToolC
                 {tool.name}
               </h3>
               <PublisherBadge provenance={provenance} />
+              <OriginBadge origin={tool.origin} />
             </div>
             <div style={{
               fontFamily: "'Space Mono', ui-monospace, monospace",

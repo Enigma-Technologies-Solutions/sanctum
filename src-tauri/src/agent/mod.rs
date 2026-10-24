@@ -9,6 +9,8 @@
 //! - [`protocol`]: the few methods and shapes Sanctum uses, checked against the schema that
 //!   ships in `spec/codex-app-server/`.
 //! - [`account`]: account state and the ChatGPT browser sign-in.
+//! - [`chat`]: one build session: a scratch folder, the sandbox policy, and a turn.
+//! - [`draft`]: the draft as the library sees it: a report to read, and adding it.
 //! - [`process`]: starting the `codex` binary with a cleared environment and its own home.
 //! - [`install`]: downloading the pinned Codex release on first use and checking it.
 //! - [`commands`]: the Tauri commands the main window calls.
@@ -26,7 +28,10 @@
 //!    same hidden-character cleaning as registry text, at the Commands boundary.
 
 pub mod account;
+pub mod chat;
 pub mod commands;
+pub mod draft;
+pub mod history;
 pub mod install;
 pub mod process;
 pub mod protocol;
@@ -47,6 +52,12 @@ pub enum AgentError {
     LoginTimeout,
     /// The process could not be started.
     Spawn(String),
+    /// A turn ran past its time limit and was stopped.
+    TurnTimeout,
+    /// A turn produced more steps than Sanctum allows and was stopped.
+    TooManySteps,
+    /// The scratch folder could not be prepared.
+    Scratch(String),
 }
 
 impl From<rpc::RpcError> for AgentError {
@@ -68,6 +79,11 @@ impl std::fmt::Display for AgentError {
             AgentError::LoginFailed(m) => write!(f, "sign-in failed: {m}"),
             AgentError::LoginTimeout => write!(f, "sign-in was not finished in time"),
             AgentError::Spawn(m) => write!(f, "{m}"),
+            AgentError::TurnTimeout => write!(f, "the agent took too long, so it was stopped"),
+            AgentError::TooManySteps => {
+                write!(f, "the agent took too many steps, so it was stopped")
+            }
+            AgentError::Scratch(m) => write!(f, "{m}"),
         }
     }
 }

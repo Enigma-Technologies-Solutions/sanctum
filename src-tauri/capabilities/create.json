@@ -1,0 +1,9 @@
+{
+  "identifier": "create",
+  "description": "The Create window: Sanctum's own interface for building an app with Codex. Same trust as the main window, with only what the chat needs (events, and copying a link).",
+  "windows": ["create"],
+  "permissions": [
+    "core:default",
+    "clipboard-manager:allow-write-text"
+  ]
+}

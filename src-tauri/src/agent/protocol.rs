@@ -22,6 +22,13 @@ pub const M_LOGIN_START: &str = "account/login/start";
 pub const M_LOGIN_CANCEL: &str = "account/login/cancel";
 pub const M_LOGOUT: &str = "account/logout";
 pub const N_LOGIN_COMPLETED: &str = "account/login/completed";
+pub const M_THREAD_START: &str = "thread/start";
+pub const M_TURN_START: &str = "turn/start";
+pub const M_TURN_INTERRUPT: &str = "turn/interrupt";
+pub const N_AGENT_DELTA: &str = "item/agentMessage/delta";
+pub const N_ITEM_STARTED: &str = "item/started";
+pub const N_ITEM_COMPLETED: &str = "item/completed";
+pub const N_TURN_COMPLETED: &str = "turn/completed";
 
 pub fn initialize_params(version: &str) -> Value {
     json!({
@@ -166,6 +173,13 @@ mod tests {
             M_LOGIN_CANCEL,
             M_LOGOUT,
             N_LOGIN_COMPLETED,
+            M_THREAD_START,
+            M_TURN_START,
+            M_TURN_INTERRUPT,
+            N_AGENT_DELTA,
+            N_ITEM_STARTED,
+            N_ITEM_COMPLETED,
+            N_TURN_COMPLETED,
         ] {
             assert!(
                 SCHEMA.contains(&format!("\"{m}\"")),

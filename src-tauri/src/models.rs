@@ -145,6 +145,10 @@ pub struct ToolRecord {
     pub approvals: Vec<DetectedCapability>,
     pub created_at: i64,
     pub updated_at: i64,
+    /// `agent` for a tool written by an AI agent in Sanctum; `None` otherwise. Shown as a badge.
+    /// It says where the file came from, not that it is safe, and it grants nothing.
+    #[serde(default)]
+    pub origin: Option<String>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
