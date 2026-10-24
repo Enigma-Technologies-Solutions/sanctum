@@ -389,6 +389,10 @@ pub async fn open_tool_window(
         .title(title)
         .initialization_script(BLOCK_TAURI_IPC)
         .on_navigation(move |url| is_allowed_tool_navigation(url, &nav_host))
+        .on_download(crate::commands::downloads::handler(
+            app.clone(),
+            label.clone(),
+        ))
         .inner_size(1024.0, 768.0)
         .min_inner_size(400.0, 300.0)
         .center();

@@ -121,6 +121,7 @@ Canvas 2D, WebGL, Web Audio, Web Crypto (`crypto.subtle`, `crypto.randomUUID()`)
 | `<iframe>` | `frame-src 'none'` |
 | `<embed>`, `<object>` | `object-src 'none'` |
 | Form submission | `form-action 'none'` |
+| `showSaveFilePicker`, `window.open` | Not available. Use the download link in "Saving files" |
 | Scripts from a CDN | `script-src` is `'self' 'unsafe-inline'` only. Inline the library. |
 | `postMessage` or `BroadcastChannel` to another tool | Different origins |
 | `eval()`, `new Function()` | Runs, but the scanner can't see what it does |
@@ -150,6 +151,33 @@ The scanner doesn't detect `navigator.credentials` yet, so WebAuthn use won't ap
 
 Put CSS and JavaScript inline, and embed images and fonts as `data:` URIs. An external asset only loads if its host has been approved.
 
+## Saving files
+
+A tool can't write to the disk or open a save dialog. To give the person a file (an export, a report, a converted document), build it in memory and click a link with a `download` name:
+
+```js
+function saveFile(name, data, type) {
+  const url = URL.createObjectURL(new Blob([data], { type }));
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = name;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 10000);
+}
+
+saveFile("report.csv", csvText, "text/csv");
+```
+
+Sanctum saves the file in the person's Downloads folder, with no dialog and no approval. The page can't see where it went or whether it worked, so show a line such as "Saved report.csv to your Downloads folder" after calling it.
+
+- **Name.** Give a plain file name with the right extension and no folders. Only the last part is used.
+- **Existing files.** A file never replaces another. If the name is taken, Sanctum adds a number: `report (1).csv`.
+- **Refused.** Programs and scripts (`.exe`, `.app`, `.sh`, `.bat`, `.js`, `.py`, `.dmg` and similar) are never saved.
+- **Limit.** A window can save 25 files. Offer one button per file, not a loop.
+- **Don't use** `showSaveFilePicker`, `window.open` or `location.href = blobUrl`. They don't work here.
+
 ## Versions and integrity
 
 Each version is stored under its SHA-256. Before opening a window Sanctum re-hashes the stored file. If it doesn't match, that version is quarantined and won't run again; the user has to add a clean copy. Don't expect to edit a stored tool on disk between runs.
@@ -162,6 +190,7 @@ Each version is stored under its SHA-256. Before opening a window Sanctum re-has
 | Web Crypto | Works | |
 | Storage (all kinds) | Works | |
 | File input | Works | |
+| Saving a file (`<a download>`) | Works, goes to Downloads | |
 | Canvas, WebGL, Web Audio | Works | |
 | WebAuthn | Works on macOS (see `rpId`) | |
 | Network | Blocked | Allowed for approved hosts |

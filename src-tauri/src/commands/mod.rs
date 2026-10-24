@@ -3,6 +3,7 @@
 
 pub mod approvals;
 pub mod bundle;
+pub mod downloads;
 pub mod ingest;
 pub mod library;
 pub mod runner;
