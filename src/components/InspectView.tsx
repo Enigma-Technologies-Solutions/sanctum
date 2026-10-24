@@ -11,7 +11,7 @@ import type {
 } from "@/lib/types";
 import { formatBytes, formatDate, capabilityToPlain, SIGNATURE_MEANING } from "@/lib/types";
 import { Commands } from "@/lib/commands";
-import { asAgentError } from "@/lib/agent";
+import { asAgentError, useAgentSetup } from "@/lib/agent";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { Separator } from "@/components/ui/separator";
@@ -175,6 +175,8 @@ export function InspectView({ item, onBack, onRun, onRefresh, onDelete }: Inspec
   // Opens the Create window with this app loaded, so Codex changes it and a result you like
   // becomes a new version. The window opens for the person to continue in; nothing is sent
   // until they send a message there.
+  const create = useAgentSetup();
+  const canModify = !!create?.supported && create.enabled;
   const handleModify = useCallback(async () => {
     setUpdateError(null);
     try {
@@ -348,7 +350,7 @@ export function InspectView({ item, onBack, onRun, onRefresh, onDelete }: Inspec
             Add new version from:
           </span>
           <div style={{ display: "flex", gap: "8px", flexWrap: "wrap" }}>
-            {tool.origin === "agent" && (
+            {tool.origin === "agent" && canModify && (
               <Button size="sm" variant="volt" className="gap-1.5" disabled={updating} onClick={handleModify}>
                 <PencilRuler className="h-3.5 w-3.5" aria-hidden="true" /> Modify with Codex
               </Button>

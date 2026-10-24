@@ -56,6 +56,9 @@ pub struct AgentState {
     previews_cleaned: AtomicBool,
     /// The person's standing instructions for every app, a plain text file.
     instructions_path: PathBuf,
+    /// The marker file that says the person turned building apps on. Absent means off.
+    enabled_path: PathBuf,
+    enabled: AtomicBool,
     process: Mutex<Option<Arc<AgentProcess>>>,
     signing_in: AtomicBool,
     cancelled: AtomicBool,
@@ -137,7 +140,10 @@ impl AgentState {
         release: Option<Release>,
         transport: Result<Arc<dyn Transport>, String>,
     ) -> AgentState {
+        let enabled_path = data_dir.join("agent").join("enabled");
         AgentState {
+            enabled: AtomicBool::new(enabled_path.is_file()),
+            enabled_path,
             home: data_dir.join("agent").join("codex-home"),
             bin_dir: data_dir.join("agent").join("bin"),
             sessions_dir: data_dir.join("agent").join("sessions"),
@@ -154,6 +160,37 @@ impl AgentState {
             chat: Mutex::new(None),
             turn_running: AtomicBool::new(false),
             turn_slot: StdMutex::new(None),
+        }
+    }
+
+    /// Building apps is off until the person turns it on in Settings. Nothing starts, downloads
+    /// or signs in while it is off.
+    fn enabled(&self) -> bool {
+        self.enabled.load(Ordering::SeqCst)
+    }
+
+    fn set_enabled(&self, on: bool) -> std::io::Result<()> {
+        if on {
+            if let Some(dir) = self.enabled_path.parent() {
+                std::fs::create_dir_all(dir)?;
+            }
+            std::fs::write(&self.enabled_path, b"on\n")?;
+        } else {
+            match std::fs::remove_file(&self.enabled_path) {
+                Ok(()) => {}
+                Err(e) if e.kind() == std::io::ErrorKind::NotFound => {}
+                Err(e) => return Err(e),
+            }
+        }
+        self.enabled.store(on, Ordering::SeqCst);
+        Ok(())
+    }
+
+    fn require_enabled(&self) -> Result<(), AgentCommandError> {
+        if self.enabled() {
+            Ok(())
+        } else {
+            Err(AgentCommandError::disabled())
         }
     }
 
@@ -190,6 +227,7 @@ impl AgentState {
 
     /// The running process, started if there is none (or the old one died).
     async fn ensure(&self) -> Result<Arc<AgentProcess>, AgentCommandError> {
+        self.require_enabled()?;
         let mut slot = self.process.lock().await;
         if let Some(p) = slot.as_ref() {
             if !p.rpc.is_closed() {
@@ -208,6 +246,7 @@ impl AgentState {
         &self,
         progress: &(dyn Fn(u64, u64) + Send + Sync),
     ) -> Result<(), AgentCommandError> {
+        self.require_enabled()?;
         if self.program_override.is_some() {
             return Ok(());
         }
@@ -249,12 +288,17 @@ impl AgentState {
     }
 }
 
+/// Sent to every window when building apps is turned on or off.
+const ENABLED_EVENT: &str = "agent-enabled";
+
 /// What the interface needs to decide what to show.
 #[derive(Debug, Serialize, PartialEq, Eq)]
 #[serde(rename_all = "camelCase")]
 pub struct AgentSetup {
     /// Sanctum has a Codex build for this computer.
     pub supported: bool,
+    /// The person turned building apps on in Settings. Off until they do.
+    pub enabled: bool,
     /// Codex is already downloaded.
     pub installed: bool,
     /// Size of the first-use download, in megabytes, for the sentence that asks.
@@ -299,6 +343,12 @@ impl AgentCommandError {
             code,
             message: message.into(),
         }
+    }
+    fn disabled() -> Self {
+        Self::new(
+            "disabled",
+            "Building apps is turned off. You can turn it on in Settings.",
+        )
     }
     fn unsupported() -> Self {
         Self::new(
@@ -365,6 +415,7 @@ impl Drop for SigningIn<'_> {
 fn setup_of(state: &AgentState) -> AgentSetup {
     AgentSetup {
         supported: state.supported(),
+        enabled: state.enabled(),
         installed: state.installed(),
         download_mb: state.release.as_ref().map_or(0, |r| {
             install::pending_download_bytes(&state.bin_dir, r).div_ceil(1_000_000)
@@ -836,6 +887,30 @@ pub fn agent_setup(
     Ok(setup_of(&state))
 }
 
+/// Turns building apps on or off. Off is the default. Turning it off ends any open session and
+/// stops Codex, and leaves the sign-in and the downloaded program where they are.
+#[tauri::command]
+pub async fn agent_set_enabled(
+    app: AppHandle,
+    window: Window,
+    state: State<'_, AgentState>,
+    on: bool,
+) -> Result<AgentSetup, AgentCommandError> {
+    require_host(&window)?;
+    if on && !state.supported() {
+        return Err(AgentCommandError::unsupported());
+    }
+    state
+        .set_enabled(on)
+        .map_err(|e| AgentCommandError::new("io", format!("Could not save the setting: {e}")))?;
+    if !on {
+        state.shutdown().await;
+    }
+    // Every Sanctum window shows or hides its Create controls to match.
+    let _ = app.emit(ENABLED_EVENT, on);
+    Ok(setup_of(&state))
+}
+
 /// The signed-in account. Starts the local Codex process if it is not running; no request
 /// leaves the computer for this. Does not download anything.
 #[tauri::command]
@@ -921,6 +996,7 @@ pub async fn agent_open_create_window(
     if !state.supported() {
         return Err(AgentCommandError::unsupported());
     }
+    state.require_enabled()?;
     // An app to change: it must exist, and its id goes into a URL, so it must be a plain id.
     let source = match tool_id {
         Some(id) => {
@@ -1199,6 +1275,7 @@ read line
         std::fs::write(&bin, script).unwrap();
         std::fs::set_permissions(&bin, std::fs::Permissions::from_mode(0o755)).unwrap();
         let mut st = AgentState::new(&d, "0.0.0-test", None, Err("none".into()));
+        st.set_enabled(true).unwrap();
         st.program_override = Some(bin);
         (st, d)
     }
@@ -1213,8 +1290,32 @@ read line
         let d = dir();
         let transport: Arc<dyn Transport> = mock.clone();
         let mut st = AgentState::new(&d, "0.0.0-test", Some(rel), Ok(transport));
+        st.set_enabled(true).unwrap();
         st.program_override = None;
         (st, d, mock)
+    }
+
+    #[tokio::test]
+    async fn building_apps_is_off_until_the_person_turns_it_on() {
+        let (st, d) = with_program(&fake_script(true));
+        // A fresh data folder: off, and nothing starts or downloads.
+        let fresh = AgentState::new(&dir(), "0.0.0-test", None, Err("none".into()));
+        assert!(!fresh.enabled());
+        assert_eq!(fresh.require_enabled().unwrap_err().code, "disabled");
+        assert_eq!(fresh.ensure().await.err().unwrap().code, "disabled");
+        assert_eq!(
+            fresh.ensure_installed(&|_, _| {}).await.unwrap_err().code,
+            "disabled"
+        );
+        assert!(!setup_of(&fresh).enabled);
+        // On: the choice is kept for the next start. Off again removes it.
+        st.set_enabled(false).unwrap();
+        assert!(!AgentState::new(&d, "0.0.0-test", None, Err("x".into())).enabled());
+        st.set_enabled(true).unwrap();
+        assert!(AgentState::new(&d, "0.0.0-test", None, Err("x".into())).enabled());
+        st.set_enabled(false).unwrap();
+        assert_eq!(st.ensure().await.err().unwrap().code, "disabled");
+        st.set_enabled(false).unwrap();
     }
 
     #[tokio::test]
@@ -1224,6 +1325,7 @@ read line
             setup_of(&state),
             AgentSetup {
                 supported: true,
+                enabled: true,
                 installed: false,
                 download_mb: 1
             }
@@ -1306,11 +1408,13 @@ read line
     async fn no_build_for_this_computer_is_reported_not_attempted() {
         let d = dir();
         let mut state = AgentState::new(&d, "0.0.0-test", None, Err("x".into()));
+        state.set_enabled(true).unwrap();
         state.program_override = None;
         assert_eq!(
             setup_of(&state),
             AgentSetup {
                 supported: false,
+                enabled: true,
                 installed: false,
                 download_mb: 0
             }
@@ -1430,6 +1534,7 @@ exec sleep 30
     async fn a_program_that_cannot_start_is_a_process_error() {
         let d = dir();
         let mut state = AgentState::new(&d, "0.0.0-test", None, Err("x".into()));
+        state.set_enabled(true).unwrap();
         state.program_override = Some(d.join("nope"));
         let e = account_of(&state).await.unwrap_err();
         assert_eq!(e.code, "process");

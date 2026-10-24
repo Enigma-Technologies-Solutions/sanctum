@@ -5,13 +5,15 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { TooltipProvider } from "@/components/ui/tooltip";
+import { listen } from "@tauri-apps/api/event";
 import { Commands } from "@/lib/commands";
 import { commandError } from "@/test/fixtures";
 import { InspectView } from "./InspectView";
 
 vi.mock("@tauri-apps/plugin-dialog", () => ({ open: vi.fn() }));
+vi.mock("@tauri-apps/api/event", () => ({ listen: vi.fn().mockResolvedValue(() => {}) }));
 vi.mock("@/lib/commands", () => ({
-  Commands: { getProvenance: vi.fn(), agentOpenCreateWindow: vi.fn() },
+  Commands: { getProvenance: vi.fn(), agentOpenCreateWindow: vi.fn(), agentSetup: vi.fn() },
 }));
 
 const C = vi.mocked(Commands);
@@ -35,6 +37,8 @@ function show(origin: string | null) {
 beforeEach(() => {
   vi.resetAllMocks();
   C.getProvenance.mockResolvedValue(null as never);
+  vi.mocked(listen).mockResolvedValue(() => {});
+  C.agentSetup.mockResolvedValue({ supported: true, enabled: true, installed: true, downloadMb: 0 });
   C.agentOpenCreateWindow.mockResolvedValue(undefined);
 });
 
@@ -44,9 +48,24 @@ describe("changing a tool with Codex", () => {
     show("agent");
     expect(screen.queryByRole("button", { name: /Modify with Codex/ })).toBeNull();
     await user.click(screen.getByRole("button", { name: /Update/ }));
-    await user.click(screen.getByRole("button", { name: /Modify with Codex/ }));
+    await user.click(await screen.findByRole("button", { name: /Modify with Codex/ }));
     expect(C.agentOpenCreateWindow).toHaveBeenCalledWith("tool-1");
     // The panel closes once the window is on its way.
+    expect(screen.queryByRole("button", { name: /Modify with Codex/ })).toBeNull();
+  });
+
+  it("is not offered while building apps is turned off, or on a computer without it", async () => {
+    const user = userEvent.setup();
+    C.agentSetup.mockResolvedValue({ supported: true, enabled: false, installed: true, downloadMb: 0 });
+    const { unmount } = show("agent");
+    await user.click(screen.getByRole("button", { name: /Update/ }));
+    expect(await screen.findByRole("button", { name: /Paste Clipboard/ })).toBeInTheDocument();
+    expect(C.agentSetup).toHaveBeenCalled();
+    expect(screen.queryByRole("button", { name: /Modify with Codex/ })).toBeNull();
+    unmount();
+    C.agentSetup.mockResolvedValue({ supported: false, enabled: false, installed: false, downloadMb: 0 });
+    show("agent");
+    await user.click(screen.getByRole("button", { name: /Update/ }));
     expect(screen.queryByRole("button", { name: /Modify with Codex/ })).toBeNull();
   });
 
@@ -63,7 +82,7 @@ describe("changing a tool with Codex", () => {
     const user = userEvent.setup();
     show("agent");
     await user.click(screen.getByRole("button", { name: /Update/ }));
-    await user.click(screen.getByRole("button", { name: /Modify with Codex/ }));
+    await user.click(await screen.findByRole("button", { name: /Modify with Codex/ }));
     expect(await screen.findByText("Building apps is not available on this computer yet.")).toBeInTheDocument();
     expect(screen.getByRole("button", { name: /Modify with Codex/ })).toBeInTheDocument();
   });

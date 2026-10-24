@@ -251,6 +251,8 @@ export interface RegistryCommandError {
 export interface AgentSetup {
   /** Sanctum has a Codex build for this computer. */
   supported: boolean;
+  /** The person turned building apps on in Settings. Off until they do. */
+  enabled: boolean;
   /** Codex is already downloaded. */
   installed: boolean;
   /** Size of the first-use download in megabytes. */

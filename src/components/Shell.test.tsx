@@ -24,7 +24,7 @@ beforeEach(() => {
   vi.mocked(listen).mockResolvedValue(() => {});
   C.listTools.mockResolvedValue([]);
   C.getPolicyStatus.mockResolvedValue({ managed: false, error: null, pinnedCount: null } as never);
-  C.agentSetup.mockResolvedValue({ supported: false, installed: false, downloadMb: 0 });
+  C.agentSetup.mockResolvedValue({ supported: false, enabled: true, installed: false, downloadMb: 0 });
 });
 
 describe("the main navigation", () => {

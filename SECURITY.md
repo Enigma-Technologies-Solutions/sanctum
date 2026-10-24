@@ -31,8 +31,12 @@ In scope:
 - Path traversal in the `sanctum-tool://` protocol handler
 - Integrity check bypass (running a quarantined or tampered tool)
 - CSP injection or bypass via crafted tool HTML
+- With Build apps with Codex turned on: the Codex process reading or writing outside its private
+  work folder, a draft being added to the library without a click, or a saved file landing outside
+  the Downloads folder or overwriting an existing file
 
 Out of scope:
+- What OpenAI does with the messages and drafts that Codex sends it when Build apps with Codex is on
 - Vulnerabilities in tools themselves (Sanctum does not vouch for tool content)
 - Denial of service against the local app
 - Social engineering

@@ -45,6 +45,11 @@ export const Commands = {
     return invoke("agent_setup");
   },
 
+  /** Turns building apps on or off. Off is the default; off also stops Codex and ends any session. */
+  agentSetEnabled(on: boolean): Promise<AgentSetup> {
+    return invoke("agent_set_enabled", { on });
+  },
+
   /** The signed-in account. Starts the local Codex process if needed; downloads nothing. */
   agentAccount(): Promise<AgentAccount> {
     return invoke<AgentAccount>("agent_account").then(cleanAccount);

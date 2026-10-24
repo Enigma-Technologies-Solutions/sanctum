@@ -23,14 +23,15 @@ vi.mock("@/lib/commands", () => ({
     agentSignIn: vi.fn(),
     agentCancelSignIn: vi.fn(),
     agentSignOut: vi.fn(),
+    agentSetEnabled: vi.fn(),
   },
 }));
 
 const C = vi.mocked(Commands);
 const pro = { signedIn: true, email: "me@example.com", plan: "Pro" };
 const out = { signedIn: false, email: null, plan: null };
-const READY = { supported: true, installed: true, downloadMb: 100 };
-const FIRST = { supported: true, installed: false, downloadMb: 100 };
+const READY = { supported: true, enabled: true, installed: true, downloadMb: 100 };
+const FIRST = { supported: true, enabled: true, installed: false, downloadMb: 100 };
 
 beforeEach(() => {
   vi.resetAllMocks();
@@ -42,7 +43,7 @@ beforeEach(() => {
 
 describe("Settings, Agent", () => {
   it("says so on a computer Sanctum has no Codex build for, and never starts anything", async () => {
-    C.agentSetup.mockResolvedValue({ supported: false, installed: false, downloadMb: 0 });
+    C.agentSetup.mockResolvedValue({ supported: false, enabled: true, installed: false, downloadMb: 0 });
     render(<SettingsView version="0.2.0" />);
     expect(await screen.findByText(/not available on this kind of computer/)).toBeInTheDocument();
     expect(C.agentAccount).not.toHaveBeenCalled();
@@ -75,6 +76,30 @@ describe("Settings, Agent", () => {
     expect(await screen.findByText("Not signed in.")).toBeInTheDocument();
     await user.click(screen.getByRole("button", { name: "Sign in with ChatGPT" }));
     expect(await screen.findByText(/Signed in to ChatGPT as me@example.com/)).toBeInTheDocument();
+  });
+
+  it("is off until turned on: it says what turning on means, and starts and downloads nothing", async () => {
+    C.agentSetup.mockResolvedValue({ ...READY, enabled: false });
+    render(<SettingsView version="0.2.0" />);
+    expect(await screen.findByRole("button", { name: "Turn on" })).toBeInTheDocument();
+    expect(screen.getByText(/sent to OpenAI/)).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: /sign in with chatgpt/i })).toBeNull();
+    expect(C.agentAccount).not.toHaveBeenCalled();
+    expect(C.agentSignIn).not.toHaveBeenCalled();
+  });
+
+  it("turns on, then shows the sign-in, and turns off again", async () => {
+    C.agentSetup.mockResolvedValue({ ...FIRST, enabled: false });
+    C.agentSetEnabled.mockResolvedValueOnce(FIRST).mockResolvedValueOnce({ ...FIRST, enabled: false });
+    const user = userEvent.setup();
+    render(<SettingsView version="0.2.0" />);
+    await user.click(await screen.findByRole("button", { name: "Turn on" }));
+    expect(C.agentSetEnabled).toHaveBeenLastCalledWith(true);
+    expect(await screen.findByRole("button", { name: "Sign in with ChatGPT" })).toBeInTheDocument();
+    expect(C.agentSignIn).not.toHaveBeenCalled();
+    await user.click(screen.getByRole("button", { name: "Turn off" }));
+    expect(C.agentSetEnabled).toHaveBeenLastCalledWith(false);
+    expect(await screen.findByRole("button", { name: "Turn on" })).toBeInTheDocument();
   });
 
   it("signs out and returns to the signed-out state", async () => {

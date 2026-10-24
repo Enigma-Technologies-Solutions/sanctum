@@ -487,6 +487,12 @@ export function CreateView({ onBack, initialSource }: { onBack?: () => void; ini
     );
   } else if (!agent.setup.supported) {
     body = <p style={{ ...note, padding: "16px 24px" }}>Building apps is not available on this kind of computer yet.</p>;
+  } else if (!agent.setup.enabled) {
+    body = (
+      <p role="status" style={{ ...note, padding: "16px 24px" }}>
+        Building apps is turned off. To use it, open Settings in the main Sanctum window and turn on Build apps with Codex.
+      </p>
+    );
   } else if (!agent.account?.signedIn) {
     body = (
       <div style={{ padding: "16px 24px" }}>

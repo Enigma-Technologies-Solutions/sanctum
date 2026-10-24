@@ -102,9 +102,19 @@ impl AgentProcess {
             .kill_on_drop(true);
         #[cfg(windows)]
         cmd.creation_flags(0x0800_0000); // CREATE_NO_WINDOW
-        let mut child = cmd
-            .spawn()
-            .map_err(|e| AgentError::Spawn(format!("cannot start the agent: {e}")))?;
+                                         // Linux can answer "text file busy" for a program that was written a moment ago, when
+                                         // another thread forked while the file was still open for writing. It clears at once.
+        let mut tries = 0;
+        let mut child = loop {
+            match cmd.spawn() {
+                Ok(c) => break c,
+                Err(e) if e.kind() == std::io::ErrorKind::ExecutableFileBusy && tries < 5 => {
+                    tries += 1;
+                    tokio::time::sleep(std::time::Duration::from_millis(20)).await;
+                }
+                Err(e) => return Err(AgentError::Spawn(format!("cannot start the agent: {e}"))),
+            }
+        };
 
         let stdin = child
             .stdin
