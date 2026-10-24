@@ -119,7 +119,9 @@ Say so in the release notes if asked; the post makes no platform-specific claim.
    `scripts/sign-registry.sh --bundles examples` (interactive, the maintainer's step), then
    `node scripts/verify-registry.mjs`. The builder also writes the per-tool pages, and keeps
    `web/apps/<app_id>/og.png`; make a new one with `node scripts/gen-brand.mjs apps`.
-6. **PR and merge.** The registry and pages deploy with Pages on merge; the registry check in CI
+6. **Home page card:** add the tool to the "Signed tools" grid in `web/index.html`. A launch test
+   requires that grid to list exactly the tools in the registry, so CI fails without it.
+7. **PR and merge.** The registry and pages deploy with Pages on merge; the registry check in CI
    fails if the committed files are out of date.
 
 Rules that never change: a signature identifies the publisher and unchanged bytes, never "safe";
