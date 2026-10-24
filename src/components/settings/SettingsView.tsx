@@ -252,6 +252,38 @@ function AgentSection() {
     );
   }
 
+  if (agent.setup && !agent.setup.enabled) {
+    return (
+      <Section id="s-agent" title="Build apps with Codex">
+        <Row first>
+          <div style={{ flex: 1, minWidth: 0 }}>
+            <div role="status">Off.</div>
+            {agent.error && (
+              <div role="alert" style={{ marginTop: "4px", fontSize: "12px", color: "var(--danger-ink)", overflowWrap: "anywhere" }}>
+                {agent.error}
+              </div>
+            )}
+          </div>
+          <button
+            type="button"
+            onClick={() => void agent.setEnabled(true)}
+            disabled={agent.working}
+            style={{ ...buttonStyle, opacity: agent.working ? 0.6 : 1, cursor: agent.working ? "default" : "pointer" }}
+          >
+            Turn on
+          </button>
+        </Row>
+        <Row>
+          <span style={{ fontSize: "12px", color: "var(--app-ink-2)" }}>
+            An experiment, off until you turn it on. You describe a tool in plain words and OpenAI's Codex writes it, using your
+            ChatGPT account. Turning it on lets Sanctum download Codex to this computer; nothing is downloaded or started until you
+            sign in. Your messages and the drafts Codex writes are sent to OpenAI. Sanctum never sees your password or sign-in token.
+          </span>
+        </Row>
+      </Section>
+    );
+  }
+
   let status: ReactNode = "Checking…";
   if (agent.signingIn) status = agent.phase === "downloading" ? downloadLabel(agent.download) : "Finish signing in in your browser…";
   else if (agent.setup && !agent.setup.installed) status = "Not signed in.";
@@ -262,7 +294,7 @@ function AgentSection() {
   } else if (agent.error) status = "Could not read the account.";
 
   return (
-    <Section id="s-agent" title="Agent">
+    <Section id="s-agent" title="Build apps with Codex">
       <Row first>
         <div style={{ flex: 1, minWidth: 0 }}>
           <div role="status" style={{ overflowWrap: "anywhere" }}>{status}</div>
@@ -298,7 +330,21 @@ function AgentSection() {
       <Row>
         <span style={{ fontSize: "12px", color: "var(--app-ink-2)" }}>
           {agent.setup ? signInNote(agent.setup) : null} Codex runs on this computer and starts only when you use it.
+          Your messages and the drafts Codex writes are sent to OpenAI. Apps you make can save files to your Downloads folder without asking.
         </span>
+      </Row>
+      <Row>
+        <span style={{ flex: 1, fontSize: "12px", color: "var(--app-ink-2)" }}>
+          Turning this off stops Codex and closes any open session. Your sign-in and the downloaded program stay where they are.
+        </span>
+        <button
+          type="button"
+          onClick={() => void agent.setEnabled(false)}
+          disabled={agent.working || agent.signingIn}
+          style={{ ...buttonStyle, opacity: agent.working || agent.signingIn ? 0.6 : 1, cursor: agent.working || agent.signingIn ? "default" : "pointer" }}
+        >
+          Turn off
+        </button>
       </Row>
     </Section>
   );

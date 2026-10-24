@@ -51,6 +51,51 @@ export function downloadLabel(d: AgentDownload | null): string {
   return `Downloading Codex… ${Math.min(100, Math.floor((d.done / d.total) * 100))}%`;
 }
 
+/** Tauri event sent to every window when building apps is turned on or off. */
+export const ENABLED_EVENT = "agent-enabled";
+
+/** Calls `fn` whenever building apps is turned on or off. Returns the way to stop listening. */
+export function onEnabledChange(fn: () => void): () => void {
+  let stop: (() => void) | undefined;
+  let gone = false;
+  try {
+    Promise.resolve(listen(ENABLED_EVENT, fn))
+      .then((u) => {
+        if (gone) u?.();
+        else stop = u;
+      })
+      .catch(() => {});
+  } catch {
+    // No event channel (for example in a test): the setting is read again on the next visit.
+  }
+  return () => {
+    gone = true;
+    stop?.();
+  };
+}
+
+/**
+ * Whether Create is available to use here: this computer is supported and the person turned it
+ * on in Settings. `null` while looking. Reads files only.
+ */
+export function useAgentSetup(): AgentSetup | null {
+  const [setup, setSetup] = useState<AgentSetup | null>(null);
+  useEffect(() => {
+    let live = true;
+    const look = () =>
+      Commands.agentSetup()
+        .then((s) => live && setSetup(s))
+        .catch(() => {});
+    void look();
+    const stop = onEnabledChange(() => void look());
+    return () => {
+      live = false;
+      stop();
+    };
+  }, []);
+  return setup;
+}
+
 /**
  * State and actions for the ChatGPT sign-in, shared by the Welcome panel and Settings.
  *
@@ -73,17 +118,52 @@ export function useAgent({ readAccount }: { readAccount: boolean }) {
       .then((s) => {
         if (!live.current) return;
         setSetup(s);
-        if (s.supported && s.installed && readAccount) {
+        if (s.supported && s.enabled && s.installed && readAccount) {
           Commands.agentAccount()
             .then((a) => live.current && setAccount(a))
             .catch((e: unknown) => live.current && setError(asAgentError(e).message));
         }
       })
-      .catch(() => live.current && setSetup({ supported: false, installed: false, downloadMb: 0 }));
+      .catch(() => live.current && setSetup({ supported: false, enabled: false, installed: false, downloadMb: 0 }));
     return () => {
       live.current = false;
     };
   }, [readAccount]);
+
+  // Turned on or off from anywhere in Sanctum: look again, and read the account if it is on.
+  useEffect(() => {
+    return onEnabledChange(() => {
+      Commands.agentSetup()
+        .then((s) => {
+          if (!live.current) return;
+          setSetup(s);
+          setError(null);
+          if (!s.enabled) setAccount(null);
+          else if (s.supported && s.installed && readAccount) {
+            Commands.agentAccount()
+              .then((a) => live.current && setAccount(a))
+              .catch((e: unknown) => live.current && setError(asAgentError(e).message));
+          }
+        })
+        .catch(() => {});
+    });
+  }, [readAccount]);
+
+  const setEnabled = useCallback(async (on: boolean) => {
+    setWorking(true);
+    setError(null);
+    try {
+      const s = await Commands.agentSetEnabled(on);
+      if (live.current) {
+        setSetup(s);
+        if (!on) setAccount(null);
+      }
+    } catch (e) {
+      if (live.current) setError(asAgentError(e).message);
+    } finally {
+      if (live.current) setWorking(false);
+    }
+  }, []);
 
   const signIn = useCallback(async () => {
     setSigningIn(true);
@@ -137,9 +217,9 @@ export function useAgent({ readAccount }: { readAccount: boolean }) {
   const phase: "idle" | "downloading" | "browser" = !signingIn ? "idle" : downloading ? "downloading" : "browser";
 
   // Still finding out who is signed in: Codex is on the computer and the answer has not come yet.
-  const checking = !setup || (readAccount && setup.supported && setup.installed && account === null && error === null);
+  const checking = !setup || (readAccount && setup.supported && setup.enabled && setup.installed && account === null && error === null);
 
-  return { setup, account, signingIn, phase, download, working, error, checking, signIn, cancel, signOut };
+  return { setup, account, signingIn, phase, download, working, error, checking, signIn, cancel, signOut, setEnabled };
 }
 
 /** One line of the conversation: something said, or a step Codex took. */

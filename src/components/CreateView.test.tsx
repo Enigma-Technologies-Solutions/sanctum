@@ -34,9 +34,9 @@ vi.mock("@/lib/commands", () => ({
 }));
 
 const C = vi.mocked(Commands);
-const NONE = { supported: false, installed: false, downloadMb: 0 };
-const READY = { supported: true, installed: true, downloadMb: 100 };
-const FIRST = { supported: true, installed: false, downloadMb: 100 };
+const NONE = { supported: false, enabled: true, installed: false, downloadMb: 0 };
+const READY = { supported: true, enabled: true, installed: true, downloadMb: 100 };
+const FIRST = { supported: true, enabled: true, installed: false, downloadMb: 100 };
 const pro = { signedIn: true, email: "me@example.com", plan: "Pro" };
 const out = { signedIn: false, email: null, plan: null };
 const SIGN_IN = { name: "Sign in with ChatGPT" };
@@ -77,6 +77,15 @@ describe("the Create view: before signing in", () => {
     C.agentSetup.mockResolvedValue(NONE);
     render(<CreateView onBack={vi.fn()} />);
     expect(await screen.findByText(/not available on this kind of computer/)).toBeInTheDocument();
+    expect(C.agentChatStart).not.toHaveBeenCalled();
+  });
+
+  it("says building apps is turned off, and starts nothing, until it is turned on in Settings", async () => {
+    C.agentSetup.mockResolvedValue({ ...READY, enabled: false });
+    render(<CreateView onBack={vi.fn()} />);
+    expect(await screen.findByText(/Building apps is turned off/)).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Sign in with ChatGPT" })).toBeNull();
+    expect(C.agentAccount).not.toHaveBeenCalled();
     expect(C.agentChatStart).not.toHaveBeenCalled();
   });
 

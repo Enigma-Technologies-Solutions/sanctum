@@ -13,6 +13,21 @@ section behind.
 
 ## [Unreleased]
 
+### Added
+
+- Build apps with Codex, an experiment that is **off by default**. Settings has a Turn on button.
+  While it is off, Sanctum shows no Create controls, downloads nothing and starts nothing. When it
+  is on, you sign in with ChatGPT, Sanctum downloads Codex to your computer, and you describe a
+  tool in plain words. Your messages and the drafts Codex writes are sent to OpenAI. Tools made
+  this way are marked "Made with Codex" and start with no approvals.
+- Drafts keep a history in the Create window: preview an earlier draft or go back to it.
+- Standing instructions apply to every app Codex builds.
+- Modify with Codex, under Update for a tool Codex made, opens the Create window with that tool
+  in a Sources sidebar.
+- Tool windows can save files: from a page's own blob or data link they go to your Downloads
+  folder with no prompt, never over an existing file, and programs and scripts are refused.
+- Enigma PDF Watermark, a signed tool that marks PDFs for each recipient, in the Catalogue.
+
 ## [0.2.0] - 2026-10-19
 
 ### Added

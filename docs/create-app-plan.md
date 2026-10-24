@@ -274,7 +274,7 @@ sign-in has not been tried yet. Its browser callback listens on a fixed local po
 second Codex signing in at the same time would collide.
 
 **Phase 2, chat.** Chat view, layer 1 policy, scratch directory, "Create app" button in the Tool
-Vault header and empty state. Release builds keep the feature behind a switch until Phase 4.
+Vault header and empty state. The feature is off by default and the person turns it on in Settings (Phase 4).
 
 Status: built. `agent/chat.rs` holds the layer 1 policy (`workspaceWrite`, scratch folder only, no
 network, `/tmp` and `TMPDIR` excluded, approval `never`), sent on the thread and again on every turn,
@@ -294,6 +294,26 @@ cleanup of scratch directories.
 makes no network calls itself; with Create app on, the Codex process sends prompts to OpenAI. Update
 README, site, `SECURITY.md`, the in-app welcome copy and the security notes. No release until this
 lands (the privacy copy is a promise, see the Phase 8 decision in [launch.md](launch.md)).
+
+Status: the app side is built; the public site stays as it is until the feature ships. Decision
+2026-10-24: because the OpenAI terms question is open, Create is **off by default in every build**
+and the person turns it on in Settings. The switch is a marker file (`agent/enabled`), so it
+survives restarts. While it is off, the Rust side refuses to start Codex, download it, sign in,
+open the Create window or start a session (`disabled` error), and the interface shows no Create
+card and no Modify with Codex button. Turning it off shuts down Codex and any open session, and an
+`agent-enabled` event updates every open window. The README, `SECURITY.md` and the changelog now
+describe it. This replaces the earlier idea of a release-build gate.
+
+Copy for `web/index.html`, to publish in the same change as the release that contains the feature
+(the site describes shipped versions, so it must not get ahead of the app):
+
+- Privacy answer, replacing "The only request Sanctum makes by itself is an update check": "The only
+  request Sanctum makes by itself is an update check against its GitHub releases. There is an
+  optional feature, off until you turn it on in Settings, that lets you build a tool by describing
+  it: it downloads OpenAI's Codex to your computer, and your messages and the drafts Codex writes
+  are sent to OpenAI under your own ChatGPT account. Sanctum sends none of it."
+- The line "Sanctum has no account and sends no telemetry" stays true as written.
+- A feature list entry only once the OpenAI answer is in and the checklist has been run.
 
 **Phase 5, layer 2.** macOS first, then Linux. Local allowlist proxy, Seatbelt or bubblewrap
 profile, `externalSandbox`. Windows decision recorded.

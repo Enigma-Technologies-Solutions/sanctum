@@ -122,6 +122,31 @@ needs re-presenting.
 
 ---
 
+## Build apps with Codex (experimental, off by default)
+
+Sanctum can write a tool for you. You describe it in plain words, OpenAI's Codex writes a single
+HTML file, and Sanctum shows the same approval screen it shows for any pasted tool. This is off
+until you turn it on in Settings, under Build apps with Codex.
+
+What turning it on means:
+
+- **Sanctum downloads Codex to your computer** the first time you sign in. Nothing is downloaded
+  or started before that, and Codex stops when you quit Sanctum.
+- **You sign in with your own ChatGPT account** in your browser. Sanctum never sees your
+  password or sign-in token, and there is no Sanctum account.
+- **Your messages and the drafts Codex writes are sent to OpenAI.** That is how it works, and it is
+  the one place Sanctum's data leaves your computer on your behalf. Sanctum itself sends nothing.
+- **Codex works in a private folder** with no network access of its own, and the folder is deleted
+  when you close the window. Nothing reaches your library unless you click Add.
+- **A tool made this way is marked "Made with Codex"** and starts with no approvals like any other.
+  Nobody has reviewed or signed it.
+- **Apps can save files to your Downloads folder without asking.** A page can offer a file it made,
+  and Sanctum saves it there under a plain name, never over an existing file, and refuses programs
+  and scripts. A window can save 25 files.
+
+Turning it off stops Codex and closes any open session. Your sign-in and the downloaded program
+stay where they are. The design and its limits are in [docs/create-app-plan.md](docs/create-app-plan.md).
+
 ## Status
 
 **v0.2.0** adds the signed Catalogue, install links and a light, dark or system theme. [Download it from GitHub Releases](https://github.com/Enigma-Technologies-Solutions/sanctum/releases/latest). macOS builds are signed and notarized; Windows and Linux builds are unsigned.

@@ -257,6 +257,7 @@ pub fn run() {
             registry::commands::install_all_from_registry,
             deeplink::take_pending_link,
             agent::commands::agent_setup,
+            agent::commands::agent_set_enabled,
             agent::commands::agent_account,
             agent::commands::agent_sign_in,
             agent::commands::agent_cancel_sign_in,

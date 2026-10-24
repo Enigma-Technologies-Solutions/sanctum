@@ -18,7 +18,7 @@ const C = vi.mocked(Commands) as unknown as Record<string, ReturnType<typeof vi.
 
 beforeEach(() => {
   for (const k of Object.keys(C)) C[k].mockResolvedValue(k === "getPolicyStatus" ? { managed: false, error: null, pinnedCount: null } : []);
-  C.agentSetup.mockResolvedValue({ supported: false, installed: false, downloadMb: 0 });
+  C.agentSetup.mockResolvedValue({ supported: false, enabled: true, installed: false, downloadMb: 0 });
 });
 afterEach(() => {
   localStorage.clear();

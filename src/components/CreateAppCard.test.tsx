@@ -19,9 +19,9 @@ vi.mock("@/lib/commands", () => ({
 }));
 
 const C = vi.mocked(Commands);
-const NONE = { supported: false, installed: false, downloadMb: 0 };
-const READY = { supported: true, installed: true, downloadMb: 100 };
-const FIRST = { supported: true, installed: false, downloadMb: 100 };
+const NONE = { supported: false, enabled: true, installed: false, downloadMb: 0 };
+const READY = { supported: true, enabled: true, installed: true, downloadMb: 100 };
+const FIRST = { supported: true, enabled: true, installed: false, downloadMb: 100 };
 const START = { name: /start building/i };
 
 beforeEach(() => {
@@ -34,6 +34,14 @@ describe("the Create your own app card", () => {
     render(<CreateAppCard />);
     await vi.waitFor(() => expect(C.agentSetup).toHaveBeenCalledTimes(1));
     expect(screen.queryByTestId("create-app-card")).toBeNull();
+  });
+
+  it("is not shown until the person turns building apps on in Settings", async () => {
+    C.agentSetup.mockResolvedValue({ ...READY, enabled: false });
+    render(<CreateAppCard />);
+    await vi.waitFor(() => expect(C.agentSetup).toHaveBeenCalledTimes(1));
+    expect(screen.queryByTestId("create-app-card")).toBeNull();
+    expect(C.agentAccount).not.toHaveBeenCalled();
   });
 
   it("is shown when Codex can be set up, and looking starts and downloads nothing", async () => {

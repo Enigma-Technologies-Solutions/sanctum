@@ -1,11 +1,10 @@
 // SPDX-License-Identifier: AGPL-3.0-only
 // Copyright (C) 2026 Enigma Technologies Solutions
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { ArrowRight, PencilRuler } from "lucide-react";
 import { Commands } from "@/lib/commands";
-import { asAgentError, downloadNote } from "@/lib/agent";
-import type { AgentSetup } from "@/lib/types";
+import { asAgentError, downloadNote, useAgentSetup } from "@/lib/agent";
 import { Button } from "@/components/ui/button";
 
 const font = "'Inter', system-ui, sans-serif";
@@ -13,22 +12,14 @@ const font = "'Inter', system-ui, sans-serif";
 /**
  * A card in "Your tools" for making a tool of your own. It opens the Create window, where the
  * sign-in and the chat live, so the conversation stays open while you use the rest of Sanctum.
- * Not shown on a computer Sanctum has no Codex build for. Looking reads files only: nothing is
- * downloaded or started until the person opens the window.
+ * Not shown on a computer Sanctum has no Codex build for, or until the person turns building
+ * apps on in Settings. Looking reads files only: nothing is downloaded or started until the
+ * person opens the window.
  */
 export function CreateAppCard() {
-  const [setup, setSetup] = useState<AgentSetup | null>(null);
+  const setup = useAgentSetup();
   const [error, setError] = useState<string | null>(null);
-  useEffect(() => {
-    let live = true;
-    Commands.agentSetup()
-      .then((s) => live && setSetup(s))
-      .catch(() => {});
-    return () => {
-      live = false;
-    };
-  }, []);
-  if (!setup?.supported) return null;
+  if (!setup?.supported || !setup.enabled) return null;
   const note = downloadNote(setup);
 
   return (

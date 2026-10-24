@@ -32,7 +32,7 @@ vi.mock("@/lib/commands", () => ({
 }));
 
 const C = vi.mocked(Commands);
-const NONE = { supported: false, installed: false, downloadMb: 0 };
+const NONE = { supported: false, enabled: true, installed: false, downloadMb: 0 };
 
 beforeEach(() => {
   vi.resetAllMocks();
