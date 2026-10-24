@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>PDF Watermark, a signed tool for Sanctum</title>
+<meta name="description" content="Put a visible, traceable watermark on PDFs before you share them. Runs offline and asks for no access.">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'none'; style-src 'self'; font-src 'self'; img-src 'self' data:; connect-src 'none'; form-action 'none'; base-uri 'none'">
+<meta name="referrer" content="strict-origin-when-cross-origin">
+<link rel="canonical" href="https://sanctum.enigma.sh/apps/sh.enigma.pdf-watermark/">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Sanctum">
+<meta property="og:title" content="PDF Watermark, a signed tool for Sanctum">
+<meta property="og:description" content="Put a visible, traceable watermark on PDFs before you share them. Runs offline and asks for no access.">
+<meta property="og:url" content="https://sanctum.enigma.sh/apps/sh.enigma.pdf-watermark/">
+<meta property="og:image" content="https://sanctum.enigma.sh/apps/sh.enigma.pdf-watermark/og.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="PDF Watermark, a signed tool for Sanctum">
+<meta name="twitter:description" content="Put a visible, traceable watermark on PDFs before you share them. Runs offline and asks for no access.">
+<meta name="twitter:image" content="https://sanctum.enigma.sh/apps/sh.enigma.pdf-watermark/og.png">
+<meta name="theme-color" content="#FFFFFF">
+<meta name="color-scheme" content="light">
+<link rel="icon" href="../../assets/favicon.svg" type="image/svg+xml">
+<link rel="icon" href="../../favicon.ico" sizes="32x32 48x48">
+<link rel="apple-touch-icon" href="../../assets/apple-touch-icon.png">
+<link rel="stylesheet" href="../../styles.css">
+</head>
+<body>
+<a class="skip" href="#main">Skip to content</a>
+<nav class="nav" aria-label="Primary">
+  <div class="wrap nav__inner">
+    <a class="wordmark" href="../../" aria-label="Sanctum home">SANCTUM<span class="wordmark__sq" aria-hidden="true"></span></a>
+    <div class="nav__links">
+      <a href="../../">Home</a>
+      <a href="../../apps/">Signed tools</a>
+      <a href="../../blog/">Blog</a>
+    </div>
+    <div class="nav__cta">
+      <a class="btn btn--ghost btn--sm nav__gh" href="https://github.com/Enigma-Technologies-Solutions/sanctum" rel="noopener">GitHub</a>
+      <a class="btn btn--volt btn--sm" href="https://github.com/Enigma-Technologies-Solutions/sanctum/releases/latest" rel="noopener">Download Sanctum</a>
+    </div>
+  </div>
+</nav>
+
+<main id="main" class="section apps">
+  <div class="wrap">
+    <div class="appdoc">
+    <p class="eyebrow"><a href="../">Signed tools</a></p>
+    <h1 class="appdoc__title">PDF Watermark <span class="tag">v1.0.0</span></h1>
+    <p class="lede appdoc__lede">Put a visible, traceable watermark on PDFs before you share them. Runs offline and asks for no access.</p>
+
+    <article class="card app">
+        <p class="app__desc">Marks PDFs before you send them to someone. Each file gets its own ID, and the name of the person it is for is printed on every page, so a leaked copy leads back to the copy it came from. You choose the colour, strength, angle, size and spacing of the tiled text, and can add corner stamps with the ID and page number, a band along the bottom edge, and closer marks over the bottom quarter of each page. Several files can be marked at once and saved as a ZIP with a small receipt. Everything runs inside the tool window: your PDFs are not uploaded, stored or sent anywhere, and the tool asks Sanctum for no access at all. The marks deter and trace. Someone with a PDF editor can remove them.</p>
+        <p class="fine">Asks for no special access</p>
+        <p class="fine appdoc__links">Published by Enigma Technologies Solutions · <a href="https://github.com/Enigma-Technologies-Solutions/sanctum/tree/main/examples/pdf-watermark" rel="noopener">Source</a> · <span>AGPL-3.0-only</span></p>
+        <dl class="app__hashes fine">
+          <dt>File SHA-256</dt><dd>40d7b8b695422b8963482740221af0c5ccdbe5d3a693954c1232539e525e4641</dd>
+          <dt>Tool SHA-256</dt><dd>2168f92d381617fd97cb533f98dcac2924a29464fb93674b96e45d9ef335125f</dd>
+          <dt>App id</dt><dd>sh.enigma.pdf-watermark</dd>
+          <dt>Publisher key</dt><dd>ed25519:2daedA0n4NSI2p2McCqLBfGiKRmR5XCm8lypbQTT6hg</dd>
+        </dl>
+        <div class="btn-row">
+          <a class="btn btn--volt btn--sm" href="sanctum://install?app=sh.enigma.pdf-watermark">Install in Sanctum</a>
+          <a class="btn btn--ghost btn--sm" href="../../registry/v1/bundles/sh.enigma.pdf-watermark-1.0.0.sanctum" download>Download file (578.1 KB)</a>
+        </div>
+        <p class="fine">Install opens Sanctum, which shows this tool and what it asks for, then waits for your click. Nothing is installed from the page itself. Sanctum not installed? <a href="https://github.com/Enigma-Technologies-Solutions/sanctum/releases/latest" rel="noopener">Get Sanctum</a> first.</p>
+    </article>
+    <p class="notice">Verified means the publisher is who it says and the bytes have not changed. It does not mean safe. A signature never grants access: every tool still starts with nothing approved, and you approve each capability yourself.</p>
+
+    <h2 class="apps__sub">Screenshots</h2>
+      <figure class="screenshot"><img src="../../registry/v1/apps/sh.enigma.pdf-watermark/overview.png" width="1600" height="1131" alt="Overview of Enigma PDF Watermark: a summary of what stays on your computer and a button to choose PDF files." loading="lazy"></figure>
+      <figure class="screenshot"><img src="../../registry/v1/apps/sh.enigma.pdf-watermark/settings.png" width="1600" height="1131" alt="Watermark settings: who the copy is for, colour, strength, angle, size and spacing, with a preview of the tiled text on an A4 page." loading="lazy"></figure>
+      <figure class="screenshot"><img src="../../registry/v1/apps/sh.enigma.pdf-watermark/results.png" width="1600" height="1131" alt="Marked files, each with its ID, fingerprint and recipient, and buttons to save each file or all of them as a ZIP." loading="lazy"></figure>
+
+    <h2 class="apps__sub">What is new</h2>
+    <div class="changes">
+      <section>
+        <h3 class="changes__v">1.0.0 <span class="fine">2026-10-24</span></h3>
+        <ul class="changes__list"><li><strong>Added.</strong> Put a tiled, diagonal watermark on any number of PDFs, with the name of the person each copy is for on every page.</li><li><strong>Added.</strong> A different ID for every marked file, built from random characters and the start of the original file&#39;s SHA-256, written on the pages and in the PDF&#39;s information fields.</li><li><strong>Added.</strong> Corner stamps with the ID and page number, a band along the bottom edge, and closer marks over the bottom quarter of each page.</li><li><strong>Added.</strong> Pages that are turned, or whose page box does not start at zero, are marked correctly.</li><li><strong>Added.</strong> Save each file, or all of them in one ZIP with a receipt that lists IDs and file fingerprints and holds no document content.</li><li><strong>Added.</strong> First release signed by Enigma Technologies Solutions.</li></ul>
+      </section>
+    </div>
+
+    <h2 class="apps__sub">Manual</h2>
+    <div class="manual">
+<h4>What it does</h4>
+<p>Adds a visible watermark to PDFs before you share them. Each file gets its own ID, and the name of the person it is for is printed on every page. If a copy leaks, the ID and the name show which copy it was.</p>
+<h4>What it asks Sanctum for</h4>
+<p>Nothing. The approval screen is empty: no storage, no network, no smart card and no device access. Your PDFs are read and rewritten in the tool window and are not uploaded, stored or sent anywhere. Marked files leave the window only when you press a save button, and they go to your Downloads folder.</p>
+<h4>Mark your files</h4>
+<ol><li>Under <strong>Choose your PDFs</strong>, press <strong>Choose PDF files</strong> and pick one or more. Each file can be up to 200 MB. A password protected PDF has to be unlocked first.</li><li>Under <strong>Set the watermark</strong>, type who the copy is for. It is required. Then choose the colour, strength, angle, text size and spacing. The preview shows how the text lies on an A4 page.</li><li>Under <strong>Mark and save</strong>, press <strong>Watermark all</strong>. When a file shows <strong>Done</strong>, press <strong>Save</strong> next to it, or press <strong>Save all as ZIP</strong>.</li></ol>
+<p>The original files are never changed. Marked files are named like <code>passport-watermarked.pdf</code>.</p>
+<h4>What goes on the pages</h4>
+<ul><li><strong>Tiled text.</strong> The wording is <code>CONFIDENTIAL • DO NOT SHARE • {UID} • {DATE} • {RECIPIENT}</code> by default. Open <strong>Wording</strong> to change it. You can use <code>{UID}</code>, <code>{DATE}</code>, <code>{RECIPIENT}</code>, <code>{PAGE}</code> and <code>{PAGES}</code>.</li><li><strong>Corner stamps.</strong> The ID and page number at the top left and bottom right of every page.</li><li><strong>Bottom band.</strong> A light strip along the bottom edge that says who the copy was shared with.</li><li><strong>Sensitive zones.</strong> Closer marks over the bottom quarter of each page, where the machine readable lines of a passport usually are. The text stays readable.</li><li><strong>Hidden marks.</strong> The ID is also written as almost invisible text on every page and in the PDF&#39;s information fields, with the recipient and the file&#39;s fingerprint. The original title and keywords are kept.</li></ul>
+<h4>The ID and the fingerprint</h4>
+<p>The ID is ten random characters, a dash, and four characters from the original file&#39;s SHA-256, for example <code>K7M2Q9XA4D-3F9A</code>. The fingerprint is the first twelve characters of that SHA-256. Together they let you match a marked copy to the original it came from.</p>
+<h4>The ZIP and the receipt</h4>
+<p><strong>Save all as ZIP</strong> puts every marked file in one archive. If <strong>Put a receipt in the ZIP</strong> is on, it also holds <code>receipt.json</code>: each file&#39;s ID, recipient, date, page count, settings, and the SHA-256 of the original and of the marked file. The receipt holds no document content. The ZIP is stored without compression, because PDFs are already compressed.</p>
+<h4>Good to know</h4>
+<ul><li>This deters and traces. It is not protection. Someone with a PDF editor can remove the marks, and a printout, photo or screenshot drops the hidden ones.</li><li>Letters outside the standard Latin set, such as Arabic or Chinese, cannot be drawn by the PDF&#39;s built in font. They are replaced with a question mark, and the tool tells you how many.</li><li>A window can save 25 files. Use the ZIP when you have more.</li><li>The tool cannot see whether a save worked. If a file is not in your Downloads folder, press the button again.</li><li>If you change the settings after some files are marked, those files keep the settings they were marked with. Remove them and add them again to mark them with the new ones.</li></ul>
+    </div>
+
+    <h2 class="apps__sub">For tools and scripts</h2>
+    <p class="lede"><a href="../../registry/v1/apps/sh.enigma.pdf-watermark.json"><code>apps/sh.enigma.pdf-watermark.json</code></a> holds this page's data. It is pinned by hash in the signed <a href="../../registry/v1/index.json"><code>index.json</code></a>.</p>
+    </div>
+  </div>
+</main>
+
+<footer class="foot">
+  <div class="wrap">
+    <div class="foot__bar">
+      <span class="ets" aria-hidden="true">ETS</span>
+      <span>© 2026 Enigma Technologies Solutions</span>
+      <span class="foot__bar-sp">AGPL-3.0-only</span>
+    </div>
+  </div>
+</footer>
+</body>
+</html>

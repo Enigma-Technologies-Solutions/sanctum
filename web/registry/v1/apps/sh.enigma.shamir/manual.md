@@ -26,5 +26,5 @@ These shares do not work with the `ssss-split` and `ssss-combine` command line t
 ## Good to know
 
 - The checks catch mistakes. They do not stop a dishonest share holder from forging a share, and a matching check does not prove the secret is the original.
-- There are no downloads, because tool windows cannot save files. Shares go to the clipboard. If the clipboard is blocked, the text is shown selected in a box.
+- Shares go to the clipboard and are never written to a file, so one cannot be left behind in your Downloads folder. If the clipboard is blocked, the text is shown selected in a box.
 - Secrets are masked and hidden again after 60 seconds without typing or when you switch tabs. Clear empties the fields and the bytes the page holds, on a best effort basis.

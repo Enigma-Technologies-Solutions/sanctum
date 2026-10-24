@@ -3,9 +3,9 @@
   "id": "registry:sh.enigma.public",
   "name": "Enigma Technologies Solutions",
   "kind": "public",
-  "serial": 3,
-  "issued_at": 1792413401,
-  "expires": 1800189401,
+  "serial": 5,
+  "issued_at": 1792836731,
+  "expires": 1800612731,
   "revocations": "revocations.json",
   "apps": [
     {
@@ -25,7 +25,7 @@
       },
       "detail": {
         "path": "apps/sh.enigma.otp-vault.json",
-        "sha256": "sha256:4c01ab852cffb5bbb962f1b1357d24b672164d4783141f3f5fdbceb22cc91b8c",
+        "sha256": "sha256:bb3fb2aac48067b11190738f72f3b035bb712cebfac92a3be528f52dd12defb4",
         "size": 2994
       },
       "versions": [
@@ -50,6 +50,40 @@
       ]
     },
     {
+      "app_id": "sh.enigma.pdf-watermark",
+      "name": "PDF Watermark",
+      "summary": "Put a visible, traceable watermark on PDFs before you share them. Runs offline and asks for no access.",
+      "publisher": {
+        "keyid": "ed25519:2daedA0n4NSI2p2McCqLBfGiKRmR5XCm8lypbQTT6hg",
+        "name": "Enigma Technologies Solutions"
+      },
+      "access": "free",
+      "latest": "1.0.0",
+      "icon": {
+        "path": "apps/sh.enigma.pdf-watermark/icon.svg",
+        "sha256": "sha256:bb69e2183401e6777e8b9d823a953f51f6aa9f04ab548fbd49abaf838687fedb",
+        "size": 411
+      },
+      "detail": {
+        "path": "apps/sh.enigma.pdf-watermark.json",
+        "sha256": "sha256:ff3a97ff1bd94c2658cd270e8f6545629d08bcb768c16739023853c96e24c8d6",
+        "size": 3414
+      },
+      "versions": [
+        {
+          "version": "1.0.0",
+          "published_at": 1792836640,
+          "bundle": {
+            "path": "bundles/sh.enigma.pdf-watermark-1.0.0.sanctum",
+            "sha256": "sha256:40d7b8b695422b8963482740221af0c5ccdbe5d3a693954c1232539e525e4641",
+            "size": 591942
+          },
+          "checksum": "sha256:2168f92d381617fd97cb533f98dcac2924a29464fb93674b96e45d9ef335125f",
+          "declared": []
+        }
+      ]
+    },
+    {
       "app_id": "sh.enigma.shamir",
       "name": "Shamir Secret Sharing",
       "summary": "Split a secret into shares and combine them back. Runs offline and asks for no access.",
@@ -66,7 +100,7 @@
       },
       "detail": {
         "path": "apps/sh.enigma.shamir.json",
-        "sha256": "sha256:cbb90fec9181716255989fa6c8204f3a913e35c05157f7d09df3a3a72e245b11",
+        "sha256": "sha256:79811dc4c1b7ac47054e8560c167ee59010b7321527d1e47615cf106231d429b",
         "size": 2949
       },
       "versions": [

@@ -1,0 +1,70 @@
+{
+  "format": "sanctum-registry-app/1",
+  "app_id": "sh.enigma.pdf-watermark",
+  "description": "Marks PDFs before you send them to someone. Each file gets its own ID, and the name of the person it is for is printed on every page, so a leaked copy leads back to the copy it came from. You choose the colour, strength, angle, size and spacing of the tiled text, and can add corner stamps with the ID and page number, a band along the bottom edge, and closer marks over the bottom quarter of each page. Several files can be marked at once and saved as a ZIP with a small receipt. Everything runs inside the tool window: your PDFs are not uploaded, stored or sent anywhere, and the tool asks Sanctum for no access at all. The marks deter and trace. Someone with a PDF editor can remove them.",
+  "source": "https://github.com/Enigma-Technologies-Solutions/sanctum/tree/main/examples/pdf-watermark",
+  "license": "AGPL-3.0-only",
+  "changelog": [
+    {
+      "version": "1.0.0",
+      "date": "2026-10-24",
+      "changes": [
+        {
+          "type": "added",
+          "text": "Put a tiled, diagonal watermark on any number of PDFs, with the name of the person each copy is for on every page."
+        },
+        {
+          "type": "added",
+          "text": "A different ID for every marked file, built from random characters and the start of the original file's SHA-256, written on the pages and in the PDF's information fields."
+        },
+        {
+          "type": "added",
+          "text": "Corner stamps with the ID and page number, a band along the bottom edge, and closer marks over the bottom quarter of each page."
+        },
+        {
+          "type": "added",
+          "text": "Pages that are turned, or whose page box does not start at zero, are marked correctly."
+        },
+        {
+          "type": "added",
+          "text": "Save each file, or all of them in one ZIP with a receipt that lists IDs and file fingerprints and holds no document content."
+        },
+        {
+          "type": "added",
+          "text": "First release signed by Enigma Technologies Solutions."
+        }
+      ]
+    }
+  ],
+  "manual": {
+    "path": "apps/sh.enigma.pdf-watermark/manual.md",
+    "sha256": "sha256:2cb275a493b3a44f7208db2e0a396787c0c71ad7137a7d06e92b64514c20c37e",
+    "size": 3341
+  },
+  "screenshots": [
+    {
+      "path": "apps/sh.enigma.pdf-watermark/overview.png",
+      "sha256": "sha256:291427e36520d6690b6212a05bf35ddc81b1b0c235d0315208c7b851ab20d476",
+      "size": 137436,
+      "width": 1600,
+      "height": 1131,
+      "alt": "Overview of Enigma PDF Watermark: a summary of what stays on your computer and a button to choose PDF files."
+    },
+    {
+      "path": "apps/sh.enigma.pdf-watermark/settings.png",
+      "sha256": "sha256:420bd16769eeb41c031bedb8598c3ed40ea88e3b1793178bb8041af18b2eaaac",
+      "size": 183206,
+      "width": 1600,
+      "height": 1131,
+      "alt": "Watermark settings: who the copy is for, colour, strength, angle, size and spacing, with a preview of the tiled text on an A4 page."
+    },
+    {
+      "path": "apps/sh.enigma.pdf-watermark/results.png",
+      "sha256": "sha256:735fa9155b2a62dda37806cd5d154acb2ee1103d2b4dac648a0a0c1eedd91d5d",
+      "size": 88671,
+      "width": 1600,
+      "height": 1131,
+      "alt": "Marked files, each with its ID, fingerprint and recipient, and buttons to save each file or all of them as a ZIP."
+    }
+  ]
+}

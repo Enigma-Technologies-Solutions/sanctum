@@ -1,0 +1,21 @@
+{
+  "app_id": "sh.enigma.pdf-watermark",
+  "summary": "Put a visible, traceable watermark on PDFs before you share them. Runs offline and asks for no access.",
+  "description": "Marks PDFs before you send them to someone. Each file gets its own ID, and the name of the person it is for is printed on every page, so a leaked copy leads back to the copy it came from. You choose the colour, strength, angle, size and spacing of the tiled text, and can add corner stamps with the ID and page number, a band along the bottom edge, and closer marks over the bottom quarter of each page. Several files can be marked at once and saved as a ZIP with a small receipt. Everything runs inside the tool window: your PDFs are not uploaded, stored or sent anywhere, and the tool asks Sanctum for no access at all. The marks deter and trace. Someone with a PDF editor can remove them.",
+  "license": "AGPL-3.0-only",
+  "source": "https://github.com/Enigma-Technologies-Solutions/sanctum/tree/main/examples/pdf-watermark",
+  "screenshots": [
+    {
+      "file": "overview.png",
+      "alt": "Overview of Enigma PDF Watermark: a summary of what stays on your computer and a button to choose PDF files."
+    },
+    {
+      "file": "settings.png",
+      "alt": "Watermark settings: who the copy is for, colour, strength, angle, size and spacing, with a preview of the tiled text on an A4 page."
+    },
+    {
+      "file": "results.png",
+      "alt": "Marked files, each with its ID, fingerprint and recipient, and buttons to save each file or all of them as a ZIP."
+    }
+  ]
+}
