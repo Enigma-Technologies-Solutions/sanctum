@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Run your own registry | Sanctum</title>
+<meta name="description" content="Make, sign, host and add your own registry of Sanctum tools, step by step.">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'none'; style-src 'self'; font-src 'self'; img-src 'self' data:; connect-src 'none'; form-action 'none'; base-uri 'none'">
+<meta name="referrer" content="strict-origin-when-cross-origin">
+<link rel="canonical" href="https://sanctum.enigma.sh/docs/run-your-own-registry/">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Sanctum">
+<meta property="og:title" content="Run your own registry | Sanctum">
+<meta property="og:description" content="Make, sign, host and add your own registry of Sanctum tools, step by step.">
+<meta property="og:url" content="https://sanctum.enigma.sh/docs/run-your-own-registry/">
+<meta property="og:image" content="https://sanctum.enigma.sh/assets/og.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Run your own registry | Sanctum">
+<meta name="twitter:description" content="Make, sign, host and add your own registry of Sanctum tools, step by step.">
+<meta name="twitter:image" content="https://sanctum.enigma.sh/assets/og.png">
+<meta name="theme-color" content="#FFFFFF">
+<meta name="color-scheme" content="light">
+<link rel="icon" href="../../../assets/favicon.svg" type="image/svg+xml">
+<link rel="icon" href="../../../favicon.ico" sizes="32x32 48x48">
+<link rel="apple-touch-icon" href="../../../assets/apple-touch-icon.png">
+<link rel="stylesheet" href="../../../styles.css">
+</head>
+<body>
+<a class="skip" href="#main">Skip to content</a>
+<nav class="nav" aria-label="Primary">
+  <div class="wrap nav__inner">
+    <a class="wordmark" href="../../../" aria-label="Sanctum home">SANCTUM<span class="wordmark__sq" aria-hidden="true"></span></a>
+    <div class="nav__links">
+      <a href="../../../">Home</a>
+      <a href="../../../apps/">Signed tools</a>
+      <a href="../../../blog/">Blog</a>
+    </div>
+    <div class="nav__cta">
+      <a class="btn btn--ghost btn--sm nav__gh" href="https://github.com/Enigma-Technologies-Solutions/sanctum" rel="noopener">GitHub</a>
+      <a class="btn btn--volt btn--sm" href="https://github.com/Enigma-Technologies-Solutions/sanctum/releases/latest" rel="noopener">Download Sanctum</a>
+    </div>
+  </div>
+</nav>
+
+<main id="main" class="section apps">
+  <div class="wrap">
+    <article class="blog blog--post">
+    <p class="eyebrow">Guide</p>
+    <h1 class="h2 blog__h1">Run your own registry</h1>
+    <div class="manual blog__body">
+<p>A registry is a set of static files on an HTTPS address: a catalogue, a list of withdrawn versions, and one signed bundle for each tool. Anyone can publish one. A team can keep its approved tools in one, a vendor can publish its own, and you can host one for yourself. Sanctum reads it, checks every file, and shows the tools in the Catalogue.</p>
+<p>This guide takes you from nothing to a registry that Sanctum can add and install from. The format itself is specified in <a href="https://github.com/Enigma-Technologies-Solutions/sanctum/blob/main/docs/registry-format.md" rel="noopener noreferrer">registry-format.md</a>. Nothing here needs a server that runs code.</p>
+<h4>What to expect</h4>
+<p>Sanctum trusts two things out of the box: the Enigma root key that is compiled into the app, and keys the person using it pins by hand. Your registry is signed by your own key, so the first time someone adds it, Sanctum says it does not recognise the signer, shows the key, and asks. They check it against the key you published, and only then is the registry added.</p>
+<p>Three rules hold for every registry, including yours:</p>
+<ul><li>A signature says who published a file and that it has not changed. It never says the tool is safe.</li><li>A signature never grants a capability. A tool from your registry installs with no approvals, and the person approves each one on the usual screen.</li><li>A tool signed by a key Sanctum does not know installs as an unknown signer, even from a registry the person pinned. Pinning your registry vouches for the catalogue, not for the publisher key on each tool.</li></ul>
+<h4>What you need</h4>
+<ul><li>A checkout of the <a href="https://github.com/Enigma-Technologies-Solutions/sanctum" rel="noopener noreferrer">Sanctum repository</a>. The scripts below live in it.</li><li>A recent Node, and a Rust toolchain. The signing command line tool is built from source with <code>cargo</code>.</li><li>A place to host static files over HTTPS. GitHub Pages, an object store, or a folder on an internal web server all work.</li></ul>
+<p>Define a shortcut for the signing tool, run from the root of the checkout:</p>
+<pre><code>sb() { cargo run -q --manifest-path src-tauri/crates/sanctum-bundle/Cargo.toml -- &quot;$@&quot;; }</code></pre>
+<h4>1. Choose names</h4>
+<ul><li>The registry id starts with <code>registry:</code> followed by a reverse domain name you control, for example <code>registry:com.example.tools</code>. It is the registry&#39;s identity. It stays the same if you move to another host.</li><li>Each tool has an app id that is a reverse domain name too, for example <code>com.example.hello</code>. App ids never contain a colon.</li></ul>
+<h4>2. Make two keys</h4>
+<pre><code>sb keygen --out publisher.key
+sb keygen --out registry.key</code></pre>
+<p>Each command writes a secret key file that only you can read, refuses to overwrite an existing file, and prints the public key id, which looks like <code>ed25519:</code> followed by a string of letters. Write both ids down. Back the files up somewhere offline, because a lost key cannot be recovered.</p>
+<p>The two keys do different jobs on purpose. The publisher key signs tools. The registry key signs the catalogue and the list of withdrawn versions, and you will use it again every few weeks to renew them, so it is the one that may later live on a build server. Keep the publisher key offline. A leaked registry key cannot sign a tool, and a leaked publisher key cannot sign a registry.</p>
+<h4>3. Sign each tool</h4>
+<p>For each single-file HTML tool, run the signing script. It scans the file the same way Sanctum does, so the bundle declares exactly what the app will detect at install:</p>
+<pre><code>scripts/sign-tool.sh hello.html com.example.hello &quot;Hello&quot; 1.0.0 publisher.key</code></pre>
+<p>It writes <code>com.example.hello-1.0.0.sanctum</code> next to the HTML file and prints what it declared, for example <code>[]</code> for a tool that asks for nothing, or <code>[&quot;storage&quot;]</code>. Put the finished bundles in one folder, say <code>bundles/</code>.</p>
+<p>A version only goes up. To ship a change, sign it as <code>1.0.1</code> or higher.</p>
+<h4>4. Write the registry sources</h4>
+<p>Make a folder, for example <code>registry-src/</code>:</p>
+<pre><code>registry-src/
+  registry.json
+  revocations.json
+  apps/
+    com.example.hello/
+      app.json
+      CHANGELOG.md
+      manual.md</code></pre>
+<p><code>registry.json</code> names the registry and sets how long each signed file stays valid:</p>
+<pre><code>{
+  &quot;id&quot;: &quot;registry:com.example.tools&quot;,
+  &quot;name&quot;: &quot;Example Tools&quot;,
+  &quot;kind&quot;: &quot;public&quot;,
+  &quot;site_url&quot;: &quot;https://tools.example.com&quot;,
+  &quot;index_days&quot;: 90,
+  &quot;revocations_days&quot;: 14
+}</code></pre>
+<p><code>revocations.json</code> starts empty:</p>
+<pre><code>{ &quot;entries&quot;: [] }</code></pre>
+<p><code>apps/com.example.hello/app.json</code> describes one tool. The summary is at most 200 characters and the description at most 2000. Screenshots are optional, up to eight PNG or WebP images in a <code>screenshots/</code> folder next to it, each with a <code>file</code> name and an <code>alt</code> text:</p>
+<pre><code>{
+  &quot;app_id&quot;: &quot;com.example.hello&quot;,
+  &quot;summary&quot;: &quot;Says hello.&quot;,
+  &quot;description&quot;: &quot;A tiny example tool.&quot;,
+  &quot;license&quot;: &quot;MIT&quot;,
+  &quot;screenshots&quot;: []
+}</code></pre>
+<p><code>CHANGELOG.md</code> has one heading per version, newest first, and one line per change. The line starts with <code>added</code>, <code>changed</code>, <code>fixed</code>, <code>security</code> or <code>removed</code>:</p>
+<pre><code>## 1.0.0 (2026-10-24)
+- added: First release.</code></pre>
+<p><code>manual.md</code> is optional. It uses a small subset of Markdown: headings, paragraphs, bold, italic, code, one level of lists, quotes, and links that start with <code>https://</code>. Raw HTML, images, tables and nested lists are errors, so that every viewer shows exactly what you wrote.</p>
+<h4>5. Build</h4>
+<p>The builder reads your sources and bundles, checks each bundle, and writes the registry files. It never signs anything. It needs to be told that your publisher key is trusted for this build, with <code>--anchor</code>, and it needs a sitemap file with two marker comments, because it also writes an optional set of web pages. You can discard those pages.</p>
+<p>Create <code>sitemap.xml</code> once:</p>
+<pre><code>&lt;?xml version=&quot;1.0&quot; encoding=&quot;UTF-8&quot;?&gt;
+&lt;urlset xmlns=&quot;http://www.sitemaps.org/schemas/sitemap/0.9&quot;&gt;
+  &lt;!-- registry:begin --&gt;
+  &lt;!-- registry:end --&gt;
+&lt;/urlset&gt;</code></pre>
+<p>Then build, using your publisher key id in the anchor:</p>
+<pre><code>node scripts/build-registry.mjs \
+  --source registry-src \
+  --bundles bundles \
+  --out site/registry/v1 \
+  --site scratch/apps \
+  --sitemap sitemap.xml \
+  --anchor &quot;ed25519:YOUR_PUBLISHER_KEY_ID=Example Tools&quot;</code></pre>
+<p>It prints which files changed and need signing. Keep the <code>site/registry/v1</code> folder between runs. The builder reads the old index from it to raise the serial number, and a client refuses an index whose serial goes down.</p>
+<h4>6. Sign the catalogue</h4>
+<p>Sign the two files the builder wrote, with the registry key:</p>
+<pre><code>sb registry-sign --kind index --key registry.key \
+  --file site/registry/v1/index.json --out site/registry/v1/index.json.sig
+sb registry-sign --kind revocations --key registry.key \
+  --file site/registry/v1/revocations.json --out site/registry/v1/revocations.json.sig</code></pre>
+<p>Both print a note that there is no certificate, so clients will treat the key as an unknown signer. That is expected for a registry that is not signed under the Enigma root. People pin your key when they add the registry.</p>
+<h4>7. Check it the way a client would</h4>
+<pre><code>node scripts/verify-registry.mjs site/registry/v1 \
+  --id registry:com.example.tools \
+  --anchor &quot;ed25519:YOUR_PUBLISHER_KEY_ID=Example Tools&quot; \
+  --anchor &quot;ed25519:YOUR_REGISTRY_KEY_ID=Example Tools registry&quot;</code></pre>
+<p>It should end with <code>OK.</code> and a count of apps. If it says <code>id_mismatch</code>, you left out <code>--id</code>, which defaults to Enigma&#39;s registry.</p>
+<h4>8. Host it</h4>
+<p>Upload everything under <code>site/registry/v1</code> to your host so that <code>index.json</code> is at an address you control, such as <code>https://tools.example.com/registry/v1/index.json</code>. The address of the folder is the registry address. Serve the files as they are. Every file other than the index is checked against a hash in the signed index, so a proxy that rewrites a file makes it fail, and a mirror or a CDN needs no trust.</p>
+<p>The address must use <code>https</code>, with no user name, query or fragment. It may point at a private network.</p>
+<h4>9. Add it in Sanctum</h4>
+<p>Open the Catalogue, choose Add a registry, and paste the address of the folder, for example <code>https://tools.example.com/registry/v1/</code>. Sanctum fetches the index, sees a signer it does not recognise, and shows the signing key. Compare it with your registry key id, which you should publish somewhere people can check, such as your own website. When it matches, tick the box and choose Add and trust this key.</p>
+<p>From then on the tools appear in the Catalogue. Installing one runs the same checks as a file you add by hand, and the tool starts with no approvals.</p>
+<h4>10. Keep it fresh</h4>
+<p>Two files expire. The catalogue lasts 90 days by default and the list of withdrawn versions lasts 14. Renew them before they lapse. An expired file shows a warning in Sanctum and does not block browsing or installing, but a client can no longer rely on the list being current.</p>
+<pre><code>node scripts/build-registry.mjs --renew \
+  --source registry-src --bundles bundles --out site/registry/v1 \
+  --site scratch/apps --sitemap sitemap.xml \
+  --anchor &quot;ed25519:YOUR_PUBLISHER_KEY_ID=Example Tools&quot;</code></pre>
+<p>Then sign both files again as in step 6 and upload them. A calendar reminder every ten days is enough.</p>
+<p>To publish a new version of a tool, sign the new bundle, add a section to its <code>CHANGELOG.md</code>, copy the bundle into <code>bundles/</code>, then build, sign, verify and upload.</p>
+<p>To withdraw a version, add an entry to <code>revocations.json</code> with the checksum of that tool&#39;s HTML, its app id, a reason (<code>compromised</code>, <code>vulnerable</code>, <code>withdrawn</code> or <code>mistake</code>) and the time it was revoked, then build, sign and upload. A client matches on the checksum, so the file is withdrawn wherever it came from.</p>
+<h4>If something goes wrong</h4>
+<ul><li><strong>The builder refuses a bundle.</strong> Its signature must verify and chain to an anchor you passed with <code>--anchor</code>. Check that the key id in the flag is the publisher key that signed the bundle.</li><li><strong>A changelog error.</strong> The headings must read <code>## X.Y.Z (YYYY-MM-DD)</code> and each change must start with one of the five types followed by a colon.</li><li><strong>Sanctum says the signer is not recognised.</strong> That is the normal first step for your own registry. It shows the key so that you can pin it.</li><li><strong>Sanctum refuses an update to the registry.</strong> The serial went down or stayed the same with different contents. Rebuild from the same <code>site/registry/v1</code> folder you published last.</li><li><strong>A tool refuses to install.</strong> The scan found a capability the bundle did not declare. Sign it again with <code>scripts/sign-tool.sh</code>, which declares what the scan finds.</li></ul>
+<h4>What this does not do</h4>
+<p>It does not deliver tools to people&#39;s machines without a click, and it does not give a tool any access. Those belong to an organisation policy, which is separate and described in <a href="https://github.com/Enigma-Technologies-Solutions/sanctum/blob/main/docs/registry.md" rel="noopener noreferrer">registry.md</a>. A registry also does not raise a publisher&#39;s standing: only a certificate issued under a root that Sanctum knows can do that.</p>
+    </div>
+    <p class="blog__back"><a href="https://github.com/Enigma-Technologies-Solutions/sanctum/blob/main/docs/run-your-own-registry.md" rel="noopener">Read this guide on GitHub</a></p>
+    </article>
+  </div>
+</main>
+
+<footer class="foot">
+  <div class="wrap">
+    <div class="foot__bar">
+      <span class="ets" aria-hidden="true">ETS</span>
+      <span>© 2026 Enigma Technologies Solutions</span>
+      <span class="foot__bar-sp">AGPL-3.0-only</span>
+    </div>
+  </div>
+</footer>
+</body>
+</html>

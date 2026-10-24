@@ -32,6 +32,14 @@
     <priority>0.4</priority>
   </url>
   <!-- registry:end -->
+  <!-- docs:begin -->
+  <url>
+    <loc>https://sanctum.enigma.sh/docs/run-your-own-registry/</loc>
+    <lastmod>2026-10-24</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.5</priority>
+  </url>
+  <!-- docs:end -->
   <!-- blog:begin -->
   <url>
     <loc>https://sanctum.enigma.sh/blog/</loc>

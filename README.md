@@ -165,7 +165,7 @@ stay where they are. The design and its limits are in [docs/create-app-plan.md](
 | Signed auto-updates | Wired up; first real test is the 0.1.1 update |
 | AST-based scanner (catches obfuscation) | roadmap |
 | Org policy file | roadmap |
-| Tool registry / provenance | roadmap ([design](docs/registry.md)); example provenance attested in CI |
+| Signed Catalogue and registries | Done in 0.2.0 ([format](docs/registry-format.md), [run your own](docs/run-your-own-registry.md)) |
 
 ---
 
