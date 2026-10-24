@@ -42,6 +42,9 @@ pub async fn run_migrations(pool: &SqlitePool) -> Result<(), sqlx::Error> {
         // Maps a publisher's app_id to one library tool, so updates keep the tool id and
         // therefore the origin and its storage.
         "ALTER TABLE tools ADD COLUMN app_id TEXT",
+        // Where a tool came from when it was not pasted, opened or installed from a registry.
+        // `agent` marks one written by an AI agent in Sanctum. NULL for everything else.
+        "ALTER TABLE tools ADD COLUMN origin TEXT",
     ];
     for stmt in v1 {
         let _ = sqlx::query(stmt).execute(pool).await; // "duplicate column" → ignore

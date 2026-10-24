@@ -2,9 +2,17 @@
 // Copyright (C) 2026 Enigma Technologies Solutions
 
 import { invoke } from "@tauri-apps/api/core";
-import { cleanCatalogue, cleanDetail, cleanRegistry } from "@/lib/text";
+import { cleanAccount, cleanAdded, cleanCatalogue, cleanOutcome, cleanReport, cleanStarted, cleanVersions, cleanDetail, cleanRegistry } from "@/lib/text";
 import type {
+  AgentAccount,
+  AddedDraft,
+  AgentSetup,
+  ChatDraft,
+  ChatOutcome,
+  ChatStarted,
   DetectedCapability,
+  DraftReport,
+  DraftVersion,
   BundleInstall,
   IngestResult,
   MetadataUpdate,
@@ -30,6 +38,112 @@ export const Commands = {
   /** A sanctum:// link that arrived before the window was listening. Taking it clears it. */
   takePendingLink(): Promise<LinkEvent | null> {
     return invoke("take_pending_link");
+  },
+
+  /** Whether the agent can be set up here and whether Codex is already downloaded. Looks at files only. */
+  agentSetup(): Promise<AgentSetup> {
+    return invoke("agent_setup");
+  },
+
+  /** The signed-in account. Starts the local Codex process if needed; downloads nothing. */
+  agentAccount(): Promise<AgentAccount> {
+    return invoke<AgentAccount>("agent_account").then(cleanAccount);
+  },
+
+  /**
+   * Sign in with ChatGPT. The first time it downloads Codex (progress arrives as `agent-download`
+   * events), then opens the browser and waits until the person finishes there. Resolves at once if
+   * already signed in. Rejects with an AgentCommandError.
+   */
+  agentSignIn(): Promise<AgentAccount> {
+    return invoke<AgentAccount>("agent_sign_in").then(cleanAccount);
+  },
+
+  /** Stops a download, or a sign-in that is waiting for the browser. */
+  agentCancelSignIn(): Promise<void> {
+    return invoke("agent_cancel_sign_in");
+  },
+
+  agentSignOut(): Promise<AgentAccount> {
+    return invoke<AgentAccount>("agent_sign_out").then(cleanAccount);
+  },
+
+  /**
+   * Opens the Create window, or brings it forward. It is a window of its own so a session
+   * survives while you use the rest of Sanctum. With `toolId`, the conversation is about changing
+   * that app from the library. Rejects with an AgentCommandError.
+   */
+  agentOpenCreateWindow(toolId?: string): Promise<void> {
+    return invoke("agent_open_create_window", { toolId: toolId ?? null });
+  },
+
+  /**
+   * Opens a build session: a new private work folder and a Codex thread that may write only
+   * there. Needs a ChatGPT sign-in (`not_signed_in` otherwise). No request leaves the computer
+   * until the first message.
+   */
+  agentChatStart(source?: string | null): Promise<ChatStarted> {
+    return invoke<ChatStarted>("agent_chat_start", { source: source ?? null }).then(cleanStarted);
+  },
+
+  /** The drafts this conversation has produced, newest first. */
+  agentDraftHistory(): Promise<DraftVersion[]> {
+    return invoke<DraftVersion[]>("agent_draft_history").then(cleanVersions);
+  },
+
+  /** Puts an earlier draft back as the current one. Codex is told on the next message. */
+  agentRestoreDraft(sha: string): Promise<ChatDraft> {
+    return invoke<ChatDraft>("agent_restore_draft", { sha });
+  },
+
+  /** The person's standing instructions for every app (empty when none). */
+  agentGetInstructions(): Promise<string> {
+    return invoke<string>("agent_get_instructions");
+  },
+
+  /** Saves the standing instructions. They apply to conversations started after this. */
+  agentSetInstructions(text: string): Promise<string> {
+    return invoke<string>("agent_set_instructions", { text });
+  },
+
+  /**
+   * Sends a message and resolves when Codex has finished. The reply streams meanwhile as
+   * `agent-chat` events.
+   */
+  agentChatSend(text: string): Promise<ChatOutcome> {
+    return invoke<ChatOutcome>("agent_chat_send", { text }).then(cleanOutcome);
+  },
+
+  /** What the open session's draft is and what it asks for, from the scan. Grants nothing. */
+  agentScanDraft(): Promise<DraftReport> {
+    return invoke<DraftReport>("agent_scan_draft").then(cleanReport);
+  },
+
+  /**
+   * Adds the draft to the library with no approvals, marked as made by an agent. A later draft
+   * from the same session becomes a new version of that tool. Rejects with an AgentCommandError.
+   */
+  agentAddDraft(): Promise<AddedDraft> {
+    return invoke<AddedDraft>("agent_add_draft").then(cleanAdded);
+  },
+
+  /**
+   * Opens the open session's draft (app.html) in a window of its own, as a copy Sanctum made.
+   * The page runs with nothing approved: no network, no devices, no access to Sanctum. Nothing
+   * is added to the library. Rejects with an AgentCommandError.
+   */
+  agentPreviewDraft(sha?: string): Promise<void> {
+    return invoke("agent_preview_draft", { sha: sha ?? null });
+  },
+
+  /** Stops the running turn. */
+  agentChatStop(): Promise<void> {
+    return invoke("agent_chat_stop");
+  },
+
+  /** Ends the session and deletes its work folder. */
+  agentChatClose(): Promise<void> {
+    return invoke("agent_chat_close");
   },
 
   /** Ingest raw HTML string into the library. */

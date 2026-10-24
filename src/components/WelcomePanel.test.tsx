@@ -17,16 +17,29 @@ vi.mock("@tauri-apps/api/event", () => ({ listen: vi.fn().mockResolvedValue(() =
 vi.mock("@tauri-apps/plugin-dialog", () => ({ open: vi.fn() }));
 vi.mock("@tauri-apps/plugin-clipboard-manager", () => ({ writeText: vi.fn(), readText: vi.fn() }));
 vi.mock("@/lib/commands", () => ({
-  Commands: { listTools: vi.fn(), getPolicyStatus: vi.fn(), getTool: vi.fn(), listRegistries: vi.fn(), addRegistry: vi.fn() },
+  Commands: {
+    listTools: vi.fn(),
+    getPolicyStatus: vi.fn(),
+    getTool: vi.fn(),
+    listRegistries: vi.fn(),
+    addRegistry: vi.fn(),
+    agentSetup: vi.fn(),
+    agentAccount: vi.fn(),
+    agentSignIn: vi.fn(),
+    agentCancelSignIn: vi.fn(),
+    agentSignOut: vi.fn(),
+  },
 }));
 
 const C = vi.mocked(Commands);
+const NONE = { supported: false, installed: false, downloadMb: 0 };
 
 beforeEach(() => {
   vi.resetAllMocks();
   vi.mocked(listen).mockResolvedValue(() => {});
   C.listTools.mockResolvedValue([]);
   C.getPolicyStatus.mockResolvedValue({ managed: false, error: null, pinnedCount: null } as never);
+  C.agentSetup.mockResolvedValue(NONE);
 });
 
 describe("the welcome panel", () => {

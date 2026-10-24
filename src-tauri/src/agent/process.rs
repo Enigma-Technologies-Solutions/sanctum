@@ -73,7 +73,7 @@ pub fn child_env(
 
 pub struct AgentProcess {
     pub rpc: Rpc,
-    child: Child,
+    child: tokio::sync::Mutex<Child>,
     stderr: Arc<Mutex<VecDeque<u8>>>,
 }
 
@@ -136,7 +136,11 @@ impl AgentProcess {
         });
 
         let rpc = Rpc::start(stdout, stdin);
-        let mut proc = AgentProcess { rpc, child, stderr };
+        let proc = AgentProcess {
+            rpc,
+            child: tokio::sync::Mutex::new(child),
+            stderr,
+        };
         let init = proc
             .rpc
             .request(
@@ -160,9 +164,12 @@ impl AgentProcess {
         String::from_utf8_lossy(&bytes).into_owned()
     }
 
-    pub async fn shutdown(&mut self) {
-        let _ = self.child.start_kill();
-        let _ = self.child.wait().await;
+    /// Stops the process. Takes `&self` so it can be called while another task is waiting on
+    /// the connection (the waiting task then sees the connection close).
+    pub async fn shutdown(&self) {
+        let mut child = self.child.lock().await;
+        let _ = child.start_kill();
+        let _ = child.wait().await;
     }
 }
 
@@ -251,7 +258,7 @@ read line
             // The parent's secret must not reach the child.
             std::env::set_var("OPENAI_API_KEY", "sk-test-should-not-leak");
 
-            let mut p = AgentProcess::start(&bin, &home, "0.0.0-test")
+            let p = AgentProcess::start(&bin, &home, "0.0.0-test")
                 .await
                 .expect("start");
             let s = account::status(&p.rpc).await.expect("status");

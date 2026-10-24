@@ -272,6 +272,82 @@ fn approved_summary(approvals: &[DetectedCapability]) -> String {
         .join("; ")
 }
 
+/// The tool-window id of a draft preview. Never collides with a stored tool, whose ids are UUIDs.
+pub fn draft_tool_id(draft_id: &str) -> String {
+    format!("draft-{draft_id}")
+}
+
+/// Opens a draft (a page an agent just wrote, not yet in the library) in a window of its own.
+/// `dir` holds a private copy of the page as `index.html`, made by Sanctum, so what is shown
+/// cannot change after it was looked at.
+///
+/// It is a tool window in every respect that matters: its own origin, no Tauri IPC, navigation
+/// confined to that origin, and a policy built from no approvals, which means no network, no
+/// camera, no storage beyond the page itself. Nothing about the draft can ask for more, and it
+/// has no entry in the library, so there is nothing to approve it against. When the window
+/// closes, its grant and its copy are removed.
+pub fn open_draft_window(
+    app: &tauri::AppHandle,
+    draft_id: &str,
+    dir: std::path::PathBuf,
+) -> Result<(), String> {
+    let tool_id = draft_tool_id(draft_id);
+    let label = format!("tool-{tool_id}");
+    let url = url::Url::parse(&format!("sanctum-tool://{label}/index.html"))
+        .map_err(|e| format!("Bad URL: {e}"))?;
+    let none: Vec<DetectedCapability> = Vec::new();
+    {
+        let paths = app.state::<ActiveToolPaths>();
+        paths.0.lock().unwrap().insert(
+            tool_id.clone(),
+            crate::ActiveTool {
+                dir: dir.clone(),
+                csp: build_tool_csp(&none),
+                approvals: none,
+            },
+        );
+    }
+    let nav_host = label.clone();
+    let built = WebviewWindowBuilder::new(app, &label, WebviewUrl::CustomProtocol(url))
+        .title("Draft | Not added to Sanctum, no access granted")
+        .initialization_script(BLOCK_TAURI_IPC)
+        .on_navigation(move |url| is_allowed_tool_navigation(url, &nav_host))
+        .on_download(crate::commands::downloads::handler(
+            app.clone(),
+            label.clone(),
+        ))
+        .inner_size(1024.0, 768.0)
+        .min_inner_size(400.0, 300.0)
+        .center()
+        .build();
+    let window = match built {
+        Ok(w) => w,
+        Err(e) => {
+            // Nothing is open, so nothing may stay granted or on disk.
+            app.state::<ActiveToolPaths>()
+                .0
+                .lock()
+                .unwrap()
+                .remove(&tool_id);
+            let _ = std::fs::remove_dir_all(&dir);
+            return Err(e.to_string());
+        }
+    };
+    let closing = app.clone();
+    window.on_window_event(move |event| {
+        if matches!(event, tauri::WindowEvent::Destroyed) {
+            closing
+                .state::<ActiveToolPaths>()
+                .0
+                .lock()
+                .unwrap()
+                .remove(&tool_id);
+            let _ = std::fs::remove_dir_all(&dir);
+        }
+    });
+    Ok(())
+}
+
 #[command]
 pub async fn open_tool_window(
     app: tauri::AppHandle,
@@ -389,6 +465,10 @@ pub async fn open_tool_window(
         .title(title)
         .initialization_script(BLOCK_TAURI_IPC)
         .on_navigation(move |url| is_allowed_tool_navigation(url, &nav_host))
+        .on_download(crate::commands::downloads::handler(
+            app.clone(),
+            label.clone(),
+        ))
         .inner_size(1024.0, 768.0)
         .min_inner_size(400.0, 300.0)
         .center();
@@ -876,5 +956,31 @@ mod tests {
     fn summary_flags_unresolved_destinations() {
         let summary = approved_summary(&[net(&["(dynamic)"])]);
         assert!(summary.contains("determined at runtime"), "{summary}");
+    }
+
+    /// A draft window is a tool window with nothing approved. This pins the properties that make
+    /// it safe: no IPC, navigation confined to its own origin, a policy built from no approvals,
+    /// and its grant and copy removed when it closes.
+    #[test]
+    fn a_draft_window_is_confined_like_a_tool_window_and_cleans_up() {
+        let src = include_str!("runner.rs");
+        let start = src.find("pub fn open_draft_window").unwrap();
+        let body = &src[start..src[start..].find("#[command]").unwrap() + start];
+        for must in [
+            ".initialization_script(BLOCK_TAURI_IPC)",
+            ".on_navigation(move |url| is_allowed_tool_navigation(url, &nav_host))",
+            ".on_download(crate::commands::downloads::handler(",
+            "csp: build_tool_csp(&none)",
+            "approvals: none",
+            "WindowEvent::Destroyed",
+            ".remove(&tool_id)",
+            "remove_dir_all(&dir)",
+        ] {
+            assert!(body.contains(must), "a draft window lost: {must}");
+        }
+        // Nothing in it hands the page a grant.
+        assert!(!body.contains("approvals.clone()"));
+        assert!(!body.contains("SMARTCARD_BRIDGE"));
+        assert_eq!(draft_tool_id("abc"), "draft-abc");
     }
 }

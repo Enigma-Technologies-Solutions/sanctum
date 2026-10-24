@@ -14,7 +14,7 @@ vi.mock("@tauri-apps/api/event", () => ({ listen: vi.fn().mockResolvedValue(() =
 vi.mock("@tauri-apps/plugin-dialog", () => ({ open: vi.fn() }));
 vi.mock("@tauri-apps/plugin-clipboard-manager", () => ({ writeText: vi.fn(), readText: vi.fn() }));
 vi.mock("@/lib/commands", () => ({
-  Commands: { listTools: vi.fn(), getPolicyStatus: vi.fn(), getTool: vi.fn() },
+  Commands: { listTools: vi.fn(), getPolicyStatus: vi.fn(), getTool: vi.fn(), agentSetup: vi.fn(), agentAccount: vi.fn() },
 }));
 
 const C = vi.mocked(Commands);
@@ -24,6 +24,7 @@ beforeEach(() => {
   vi.mocked(listen).mockResolvedValue(() => {});
   C.listTools.mockResolvedValue([]);
   C.getPolicyStatus.mockResolvedValue({ managed: false, error: null, pinnedCount: null } as never);
+  C.agentSetup.mockResolvedValue({ supported: false, installed: false, downloadMb: 0 });
 });
 
 describe("the main navigation", () => {
@@ -139,5 +140,58 @@ describe("the Tool Vault grouped by publisher", () => {
     expect(screen.getByTestId("empty-slot")).toHaveTextContent("Your first tool will appear here");
     // no publisher groups when nothing is signed
     expect(screen.getAllByRole("heading", { level: 2 })).toHaveLength(1);
+  });
+});
+
+describe("tools an agent wrote", () => {
+  const tool = (id: string, origin: string | null) =>
+    ({
+      tool: { id, name: `Tool ${id}`, description: "", tags: [], icon_data: null, current_ver: "v", approvals: [], created_at: 0, updated_at: 0, origin },
+      current_version: { id: "v", tool_id: id, version_num: 1, file_size: 1, checksum: "ab".repeat(32), manifest: { name: "A", version: "1", checksum: "ab".repeat(32), detected: [], signature: null }, quarantined: false, created_at: 0 },
+      all_versions: [],
+      provenance: null,
+    }) as never;
+
+  const renderLibrary = () =>
+    render(
+      <TooltipProvider>
+        <Library />
+      </TooltipProvider>,
+    );
+
+  it("are marked as made with Codex, and a tool the person added is not", async () => {
+    C.listTools.mockResolvedValue([tool("a", "agent"), tool("b", null)]);
+    renderLibrary();
+    await screen.findByText("Tool a");
+    const badges = screen.getAllByTestId("origin-badge");
+    expect(badges).toHaveLength(1);
+    expect(badges[0]).toHaveAccessibleName(/Made with Codex\. Written by an AI agent from your instructions\. Nobody has reviewed or signed it/);
+    // The mark is a source, not a seal: nothing in it says safe, verified or trusted.
+    expect(badges[0].getAttribute("aria-label")).not.toMatch(/safe|verified|trusted/i);
+  });
+
+  it("show the origin in the card's tooltip on focus", async () => {
+    C.listTools.mockResolvedValue([tool("a", "agent")]);
+    const user = userEvent.setup();
+    renderLibrary();
+    await screen.findByText("Tool a");
+    await user.tab();
+    screen.getByTestId("origin-badge").focus();
+    expect(await screen.findAllByText("Made with Codex")).not.toHaveLength(0);
+  });
+
+  it("appear in the Tool Vault as soon as the Create window adds one", async () => {
+    let fire!: () => void;
+    vi.mocked(listen).mockImplementation((async (name: string, cb: () => void) => {
+      if (name === "library-changed") fire = cb;
+      return () => {};
+    }) as never);
+    renderLibrary();
+    await waitFor(() => expect(C.listTools).toHaveBeenCalledTimes(1));
+    await waitFor(() => expect(fire).toBeDefined());
+    C.listTools.mockResolvedValue([tool("n", "agent")]);
+    fire();
+    expect(await screen.findByText("Tool n")).toBeInTheDocument();
+    expect(C.listTools).toHaveBeenCalledTimes(2);
   });
 });

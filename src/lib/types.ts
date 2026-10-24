@@ -52,6 +52,8 @@ export interface ToolRecord {
   approvals: DetectedCapability[];
   created_at: number;
   updated_at: number;
+  /** `agent` for a tool written by an AI agent in Sanctum. Where it came from, never a sign of safety. */
+  origin?: string | null;
 }
 
 export interface VersionRecord {
@@ -243,6 +245,129 @@ export interface RegistryCommandError {
   signer: string | null;
   registryId: string | null;
   registryName: string | null;
+}
+
+/** Whether the agent can be set up here. Mirrors `AgentSetup` in src-tauri/src/agent/commands.rs. */
+export interface AgentSetup {
+  /** Sanctum has a Codex build for this computer. */
+  supported: boolean;
+  /** Codex is already downloaded. */
+  installed: boolean;
+  /** Size of the first-use download in megabytes. */
+  downloadMb: number;
+}
+
+/** Progress of the first-use download of Codex (the `agent-download` event). */
+export interface AgentDownload {
+  done: number;
+  total: number;
+}
+
+/** Who is signed in to the agent (Codex). Mirrors `AgentAccount` in src-tauri/src/agent/commands.rs. */
+export interface AgentAccount {
+  signedIn: boolean;
+  email: string | null;
+  /** Plan name such as "Pro", ready to show. */
+  plan: string | null;
+}
+
+/** What a build session reports when it opens. Mirrors `ChatStarted` in src-tauri/src/agent/commands.rs. */
+export interface ChatStarted {
+  model: string | null;
+  version: string | null;
+  /** The private work folder, with the home folder shown as `~`. */
+  directory: string;
+  /** What Codex was given to read before the first message. */
+  sources: ChatSource[];
+}
+
+/** One thing Codex was given to read. Mirrors `SourceEntry` in src-tauri/src/agent/commands.rs. */
+export interface ChatSource {
+  kind: "app" | "guide" | "instructions";
+  title: string;
+  detail: string;
+  /** The library app, for `app`. */
+  toolId: string | null;
+}
+
+/** An app the person asked to change while the Create window was open (`agent-source` event). */
+export interface SourceRequest {
+  toolId: string;
+  name: string;
+}
+
+/** One draft of a conversation. Mirrors `Entry` in src-tauri/src/agent/history.rs. */
+export interface DraftVersion {
+  sha: string;
+  number: number;
+  size: number;
+  /** Unix seconds. */
+  at: number;
+  /** The file the conversation started from, not written by Codex. */
+  loaded: boolean;
+  /** This is the file in the work folder now. */
+  current: boolean;
+  name: string;
+}
+
+/** The draft the agent left in its work folder. Mirrors `Draft` in src-tauri/src/agent/chat.rs. */
+export interface ChatDraft {
+  size: number;
+  /** Larger than Sanctum accepts; it is reported but not offered. */
+  tooLarge: boolean;
+}
+
+/** How a turn ended. Mirrors `TurnOutcome` in src-tauri/src/agent/chat.rs. */
+export interface ChatOutcome {
+  status: "completed" | "interrupted" | "failed";
+  error: string | null;
+  /** How many requests from the agent Sanctum refused during the turn. */
+  refused: number;
+  draft: ChatDraft | null;
+}
+
+/** One step Codex took (the `agent-activity` event). Mirrors `Activity` in src-tauri/src/agent/chat.rs. */
+export interface ChatActivity {
+  itemId: string;
+  kind: "command" | "files" | "thinking" | "tool";
+  state: "running" | "done" | "failed" | "declined";
+  /** What it did: the command, the files, a short thought. Never command output. */
+  label: string;
+  durationMs: number | null;
+  exitCode: number | null;
+  /** How many lines the command printed. */
+  outputLines: number | null;
+}
+
+/** What a draft is and what it asks for. Mirrors `DraftReport` in src-tauri/src/agent/draft.rs. */
+export interface DraftReport {
+  name: string;
+  description: string;
+  size: number;
+  /** What the scan found the page asking for. Nothing is granted by it, and a scan can miss things. */
+  capabilities: DetectedCapability[];
+  /** `version` adds to the tool this session already added. */
+  savesAs: "new" | "version";
+  toolName: string | null;
+}
+
+/** What adding a draft did. Mirrors `Added` in src-tauri/src/agent/draft.rs. */
+export interface AddedDraft {
+  outcome: "added" | "newVersion" | "unchanged" | "alreadyInLibrary";
+  tool: ToolRecord;
+  versionNum: number;
+}
+
+/** A piece of the agent's reply (the `agent-chat` event). */
+export interface ChatText {
+  itemId: string;
+  text: string;
+}
+
+/** A rejected agent command. `code` is stable; `message` is for people. */
+export interface AgentCommandError {
+  code: string;
+  message: string;
 }
 
 /** What a signature does and does not mean. Shown wherever a publisher badge appears. */

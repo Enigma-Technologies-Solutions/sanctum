@@ -134,6 +134,7 @@ pub async fn load_tool_record(
         approvals,
         created_at: row.try_get("created_at").unwrap_or(0),
         updated_at: row.try_get("updated_at").unwrap_or(0),
+        origin: row.try_get("origin").unwrap_or(None),
     })
 }
 

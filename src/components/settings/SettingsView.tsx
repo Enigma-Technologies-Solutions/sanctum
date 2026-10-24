@@ -15,9 +15,12 @@ import {
   Monitor,
   Sun,
   Moon,
+  LogIn,
+  LogOut,
   type LucideIcon,
 } from "lucide-react";
 import { Commands } from "@/lib/commands";
+import { downloadLabel, signInNote, useAgent } from "@/lib/agent";
 import type { PolicyStatus, TrustAnchorInfo, UpdateInfo } from "@/lib/types";
 import { PageHeader } from "@/components/PageHeader";
 import { readTheme, saveTheme, type ThemeChoice } from "@/lib/theme";
@@ -237,6 +240,70 @@ function AppearanceSection() {
   );
 }
 
+function AgentSection() {
+  const agent = useAgent({ readAccount: true });
+  if (agent.setup && !agent.setup.supported) {
+    return (
+      <Section id="s-agent" title="Agent">
+        <Row first>
+          <span style={{ color: "var(--app-ink-2)" }}>Building apps is not available on this kind of computer yet.</span>
+        </Row>
+      </Section>
+    );
+  }
+
+  let status: ReactNode = "Checking…";
+  if (agent.signingIn) status = agent.phase === "downloading" ? downloadLabel(agent.download) : "Finish signing in in your browser…";
+  else if (agent.setup && !agent.setup.installed) status = "Not signed in.";
+  else if (agent.account) {
+    status = agent.account.signedIn
+      ? `Signed in to ChatGPT as ${agent.account.email ?? "your account"}${agent.account.plan ? ` (${agent.account.plan})` : ""}.`
+      : "Not signed in.";
+  } else if (agent.error) status = "Could not read the account.";
+
+  return (
+    <Section id="s-agent" title="Agent">
+      <Row first>
+        <div style={{ flex: 1, minWidth: 0 }}>
+          <div role="status" style={{ overflowWrap: "anywhere" }}>{status}</div>
+          {agent.error && (
+            <div role="alert" style={{ marginTop: "4px", fontSize: "12px", color: "var(--danger-ink)", overflowWrap: "anywhere" }}>
+              {agent.error}
+            </div>
+          )}
+        </div>
+        {agent.signingIn && (
+          <button type="button" onClick={agent.cancel} style={buttonStyle}>
+            Cancel
+          </button>
+        )}
+        {!agent.signingIn && agent.setup && (!agent.setup.installed || (agent.account && !agent.account.signedIn) || (!agent.account && agent.error)) && (
+          <button type="button" onClick={() => void agent.signIn()} style={buttonStyle}>
+            <LogIn size={13} aria-hidden="true" />
+            Sign in with ChatGPT
+          </button>
+        )}
+        {!agent.signingIn && agent.account?.signedIn && (
+          <button
+            type="button"
+            onClick={() => void agent.signOut()}
+            disabled={agent.working}
+            style={{ ...buttonStyle, opacity: agent.working ? 0.6 : 1, cursor: agent.working ? "default" : "pointer" }}
+          >
+            {agent.working ? <Loader2 size={13} className="animate-spin" aria-hidden="true" /> : <LogOut size={13} aria-hidden="true" />}
+            Sign out
+          </button>
+        )}
+      </Row>
+      <Row>
+        <span style={{ fontSize: "12px", color: "var(--app-ink-2)" }}>
+          {agent.setup ? signInNote(agent.setup) : null} Codex runs on this computer and starts only when you use it.
+        </span>
+      </Row>
+    </Section>
+  );
+}
+
 function PolicySection() {
   const [policy, setPolicy] = useState<PolicyStatus | null>(null);
   const [failed, setFailed] = useState<string | null>(null);
@@ -347,6 +414,7 @@ export function SettingsView({ version }: { version: string | null }) {
         </Section>
 
         <UpdatesSection version={version} />
+        <AgentSection />
         <PolicySection />
         <TrustSection />
 

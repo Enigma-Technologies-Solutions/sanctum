@@ -256,6 +256,23 @@ pub fn run() {
             registry::commands::install_from_registry,
             registry::commands::install_all_from_registry,
             deeplink::take_pending_link,
+            agent::commands::agent_setup,
+            agent::commands::agent_account,
+            agent::commands::agent_sign_in,
+            agent::commands::agent_cancel_sign_in,
+            agent::commands::agent_sign_out,
+            agent::commands::agent_open_create_window,
+            agent::commands::agent_chat_start,
+            agent::commands::agent_chat_send,
+            agent::commands::agent_scan_draft,
+            agent::commands::agent_add_draft,
+            agent::commands::agent_preview_draft,
+            agent::commands::agent_draft_history,
+            agent::commands::agent_restore_draft,
+            agent::commands::agent_get_instructions,
+            agent::commands::agent_set_instructions,
+            agent::commands::agent_chat_stop,
+            agent::commands::agent_chat_close,
             commands::library::list_tools,
             commands::library::get_tool,
             commands::library::update_metadata,
@@ -293,6 +310,16 @@ pub fn run() {
                 client: registry::client::RegistryClient::production(pool.clone()),
             });
             app.manage(db::DbState(pool));
+            // The agent: nothing is downloaded or started until the person asks
+            // (docs/create-app-plan.md).
+            let transport = registry::fetch::ReqwestTransport::new()
+                .map(|t| std::sync::Arc::new(t) as std::sync::Arc<dyn registry::fetch::Transport>);
+            app.manage(agent::commands::AgentState::new(
+                &data_dir,
+                env!("CARGO_PKG_VERSION"),
+                agent::install::release_here(),
+                transport,
+            ));
             app.manage(AppDataDir(data_dir));
 
             // sanctum:// links: validated and shown in a confirmation, never acted on here.
@@ -316,8 +343,16 @@ pub fn run() {
 
             Ok(())
         })
-        .run(tauri::generate_context!())
-        .expect("error running Sanctum");
+        .build(tauri::generate_context!())
+        .expect("error building Sanctum")
+        .run(|app, event| {
+            // Stop the agent process with the app, so none is left behind.
+            if let tauri::RunEvent::Exit = event {
+                if let Some(agent) = app.try_state::<agent::commands::AgentState>() {
+                    tauri::async_runtime::block_on(agent.shutdown());
+                }
+            }
+        });
 }
 
 // ── Tests ─────────────────────────────────────────────────────────────────────

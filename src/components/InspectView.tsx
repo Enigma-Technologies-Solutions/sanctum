@@ -11,6 +11,7 @@ import type {
 } from "@/lib/types";
 import { formatBytes, formatDate, capabilityToPlain, SIGNATURE_MEANING } from "@/lib/types";
 import { Commands } from "@/lib/commands";
+import { asAgentError } from "@/lib/agent";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { Separator } from "@/components/ui/separator";
@@ -21,7 +22,7 @@ import {
   Loader2, Play, RotateCcw, Tag, X, Shield, Info,
   Trash2, RefreshCw, Clipboard, FolderOpen,
   Camera, Mic, MapPin, Bell, Usb, Cable, Mouse, Bluetooth, HardDrive, Globe,
-  CreditCard, Settings,
+  CreditCard, Settings, PencilRuler,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 
@@ -170,6 +171,19 @@ export function InspectView({ item, onBack, onRun, onRefresh, onDelete }: Inspec
     } catch (e) { setUpdateError(String(e)); }
     finally { setUpdating(false); }
   }, [tool.id, onRefresh]);
+
+  // Opens the Create window with this app loaded, so Codex changes it and a result you like
+  // becomes a new version. The window opens for the person to continue in; nothing is sent
+  // until they send a message there.
+  const handleModify = useCallback(async () => {
+    setUpdateError(null);
+    try {
+      await Commands.agentOpenCreateWindow(tool.id);
+      setShowUpdate(false);
+    } catch (e) {
+      setUpdateError(asAgentError(e).message);
+    }
+  }, [tool.id]);
 
   const handleUpdateFile = useCallback(async () => {
     const selected = await open({ title: "Select updated HTML or signed bundle", filters: [{ name: "HTML or signed bundle", extensions: ["html", "htm", "sanctum"] }], multiple: false });
@@ -334,6 +348,11 @@ export function InspectView({ item, onBack, onRun, onRefresh, onDelete }: Inspec
             Add new version from:
           </span>
           <div style={{ display: "flex", gap: "8px", flexWrap: "wrap" }}>
+            {tool.origin === "agent" && (
+              <Button size="sm" variant="volt" className="gap-1.5" disabled={updating} onClick={handleModify}>
+                <PencilRuler className="h-3.5 w-3.5" aria-hidden="true" /> Modify with Codex
+              </Button>
+            )}
             <Button size="sm" variant="volt" className="gap-1.5" disabled={updating} onClick={handleUpdateClipboard}>
               {updating ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Clipboard className="h-3.5 w-3.5" />}
               Paste Clipboard
@@ -633,6 +652,9 @@ export function InspectView({ item, onBack, onRun, onRefresh, onDelete }: Inspec
                         ["Size",    formatBytes(cv.file_size), true],
                         ["Ingested",formatDate(cv.created_at), false],
                         ["Version", versionLabel(cv), true],
+                        ...(tool.origin === "agent"
+                          ? [["Origin", "Made with Codex, an AI agent. Nobody has reviewed or signed it.", false]]
+                          : []),
                         ["Signed",  provenanceLabel(provenance), false],
                       ].map(([label, value, isMono]) => (
                         <>

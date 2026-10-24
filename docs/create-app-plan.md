@@ -23,8 +23,9 @@ under its normal rules. No copy and paste.
 - **Everything happens inside the Sanctum window.** The user never runs a command or a script. The
   Welcome panel (and the empty Tool Vault) offers "Sign in with ChatGPT to build your own app".
   The click opens the browser, the user signs in on OpenAI's page, and the app takes it from there.
-- **Sanctum ships its own Codex.** Customers are not developers and will not have `codex`
-  installed. Sanctum bundles the unmodified binary as a Tauri sidecar (see "Finding the binary").
+- **Sanctum is the only thing a person installs.** Customers are not developers and will not have
+  `codex`. The first time they click Sign in, Sanctum downloads the pinned, unmodified Codex release
+  and checks it (see "Getting Codex").
 - **Off until chosen.** Sanctum itself still makes no network call. The `codex` process talks to
   OpenAI, only after the user turns the feature on, signs in and sends a prompt.
 - **Generated tools are ordinary unsigned tools.** Same scan, same hidden-character and size checks,
@@ -80,6 +81,12 @@ VM would break the "one desktop app" promise. Containment is OS-level and in two
   prompt for the user to click through, and nothing for an injected instruction to talk them into.
 - The scratch directory is new per session and holds `app.html`, plus an `AGENTS.md` written by
   Sanctum (see "What the agent is told").
+- Commands get a temporary folder inside the scratch directory (`.tmp`), set per thread with
+  `TMPDIR` and `TMPPREFIX`, while `/tmp` and the system `$TMPDIR` stay closed. Found in the first real
+  runs: a shell needs a temporary file for every `cat > file <<EOF`, which is how an agent writes
+  its output. With the system folders closed the write failed ("can't create temp file for here
+  document"), left an empty `app.html`, and the failed command never showed as a step. The model then
+  retried for minutes. Checked against Codex 0.163.0 with `command/exec` (zsh and bash).
 
 **Known gap in layer 1:** workspace-write still lets commands read most of the disk. With network
 off for commands, the only path out is the model conversation, and the only input is the user's own
@@ -122,9 +129,55 @@ This is guidance for quality, not a security control. The controls are the sandb
 2. When `turn/completed` arrives, Sanctum looks for `app.html` in the scratch directory. If it
    exists and passed the size cap (start at 2 MB), Sanctum runs the existing scan and shows a card:
    name, description, detected capabilities, a "Preview" button.
-3. "Preview" opens the draft in a tool window with **no approvals**, labelled as a draft.
-4. "Add to library" calls the existing ingest path with origin `agent`. A later turn that changes
-   `app.html` offers "Save as new version", which reuses the existing versioning and rollback.
+3. "Preview" opens the draft in a tool window with **no approvals**, labelled as a draft. Built:
+   `agent_preview_draft` reads `app.html` once, as a checked plain file (not a link, at most 2 MB),
+   writes a private copy to `agent/previews/<id>/index.html`, and opens it with
+   `runner::open_draft_window`: its own origin (`tool-draft-<id>`), no Tauri IPC, navigation confined,
+   a policy from an empty approval list (no network, no devices), no entry in the library. The copy
+   means later edits by the agent do not change what is shown; each click makes a new copy (at most 8
+   open). An organisation policy that pins checksums refuses a draft like any unlisted file. Closing
+   the window removes its grant and copy; quitting removes all copies.
+4. The draft card (name, description, size, what the scan found it asking for, in plain words) has
+   "Preview" and "Add to library". Adding calls the existing ingest (`agent/draft.rs`): same scan, same
+   content-addressed storage, **no approvals**, and the tool gets `origin = 'agent'` (a new nullable
+   `tools.origin` column), shown as a "Made with Codex" badge on the card and an Origin row in
+   Inspect. A later draft in the same session is offered as "Save as new version" of that tool and
+   reuses the existing versioning and rollback. Rules: a file the person already had stays theirs (not
+   relabelled), a file that belongs to a different tool is never moved into this one, and adding the
+   same file twice changes nothing. The Create window tells the Tool Vault to reload through a
+   `library-changed` event. The badge says where the file came from, never that it is safe. Known
+   limit: origin belongs to the tool, so a person who later replaces its content with their own keeps
+   the badge.
+   **Drafts of a conversation.** Sanctum keeps its own copy (in memory, never in the work folder, which
+   the agent can rewrite) of each distinct `app.html` it sees when a turn ends: at most 20 and 16 MB
+   (`agent/history.rs`). The draft card lists them, newest first, as "Draft N" (the file an existing
+   app started from is "Starting point"). Any can be previewed, and any can be put back
+   (`agent_restore_draft`): refused while Codex is working, the draft being left is kept first so
+   nothing is lost, the file is written over `app.html` (a link there is replaced, never followed),
+   and Codex gets one line before the next message saying the file was put back, so it reads it again
+   instead of editing from memory. This is separate from the library's own versions.
+
+   **Changing an app from the library.** Inspect, Update, "Modify with Codex" (shown only for
+   `origin = 'agent'` tools) opens the Create window with that tool (`agent_open_create_window(tool_id)`;
+   the id goes in the window address, or in an `agent-source` event when the window is open, and is
+   checked as a UUID and as an existing tool). `agent_chat_start(source)` reads the tool's current
+   version (hash checked, not quarantined, text, at most 2 MB), puts it in the work folder as
+   `app.html`, adds "The app being changed" to the rules file (the name made one line, 80 characters),
+   and sets the session's tool so a result is offered as "Save as new version". An open conversation is
+   not replaced without asking. A "Sources" panel in the Create window lists what Codex was given:
+   the app (with a note that it goes to OpenAI with the first message), the Sanctum guide, and the
+   person's instructions.
+
+   **Standing instructions and saving files.** The person can write instructions for every app
+   (`agent/instructions.md` in the data folder, at most 4,000 characters, edited in the Sources
+   panel). They go in each new conversation's rules file after Sanctum's rules, which state that they
+   win, and apply to conversations started after saving. The guide (`SANCTUM_FOR_AGENTS.md`, sent to
+   Codex and public) has a "Saving files" section so every app knows the one way a tool can give the
+   person a file. That way is real because Sanctum now decides it (`commands/downloads.rs`): a click on
+   a link with a `download` name, from a blob or data URL the page built, saves to the Downloads folder
+   and nowhere else, with a cleaned name, never replacing a file, refusing programs and scripts, at
+   most 25 per window. It needs no approval, as in a browser; a tool window and a draft preview both
+   get it. Before this the webview's own default applied, which differs by platform.
 5. Closing the session deletes the scratch directory. Nothing outside the library persists.
 
 Capability approval is unchanged. A generated tool that wants Storage or a network host shows the
@@ -132,40 +185,54 @@ same approval screen as any other tool, and the user decides.
 
 ## UI
 
-- **Entry points:** the Welcome panel gets a second action, "Sign in with ChatGPT to build your own
-  app" (Lucide `log-in` icon), beside "Browse signed tools". Once signed in, the same place and the
-  Tool Vault header show "Create app" (Lucide `plus`). The empty-state text mentions it.
-- First use shows one panel: what Codex is, that prompts go to OpenAI, that Sanctum does not see the
-  account token, "Sign in with ChatGPT", and a link to the privacy page.
+- **Entry points:** a "Create your own app" card in "Your tools", next to the tools (Lucide
+  `pencil-ruler` icon, button "Start building"). It opens the Create window, a window of its own
+  (label `create`, own capability file `capabilities/create.json`) so a conversation stays open while
+  you use the rest of Sanctum; clicking again brings it forward. Closing the window ends the session and
+  deletes its work folder. Keeping the conversation across closes is a later step. The card is hidden on
+  a computer Sanctum has no Codex build for.
+- The Create window signs you in first (what Codex is, the first-use download, "Sign in with ChatGPT"),
+  then shows the chat. The chat footer says that prompts go to OpenAI and that Sanctum does not see the
+  account token. Closing the window ends the session and deletes its work folder.
 - Chat view: transcript, composer, a "Codex is working" state with a stop button
   (`turn/interrupt`), the app card above the composer, session list reset on close.
-- If the bundled Codex fails to start: show the error text and a "Copy details" button. No install
+- If Codex fails to download or start: show the error text and a "Copy details" button. No install
   instructions, because nothing is expected to be installed.
 - Settings, Agent: account (plan, sign out), Codex version, advanced binary path, "Delete agent data".
 - Offline or sign-in failure: plain message, the rest of Sanctum is unaffected.
 
-## Finding the binary
+## Getting Codex
 
-**Bundle it.** The sign-in is only "one click" if nothing has to be installed first. Sanctum ships
-the official, unmodified Codex release as a Tauri sidecar (`bundle.externalBin`, one binary per
-target triple, named `codex-<triple>`).
+**Download it on first use.** Codex is about 125 MB to download and 315 to 415 MB on disk, which is
+ten times the Sanctum installer, so it is not bundled. The first time someone clicks "Sign in with
+ChatGPT", Sanctum downloads the exact release pinned in `src-tauri/src/agent/codex-pins.json` from
+OpenAI's GitHub releases. The screen says so, with the size, before the click.
 
-- Codex is Apache-2.0, so redistribution is allowed. Keep its LICENSE and NOTICE in the app.
-- The binary is fetched at build time from OpenAI's tagged release and checked against a pinned
-  SHA-256 in the repo, so a release build can never pick up a different file. It is never patched.
-- On macOS the sidecar must be signed with the Developer ID and notarized with the app. CI already
-  does this for the app; add the sidecar to the same step.
-- Cost: tens of megabytes per platform, and Codex updates ship with Sanctum releases (the updater
-  already exists). A Sanctum release must follow any Codex security fix.
-- Sanctum starts the sidecar only from the Create app code path, never at launch.
-- Settings shows the bundled Codex version. A developer who prefers their own binary can pick a path
-  there (advanced, off the default path).
+- `scripts/pin-codex.py <version>` writes the pins: for each platform, the release URL, the size and
+  SHA-256 of each archive (checked against the digest GitHub publishes) and of the one program inside
+  it. There are two programs per platform: `codex`, and `codex-code-mode-host`, which Codex starts from
+  its own folder to run every command the agent asks for. Without the helper each command fails before
+  it runs ("failed to spawn code-mode host"), which is what the first real test showed. A computer
+  that has only `codex` downloads only the helper. The optional `rg` search tool and the voice files
+  in Codex's full package are not fetched.
+  Review the diff like code. A new Codex version is a Sanctum release, and
+  `spec/codex-app-server/` is regenerated from the same version; a test fails if they differ.
+- Download rules (`agent/install.rs`): github.com only, redirects only to github.com or
+  githubusercontent.com over https, exactly the pinned size and hash, a stall and a total timeout, and
+  cancel at any moment. Exactly one file is taken out of each archive, chosen by name from the pin;
+  the archive decides no paths. Each file must match its own pinned hash, and all are hashed again
+  before every start, so a changed file is never run.
+- It is saved under `<app data>/agent/bin/<version>/`. An older version is deleted after a new one
+  installs. Nothing is downloaded until the click, so Sanctum stays network-silent otherwise.
+- Codex is Apache-2.0, so redistribution is allowed. Still to do: ship its LICENSE and NOTICE in the
+  app's licences page.
 - The Codex name and logo are not used as Sanctum's own naming (see Risks).
-
-If OpenAI objects to redistribution, fall back to detecting an installed `codex`: `/opt/homebrew/bin`,
-`/usr/local/bin`, `~/.local/bin`, npm and cargo global bins, then a login shell
-(`$SHELL -lc 'command -v codex'`, because GUI apps do not inherit `PATH`), with a minimum version and
-a file picker. That fallback turns the feature into a developer feature, so it is not the default.
+- A development build can use its own copy through `SANCTUM_CODEX_BIN`; release builds ignore it.
+- Platforms: macOS (both chips), Linux (x86_64 and arm64, static musl builds), Windows x86_64.
+  Elsewhere the Welcome button is hidden and Settings says it is not available yet.
+- Still to measure: whether macOS Gatekeeper accepts the downloaded program (it is fetched by
+  Sanctum, so it carries no quarantine flag, but check on a clean Mac), Windows SmartScreen, and
+  how Codex finds `bwrap` on Linux (needed for Phase 5).
 
 ## Hardening rules for the client
 
@@ -176,8 +243,8 @@ a file picker. That fallback turns the feature into a developer feature, so it i
   `never` and Create app has no use for them.
 - Notification bodies are not logged. The auth URL is opened and discarded.
 - All text from the agent goes through `cleanText` (hidden and bidi characters) before display.
-- Commands for this feature are registered on the `main` window capability only. Tool windows keep
-  zero IPC.
+- The commands answer only to Sanctum's own windows (`main` and `create`, checked by label in Rust).
+  Tool windows keep zero IPC, and a test pins the capability files.
 - The protocol schema is generated with `codex app-server generate-json-schema` and checked in under
   `spec/codex-app-server/`, with the Codex version it came from. CI parses recorded fixtures against it.
 
@@ -192,13 +259,33 @@ Phase 1 (off in release builds, tokens redacted): the exact login callback behav
 how a blocked action fails, and how good the HTML is. Phase 5 does not start until the last two are
 answered.
 
-**Phase 1, client and sign-in.** `src-tauri/src/agent/`: sidecar supervisor, JSON-RPC framing, typed
+**Phase 1, client and sign-in.** `src-tauri/src/agent/`: process supervisor, JSON-RPC framing, typed
 messages from the checked-in schema, a fake app-server for tests, and the sign-in commands
 (`agent_status`, `agent_sign_in`, `agent_sign_out`). UI: the Welcome panel button and a Settings,
 Agent card showing signed-in state and plan. This slice already works end to end with a real login.
 
+Status: the client merged in #33. The commands are `agent_setup`, `agent_account`, `agent_sign_in`,
+`agent_cancel_sign_in` and `agent_sign_out`, all main-window only. Sign-in downloads Codex the first
+time (progress arrives as `agent-download` events), starts it, opens the browser and waits. Looking
+at the setup reads files only. The Codex process starts when the person clicks Sign in, or opens
+Settings with Codex already downloaded, never at launch, and stops when Sanctum quits. Checked against
+the real Codex 0.163.0 for the handshake, `account/read`, `account/login/start` and cancel; a full
+sign-in has not been tried yet. Its browser callback listens on a fixed local port (1455), so a
+second Codex signing in at the same time would collide.
+
 **Phase 2, chat.** Chat view, layer 1 policy, scratch directory, "Create app" button in the Tool
 Vault header and empty state. Release builds keep the feature behind a switch until Phase 4.
+
+Status: built. `agent/chat.rs` holds the layer 1 policy (`workspaceWrite`, scratch folder only, no
+network, `/tmp` and `TMPDIR` excluded, approval `never`), sent on the thread and again on every turn,
+with each field pinned by a test and a mutation check. Commands: `agent_chat_start`, `agent_chat_send`
+(reply streams as `agent-chat` events), `agent_chat_stop`, `agent_chat_close`. Limits: 8,000
+characters per prompt, 10 minutes and 500 steps per turn, 200,000 characters of reply shown, a draft
+over 2 MB is reported but not offered, and a draft that is a link or folder does not count. Work
+folders live in `agent/sessions/`, are deleted when the view closes, a new session starts, or Sanctum
+quits. The Create view shows whether a draft exists; reading, scanning and adding it is Phase 3.
+Checked against the real Codex 0.163.0 for `thread/start` (no sign-in needed); a real turn needs a
+signed-in account and has not been run yet.
 
 **Phase 3, from chat to library.** Scan card, preview, add to library, new versions, origin badge,
 cleanup of scratch directories.
@@ -230,8 +317,8 @@ old `codex`, prompt asking the agent to read `~/.ssh` and to call `curl`), then 
   third-party app may use ChatGPT-plan sign-in through it. Ask OpenAI before Phase 2 ships. If the
   answer is no, the only compliant fallback is an API key, which we chose to avoid. Do not release
   without the answer.
-- **Protocol drift.** The app-server surface changes between Codex releases. Because Sanctum bundles
-  the binary, the pinned schema and the binary always move together, and CI parses fixtures against it.
+- **Protocol drift.** The app-server surface changes between Codex releases. Because Sanctum pins
+  the exact binary, the pinned schema and the binary always move together, and CI parses fixtures against it.
 - **Quality.** Codex is a general coding agent; the prompt and `AGENTS.md` decide whether it produces
   clean single-file tools. Phase 0 measures this before any UI is built.
 - **Plan limits.** ChatGPT plans have usage limits. Show the plan and a plain error when exhausted
