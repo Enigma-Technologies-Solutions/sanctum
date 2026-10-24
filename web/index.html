@@ -595,6 +595,10 @@
         <p>There's no account, telemetry or analytics. The only request Sanctum makes by itself is an update check against its GitHub releases. Updates are signature-checked in Rust against a public key built into the app, and only install when you click to install them. A registry is contacted only when you add it, refresh it or install from it, and an <code>sanctum://</code> link shows a confirmation and does nothing until you click.</p>
       </details>
       <details>
+        <summary>Can I run my own registry?</summary>
+        <p>Yes. A registry is a set of static files on an HTTPS address, so GitHub Pages or an internal web server is enough. You sign a catalogue with your own key, and people who add it check that key and pin it. <a href="./docs/run-your-own-registry/">The guide</a> goes from making keys to adding the registry in Sanctum.</p>
+      </details>
+      <details>
         <summary>What is a registry, and what does “Verified” mean?</summary>
         <p>A registry is a signed list of tools that Sanctum can browse and install from. The Enigma registry holds tools Enigma signs. Verified means the publisher is who it says and the file has not changed since it was signed. It does not mean the tool is safe, and a signature never grants access: an installed tool still starts with nothing approved.</p>
       </details>

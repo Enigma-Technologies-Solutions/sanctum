@@ -16,6 +16,9 @@ on:
       - 'workers/**'
       - 'blog-src/**'
       - 'web/blog/**'
+      - 'web/docs/**'
+      - 'docs/run-your-own-registry.md'
+      - 'scripts/build-docs.mjs'
       - 'web/index.html'
       - 'web/assets/**'
       - 'assets/logo/**'
@@ -38,6 +41,9 @@ on:
       - 'workers/**'
       - 'blog-src/**'
       - 'web/blog/**'
+      - 'web/docs/**'
+      - 'docs/run-your-own-registry.md'
+      - 'scripts/build-docs.mjs'
       - 'web/index.html'
       - 'web/assets/**'
       - 'assets/logo/**'
@@ -89,6 +95,8 @@ jobs:
         run: node --test workers/install/*.test.mjs
       - name: Committed blog matches blog-src
         run: node scripts/build-blog.mjs --check
+      - name: Committed guides match docs/
+        run: node scripts/build-docs.mjs --check
       - name: Committed registry matches its sources
         run: node scripts/build-registry.mjs --check
       # --allow-stale: an expired file must not block an unrelated pull request. The
@@ -97,7 +105,7 @@ jobs:
         run: node scripts/verify-registry.mjs --allow-stale
       - name: Public pages contain no em or en dashes
         run: |
-          if grep -rPn '[\x{2013}\x{2014}]' web/apps web/blog blog-src registry; then
+          if grep -rPn '[\x{2013}\x{2014}]' web/apps web/blog web/docs docs/run-your-own-registry.md blog-src registry; then
             echo "::error::Remove em and en dashes from public copy; rewrite the sentence."
             exit 1
           fi
