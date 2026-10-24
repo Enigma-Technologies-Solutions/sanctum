@@ -10,9 +10,13 @@
 //! - the address must be on github.com, and redirects may only go to github.com or
 //!   githubusercontent.com, over https;
 //! - the download must be exactly the pinned size and match the pinned SHA-256;
-//! - exactly one file is taken out of the archive, chosen by name from the pin (the archive
+//! - exactly one file is taken out of each archive, chosen by name from the pin (the archive
 //!   decides no paths), and it must match its own pinned size and SHA-256;
-//! - before every start, the program on disk is hashed again.
+//! - before every start, every installed file is hashed again.
+//!
+//! A release is the `codex` program plus the helpers it starts from the same folder (today
+//! `codex-code-mode-host`, which runs the commands the agent asks for). Each is its own pinned
+//! download. A computer that already has some of them downloads only the rest.
 //!
 //! The pins are made by `scripts/pin-codex.py` and reviewed like code. A new Codex version is a
 //! Sanctum release. Nothing is downloaded until the person clicks.
@@ -50,17 +54,36 @@ pub struct Pin {
     pub size: u64,
 }
 
+/// One platform's entry in the pin file: the program, and the helpers that go beside it.
+#[derive(Deserialize)]
+struct PlatformPin {
+    #[serde(flatten)]
+    program: Pin,
+    #[serde(default)]
+    helpers: Vec<Pin>,
+}
+
 #[derive(Deserialize)]
 struct PinFile {
     version: String,
-    pins: HashMap<String, Pin>,
+    pins: HashMap<String, PlatformPin>,
 }
 
 /// One pinned Codex release for one platform.
 #[derive(Debug, Clone)]
 pub struct Release {
     pub version: String,
+    /// The `codex` program.
     pub pin: Pin,
+    /// Programs that must sit beside it.
+    pub helpers: Vec<Pin>,
+}
+
+impl Release {
+    /// Every file of the release, the program first.
+    pub fn files(&self) -> impl Iterator<Item = &Pin> {
+        std::iter::once(&self.pin).chain(self.helpers.iter())
+    }
 }
 
 fn pin_file() -> &'static PinFile {
@@ -78,20 +101,37 @@ pub fn release_here() -> Option<Release> {
     let f = pin_file();
     f.pins.get(&platform_key()).map(|p| Release {
         version: f.version.clone(),
-        pin: p.clone(),
+        pin: p.program.clone(),
+        helpers: p.helpers.clone(),
     })
+}
+
+/// Where one file of the release lives once installed.
+pub fn path_of(bin_dir: &Path, rel: &Release, pin: &Pin) -> PathBuf {
+    bin_dir.join(&rel.version).join(&pin.file)
 }
 
 /// Where the program lives once installed.
 pub fn binary_path(bin_dir: &Path, rel: &Release) -> PathBuf {
-    bin_dir.join(&rel.version).join(&rel.pin.file)
+    path_of(bin_dir, rel, &rel.pin)
 }
 
-/// Cheap check used by the interface: the file is there and has the right size. The hash is
-/// checked by [`verify`] before it is ever run.
+fn file_present(bin_dir: &Path, rel: &Release, pin: &Pin) -> bool {
+    std::fs::metadata(path_of(bin_dir, rel, pin)).is_ok_and(|m| m.is_file() && m.len() == pin.size)
+}
+
+/// Cheap check used by the interface: every file is there and has the right size. The hashes
+/// are checked by [`verify`] before anything is run.
 pub fn is_present(bin_dir: &Path, rel: &Release) -> bool {
-    std::fs::metadata(binary_path(bin_dir, rel))
-        .is_ok_and(|m| m.is_file() && m.len() == rel.pin.size)
+    rel.files().all(|p| file_present(bin_dir, rel, p))
+}
+
+/// How many bytes a download would fetch now: the archives of the files that are missing.
+pub fn pending_download_bytes(bin_dir: &Path, rel: &Release) -> u64 {
+    rel.files()
+        .filter(|p| !file_present(bin_dir, rel, p))
+        .map(|p| p.archive_size)
+        .sum()
 }
 
 fn hash_file(path: &Path) -> std::io::Result<(String, u64)> {
@@ -110,15 +150,19 @@ fn hash_file(path: &Path) -> std::io::Result<(String, u64)> {
     Ok((hex::encode(h.finalize()), total))
 }
 
-/// Whether the installed program is exactly the pinned one. Reads the whole file.
+fn file_ok(path: &Path, pin: &Pin) -> bool {
+    hash_file(path).is_ok_and(|(sha, len)| len == pin.size && sha == pin.sha256)
+}
+
+/// Whether every installed file is exactly the pinned one. Reads the whole files.
 pub async fn verify(bin_dir: &Path, rel: &Release) -> bool {
-    let path = binary_path(bin_dir, rel);
-    let want = rel.pin.clone();
-    tokio::task::spawn_blocking(move || {
-        hash_file(&path).is_ok_and(|(sha, len)| len == want.size && sha == want.sha256)
-    })
-    .await
-    .unwrap_or(false)
+    let checks: Vec<(PathBuf, Pin)> = rel
+        .files()
+        .map(|p| (path_of(bin_dir, rel, p), p.clone()))
+        .collect();
+    tokio::task::spawn_blocking(move || checks.iter().all(|(path, pin)| file_ok(path, pin)))
+        .await
+        .unwrap_or(false)
 }
 
 #[derive(Debug, PartialEq, Eq)]
@@ -179,16 +223,15 @@ fn clean_partials(bin_dir: &Path) {
     }
 }
 
-/// Downloads `rel` into `archive`, checking size, hash and hosts. `progress(done, total)` is
+/// Downloads one pinned archive into `archive`, checking size, hash and hosts. `progress(done, total)` is
 /// called as data arrives.
 async fn download(
     transport: &dyn Transport,
-    rel: &Release,
+    pin: &Pin,
     archive: &Path,
     cancel: &AtomicBool,
     progress: &(dyn Fn(u64, u64) + Send + Sync),
 ) -> Result<(), InstallError> {
-    let pin = &rel.pin;
     let start = check_url(&pin.url, true).map_err(|e| InstallError::Network(e.to_string()))?;
     if !host_ok(&start) || start.host_str() != Some("github.com") {
         return Err(InstallError::Network(
@@ -323,8 +366,55 @@ fn unpack(archive: &Path, out: &Path, pin: &Pin) -> Result<(), InstallError> {
     ))
 }
 
+/// Downloads, checks and places one file of the release.
+async fn install_one(
+    transport: &dyn Transport,
+    bin_dir: &Path,
+    rel: &Release,
+    pin: &Pin,
+    cancel: &AtomicBool,
+    progress: &(dyn Fn(u64, u64) + Send + Sync),
+) -> Result<(), InstallError> {
+    let final_path = path_of(bin_dir, rel, pin);
+    let id = uuid::Uuid::new_v4();
+    let archive = bin_dir.join(format!(".dl-{id}"));
+    let unpacked = bin_dir.join(format!(".unpack-{id}"));
+    let result: Result<(), InstallError> = async {
+        tokio::time::timeout(
+            TOTAL_TIMEOUT,
+            download(transport, pin, &archive, cancel, progress),
+        )
+        .await
+        .map_err(|_| InstallError::Timeout)??;
+        if cancel.load(Ordering::SeqCst) {
+            return Err(InstallError::Cancelled);
+        }
+        let (a, u, p) = (archive.clone(), unpacked.clone(), pin.clone());
+        tokio::task::spawn_blocking(move || unpack(&a, &u, &p))
+            .await
+            .map_err(|e| InstallError::Io(e.to_string()))??;
+        #[cfg(unix)]
+        {
+            use std::os::unix::fs::PermissionsExt;
+            std::fs::set_permissions(&unpacked, std::fs::Permissions::from_mode(0o755))
+                .map_err(io)?;
+        }
+        let dir = final_path.parent().expect("has a parent");
+        std::fs::create_dir_all(dir).map_err(io)?;
+        let _ = std::fs::remove_file(&final_path);
+        std::fs::rename(&unpacked, &final_path).map_err(io)?;
+        Ok(())
+    }
+    .await;
+    let _ = std::fs::remove_file(&archive);
+    let _ = std::fs::remove_file(&unpacked);
+    result
+}
+
 /// Downloads, checks and installs `rel` under `bin_dir`. Returns the path of the program.
-/// Does nothing but return the path if the right program is already installed.
+/// Files that are already installed and match their pins are left alone, so a computer that
+/// has only some of them downloads only the rest. `progress(done, total)` counts the bytes of
+/// all the downloads together.
 pub async fn install(
     transport: &dyn Transport,
     bin_dir: &Path,
@@ -344,39 +434,29 @@ pub async fn install(
     }
     clean_partials(bin_dir);
 
-    let id = uuid::Uuid::new_v4();
-    let archive = bin_dir.join(format!(".dl-{id}"));
-    let unpacked = bin_dir.join(format!(".unpack-{id}"));
-    let result: Result<(), InstallError> = async {
-        tokio::time::timeout(
-            TOTAL_TIMEOUT,
-            download(transport, rel, &archive, cancel, progress),
-        )
-        .await
-        .map_err(|_| InstallError::Timeout)??;
-        if cancel.load(Ordering::SeqCst) {
-            return Err(InstallError::Cancelled);
+    // What still has to be fetched: a missing file, or one that is not the pinned one.
+    let mut todo: Vec<&Pin> = Vec::new();
+    for pin in rel.files() {
+        let path = path_of(bin_dir, rel, pin);
+        let p = pin.clone();
+        let good = file_present(bin_dir, rel, pin)
+            && tokio::task::spawn_blocking(move || file_ok(&path, &p))
+                .await
+                .unwrap_or(false);
+        if !good {
+            todo.push(pin);
         }
-        let (a, u, p) = (archive.clone(), unpacked.clone(), rel.pin.clone());
-        tokio::task::spawn_blocking(move || unpack(&a, &u, &p))
-            .await
-            .map_err(|e| InstallError::Io(e.to_string()))??;
-        #[cfg(unix)]
-        {
-            use std::os::unix::fs::PermissionsExt;
-            std::fs::set_permissions(&unpacked, std::fs::Permissions::from_mode(0o755))
-                .map_err(io)?;
-        }
-        let dir = final_path.parent().expect("has a parent");
-        std::fs::create_dir_all(dir).map_err(io)?;
-        let _ = std::fs::remove_file(&final_path);
-        std::fs::rename(&unpacked, &final_path).map_err(io)?;
-        Ok(())
     }
-    .await;
-    let _ = std::fs::remove_file(&archive);
-    let _ = std::fs::remove_file(&unpacked);
-    result?;
+    let total: u64 = todo.iter().map(|p| p.archive_size).sum();
+    let mut before = 0u64;
+    for pin in todo {
+        let base = before;
+        install_one(transport, bin_dir, rel, pin, cancel, &move |d, _| {
+            progress(base + d, total)
+        })
+        .await?;
+        before += pin.archive_size;
+    }
 
     // An older version is no longer needed.
     if let Ok(rd) = std::fs::read_dir(bin_dir) {
@@ -439,7 +519,27 @@ pub(crate) mod testing {
                 sha256: sha(program),
                 size: program.len() as u64,
             },
+            helpers: vec![],
         }
+    }
+
+    pub const HELPER_URL: &str =
+        "https://github.com/openai/codex/releases/download/rust-v9.9.9/helper-test.tar.gz";
+    pub const HELPER_CDN: &str =
+        "https://release-assets.githubusercontent.com/abc/helper-test.tar.gz?sig=2";
+
+    /// `rel` plus a helper pinned to `helper` inside `archive`.
+    pub fn with_helper(mut rel: Release, helper: &[u8], archive: &[u8]) -> Release {
+        rel.helpers.push(Pin {
+            url: HELPER_URL.into(),
+            archive_sha256: sha(archive),
+            archive_size: archive.len() as u64,
+            entry: "helper-test".into(),
+            file: "codex-code-mode-host".into(),
+            sha256: sha(helper),
+            size: helper.len() as u64,
+        });
+        rel
     }
 }
 
@@ -736,6 +836,131 @@ mod tests {
 
     // ── The real pins ─────────────────────────────────────────────────────────────────
 
+    const HELPER: &[u8] = b"#!/bin/sh\necho pretend helper, a different length\n";
+
+    /// A release with a helper, and a server that has both archives.
+    fn served_with_helper() -> (Release, Mock, Vec<u8>) {
+        let (_a, rel, mock) = served();
+        let archive = targz(&[("helper-test", HELPER)]);
+        let rel = with_helper(rel, HELPER, &archive);
+        mock.route(HELPER_URL, Script::Redirect(302, HELPER_CDN.into()));
+        mock.serve(HELPER_CDN, &archive);
+        (rel, mock, archive)
+    }
+
+    #[tokio::test]
+    async fn the_helper_is_installed_beside_the_program_and_progress_counts_both() {
+        let (rel, mock, helper_archive) = served_with_helper();
+        let d = dir();
+        let last = AtomicU64::new(0);
+        let totals = std::sync::Mutex::new(std::collections::HashSet::new());
+        let cancel = AtomicBool::new(false);
+        install(&mock, &d, &rel, &cancel, &|done, total| {
+            last.store(done, Ordering::SeqCst);
+            totals.lock().unwrap().insert(total);
+        })
+        .await
+        .unwrap();
+        let helper = d.join("9.9.9/codex-code-mode-host");
+        assert_eq!(std::fs::read(&helper).unwrap(), HELPER);
+        let all = rel.pin.archive_size + helper_archive.len() as u64;
+        assert_eq!(last.load(Ordering::SeqCst), all);
+        assert_eq!(*totals.lock().unwrap(), [all].into());
+        assert!(is_present(&d, &rel));
+        assert!(verify(&d, &rel).await);
+        #[cfg(unix)]
+        {
+            use std::os::unix::fs::PermissionsExt;
+            assert_eq!(
+                std::fs::metadata(&helper).unwrap().permissions().mode() & 0o777,
+                0o755
+            );
+        }
+        let _ = std::fs::remove_dir_all(&d);
+    }
+
+    #[tokio::test]
+    async fn a_computer_with_only_the_program_downloads_only_the_helper() {
+        let (rel, mock, helper_archive) = served_with_helper();
+        let d = dir();
+        // What the first version of Sanctum installed: the program alone.
+        let mut program_only = rel.clone();
+        program_only.helpers.clear();
+        let c = AtomicBool::new(false);
+        install(&mock, &d, &program_only, &c, &no_progress())
+            .await
+            .unwrap();
+        assert!(!is_present(&d, &rel), "the helper is missing");
+        assert!(!verify(&d, &rel).await);
+        assert_eq!(
+            pending_download_bytes(&d, &rel),
+            helper_archive.len() as u64
+        );
+        let before = mock.call_count();
+        let total = std::sync::Mutex::new(0u64);
+        install(&mock, &d, &rel, &c, &|_, t| *total.lock().unwrap() = t)
+            .await
+            .unwrap();
+        assert_eq!(
+            mock.call_count() - before,
+            2,
+            "one download: request and redirect"
+        );
+        assert_eq!(*total.lock().unwrap(), helper_archive.len() as u64);
+        assert!(verify(&d, &rel).await);
+        assert_eq!(pending_download_bytes(&d, &rel), 0);
+        let _ = std::fs::remove_dir_all(&d);
+    }
+
+    #[tokio::test]
+    async fn a_helper_that_is_not_the_pinned_one_is_replaced() {
+        let (rel, mock, _a) = served_with_helper();
+        let d = dir();
+        let c = AtomicBool::new(false);
+        install(&mock, &d, &rel, &c, &no_progress()).await.unwrap();
+        // Same length, different content.
+        let helper = d.join("9.9.9/codex-code-mode-host");
+        let mut bytes = std::fs::read(&helper).unwrap();
+        bytes[3] ^= 1;
+        std::fs::write(&helper, &bytes).unwrap();
+        assert!(is_present(&d, &rel), "the size still matches");
+        assert!(!verify(&d, &rel).await);
+        install(&mock, &d, &rel, &c, &no_progress()).await.unwrap();
+        assert_eq!(std::fs::read(&helper).unwrap(), HELPER);
+        let _ = std::fs::remove_dir_all(&d);
+    }
+
+    #[tokio::test]
+    async fn a_helper_that_fails_the_check_fails_the_install() {
+        let (mut rel, mock, _a) = served_with_helper();
+        rel.helpers[0].archive_sha256 = "0".repeat(64);
+        let d = dir();
+        let c = AtomicBool::new(false);
+        let e = install(&mock, &d, &rel, &c, &no_progress())
+            .await
+            .unwrap_err();
+        assert_eq!(e, InstallError::Mismatch("checksum"));
+        assert!(
+            !verify(&d, &rel).await,
+            "an install without its helper never counts"
+        );
+        assert!(!d.join("9.9.9/codex-code-mode-host").exists());
+        let _ = std::fs::remove_dir_all(&d);
+    }
+
+    #[tokio::test]
+    async fn a_helper_may_only_come_from_github_too() {
+        let (mut rel, mock, _a) = served_with_helper();
+        rel.helpers[0].url = "https://evil.example.com/helper.tar.gz".into();
+        let d = dir();
+        let c = AtomicBool::new(false);
+        let e = install(&mock, &d, &rel, &c, &no_progress())
+            .await
+            .unwrap_err();
+        assert!(matches!(e, InstallError::Network(_)));
+        let _ = std::fs::remove_dir_all(&d);
+    }
+
     #[test]
     fn the_checked_in_pins_are_well_formed_and_match_the_schema_version() {
         let f = pin_file();
@@ -746,31 +971,47 @@ mod tests {
             "linux-x86_64",
             "windows-x86_64",
         ] {
-            let p = f
+            let pp = f
                 .pins
                 .get(key)
                 .unwrap_or_else(|| panic!("{key} is not pinned"));
-            let u = Url::parse(&p.url).unwrap();
-            assert_eq!(u.host_str(), Some("github.com"), "{key}");
+            // Codex runs the agent's commands through this helper, and looks for it beside
+            // itself. Without it every command fails before it starts.
+            let ext = if key.starts_with("windows") {
+                ".exe"
+            } else {
+                ""
+            };
+            assert_eq!(pp.program.file, format!("codex{ext}"), "{key}");
             assert!(
-                u.path().starts_with(&format!(
-                    "/openai/codex/releases/download/rust-v{}/",
-                    f.version
-                )),
-                "{key}: {}",
-                p.url
+                pp.helpers
+                    .iter()
+                    .any(|h| h.file == format!("codex-code-mode-host{ext}")),
+                "{key} has no codex-code-mode-host"
             );
-            for h in [&p.archive_sha256, &p.sha256] {
-                assert_eq!(h.len(), 64, "{key}");
-                assert!(h.bytes().all(|b| b.is_ascii_hexdigit()), "{key}");
-            }
-            assert!(
-                p.archive_size > 1_000_000 && p.size > p.archive_size,
-                "{key}"
-            );
-            // The names are plain: nothing that could be a path.
-            for n in [&p.entry, &p.file] {
-                assert!(!n.is_empty() && !n.contains(['/', '\\']), "{key}: {n}");
+            for p in std::iter::once(&pp.program).chain(pp.helpers.iter()) {
+                let u = Url::parse(&p.url).unwrap();
+                assert_eq!(u.host_str(), Some("github.com"), "{key}");
+                assert!(
+                    u.path().starts_with(&format!(
+                        "/openai/codex/releases/download/rust-v{}/",
+                        f.version
+                    )),
+                    "{key}: {}",
+                    p.url
+                );
+                for h in [&p.archive_sha256, &p.sha256] {
+                    assert_eq!(h.len(), 64, "{key}");
+                    assert!(h.bytes().all(|b| b.is_ascii_hexdigit()), "{key}");
+                }
+                assert!(
+                    p.archive_size > 1_000_000 && p.size > p.archive_size,
+                    "{key}"
+                );
+                // The names are plain: nothing that could be a path.
+                for n in [&p.entry, &p.file] {
+                    assert!(!n.is_empty() && !n.contains(['/', '\\']), "{key}: {n}");
+                }
             }
         }
         // The protocol schema we test against must be the one of the version we download.
