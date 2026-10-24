@@ -25,7 +25,7 @@ If you approved smart card access for the OATH applet, you can write a key to yo
 
 ## Back up and restore
 
-Tool windows cannot save files, so **Copy backup** puts the encrypted backup on the clipboard. Paste it into a safe place. **Restore pasted backup** accepts pasted text, and **Choose file** accepts a file. A backup is still encrypted, so it is only as safe as your password.
+This tool does not save files itself, so **Copy backup** puts the encrypted backup on the clipboard. Paste it into a safe place. **Restore pasted backup** accepts pasted text, and **Choose file** accepts a file. A backup is still encrypted, so it is only as safe as your password.
 
 ## Good to know
 
