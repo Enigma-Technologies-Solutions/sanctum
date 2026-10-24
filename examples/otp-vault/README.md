@@ -35,9 +35,11 @@ shortening for long secrets and non-default periods.
 
 - **Storage follows the tool id.** A new version of the tool keeps the vault. Deleting the
   tool and adding it again gives it a new origin and empty storage.
-- **Backups use the clipboard.** Tool windows refuse navigation off their own origin,
-  `blob:` included, so `<a download>` cannot save a file. "Copy backup" puts the encrypted
-  JSON on the clipboard; "Restore" accepts pasted text or a chosen file. See #5.
+- **Backups use the clipboard.** This tool does not save files itself. "Copy backup" puts the
+  encrypted JSON on the clipboard; "Restore" accepts pasted text or a chosen file. (Tool windows
+  can save a file through a download link, which goes to the Downloads folder. This tool was
+  written before that was possible, and its backup still goes where you choose to paste it.)
+  See #5.
 - **Codes on request for YubiKey accounts.** `CALCULATE ALL` is `00 A4 00 01`. The broker
   refuses interindustry INS `A4` as SELECT whatever the selected applet, so the tool falls
   back to `LIST` and computes each code when clicked. A touch-protected account blinks the

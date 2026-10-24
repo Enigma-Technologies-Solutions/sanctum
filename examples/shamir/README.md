@@ -25,9 +25,10 @@ The checks catch mistakes. They do not stop a dishonest share holder from forgin
 
 ## Behaviour inside Sanctum
 
-- **No downloads.** Tool windows refuse `<a download>` and `blob:` navigation, so shares
-  are copied to the clipboard. If the clipboard is blocked, the text is shown selected in a
-  box. Reading the clipboard is never needed: paste shares into the text box.
+- **No files.** Shares are copied to the clipboard and never written to disk. (Tool windows can
+  save a file through a download link, which goes to the Downloads folder, but a share left in
+  a file is easy to forget.) If the clipboard is blocked, the text is shown selected in a box.
+  Reading the clipboard is never needed: paste shares into the text box.
 - **Secrets are masked** and hidden again after 60 seconds without typing or when you
   switch tabs. Clear empties the fields and the bytes the page holds, on a best effort basis.
 
