@@ -166,6 +166,7 @@ stay where they are. The design and its limits are in [docs/create-app-plan.md](
 | AST-based scanner (catches obfuscation) | roadmap |
 | Org policy file | roadmap |
 | Signed Catalogue and registries | Done in 0.2.0 ([format](docs/registry-format.md), [run your own](docs/run-your-own-registry.md)) |
+| White-label builds | A fork, not a setting: [guide](docs/white-label.md) |
 
 ---
 
