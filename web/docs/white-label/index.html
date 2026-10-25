@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Build your own branded Sanctum | Sanctum</title>
+<meta name="description" content="Fork Sanctum into a build with your own name, colours, trust keys and registry.">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'none'; style-src 'self'; font-src 'self'; img-src 'self' data:; connect-src 'none'; form-action 'none'; base-uri 'none'">
+<meta name="referrer" content="strict-origin-when-cross-origin">
+<link rel="canonical" href="https://sanctum.enigma.sh/docs/white-label/">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Sanctum">
+<meta property="og:title" content="Build your own branded Sanctum | Sanctum">
+<meta property="og:description" content="Fork Sanctum into a build with your own name, colours, trust keys and registry.">
+<meta property="og:url" content="https://sanctum.enigma.sh/docs/white-label/">
+<meta property="og:image" content="https://sanctum.enigma.sh/assets/og.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Build your own branded Sanctum | Sanctum">
+<meta name="twitter:description" content="Fork Sanctum into a build with your own name, colours, trust keys and registry.">
+<meta name="twitter:image" content="https://sanctum.enigma.sh/assets/og.png">
+<meta name="theme-color" content="#FFFFFF">
+<meta name="color-scheme" content="light">
+<link rel="icon" href="../../assets/favicon.svg" type="image/svg+xml">
+<link rel="icon" href="../../favicon.ico" sizes="32x32 48x48">
+<link rel="apple-touch-icon" href="../../assets/apple-touch-icon.png">
+<link rel="stylesheet" href="../../styles.css">
+</head>
+<body>
+<a class="skip" href="#main">Skip to content</a>
+<nav class="nav" aria-label="Primary">
+  <div class="wrap nav__inner">
+    <a class="wordmark" href="../../" aria-label="Sanctum home">SANCTUM<span class="wordmark__sq" aria-hidden="true"></span></a>
+    <div class="nav__links">
+      <a href="../../">Home</a>
+      <a href="../../apps/">Signed tools</a>
+      <a href="../../blog/">Blog</a>
+      <a href="../../docs/">Docs</a>
+    </div>
+    <div class="nav__cta">
+      <a class="btn btn--ghost btn--sm nav__gh" href="https://github.com/Enigma-Technologies-Solutions/sanctum" rel="noopener">GitHub</a>
+      <a class="btn btn--volt btn--sm" href="https://github.com/Enigma-Technologies-Solutions/sanctum/releases/latest" rel="noopener">Download Sanctum</a>
+    </div>
+  </div>
+</nav>
+
+<main id="main" class="section apps">
+  <div class="wrap">
+    <article class="blog blog--post">
+    <p class="eyebrow">Guide</p>
+    <h1 class="h2 blog__h1">Build your own branded Sanctum</h1>
+    <div class="manual blog__body">
+<p>Sanctum has no setting for a white-label build. There is no configuration file that swaps the name, the colours and the registry. A branded version is a fork of the source, built with your own name, your own keys and your own update address. This guide lists every place in the code that carries Enigma&#39;s identity, in the order you will want to change them, and says plainly what is a small edit and what is not provided.</p>
+<p>Nothing below weakens the security model, and none of it should. A branded build still starts every tool with no access, still checks every hash, and still never lets a signature grant a capability.</p>
+<h4>Before you start</h4>
+<ul><li><strong>The licence.</strong> Sanctum is AGPL-3.0-only. If you give a modified build to other people, you must give them the source of your changes under the same licence, and keep the copyright and licence notices in the files. Your own code can sit alongside it. Read the licence, or ask your lawyer, before you plan a closed build, because this one cannot be closed.</li><li><strong>The names.</strong> The AGPL does not give you rights to Enigma&#39;s names, logos or the ETS mark. There is no written trademark policy yet, so ask before you use the Sanctum name for your build, and give your product a name of its own.</li><li><strong>Building from source.</strong> Follow Building from source in the <a href="https://github.com/Enigma-Technologies-Solutions/sanctum#building-from-source" rel="noopener noreferrer">README</a> first and get an unmodified build running. Then change one thing at a time.</li><li><strong>Finding what you missed.</strong> From the root of the checkout, <code>grep -rni &quot;enigma&quot; src src-tauri/src src-tauri/tauri.conf.json</code> and <code>grep -rn &quot;Sanctum&quot; src src-tauri/src</code> list the places that still carry the old identity.</li></ul>
+<h4>1. Name and identity</h4>
+<p>These are in <code>src-tauri/tauri.conf.json</code>:</p>
+<ul><li><code>productName</code> is the name of the app and its installer.</li><li><code>identifier</code> is the reverse domain name that the operating system uses to tell apps apart. It also decides where the app keeps its library, so a build with a different identifier does not see the library of another Sanctum install. Choose it once and keep it.</li><li>The window <code>title</code> is the name in the title bar.</li><li><code>plugins.deep-link.desktop.schemes</code> is the link scheme, <code>sanctum</code> by default. The code that reads those links checks the same word, as <code>SCHEME</code> in <code>src-tauri/src/registry/link.rs</code>, so change both and run the tests.</li></ul>
+<p>Some window titles that tell people a tool is untrusted also say &quot;Sanctum&quot;. Those are in <code>src-tauri/src/commands/runner.rs</code>. Keep the warning, change the name.</p>
+<h4>2. Look and feel</h4>
+<ul><li><strong>Colours.</strong> The tokens are in <code>src/index.css</code>: the light theme under <code>:root</code>, the dark theme under <code>:root[data-theme=&quot;dark&quot;]</code>. The accent is <code>--volt</code>. Change the tokens, not the components, and every screen follows.</li><li><strong>Mark and icons.</strong> The monogram in the header is <code>src/components/StMark.tsx</code>, drawn from <code>assets/logo/st-monogram.svg</code>. The app icons are in <code>src-tauri/icons</code>. Tauri can make the whole set from one square image with <code>pnpm tauri icon your-icon.png</code>.</li><li><strong>One theme only.</strong> The Appearance section in Settings lets people choose light, dark or the system setting, and the choice is kept in the window&#39;s local storage. To ship a single theme, make <code>readTheme</code> in <code>src/lib/theme.ts</code> always return the one you want, remove the Appearance section from <code>src/components/settings/SettingsView.tsx</code>, and update <code>src/lib/theme.test.ts</code> and <code>src/components/settings/Appearance.test.tsx</code>, which expect the system default.</li></ul>
+<h4>3. Who you trust</h4>
+<p>A branded build should recognise your publisher, not Enigma&#39;s. The keys it trusts out of the box are compiled in, in <code>COMPILED_ANCHORS</code> in <code>src-tauri/src/trust.rs</code>. Replace Enigma&#39;s root key id and name with yours, then update the tests in that file that name the Enigma root.</p>
+<p>The root is a key you make with <code>keygen</code> and keep offline. It is used only to certify other keys:</p>
+<ul><li>A publisher certificate names your publisher key and the app ids it may sign, for example <code>com.example.</code>. Tools signed under it show as signed by your publisher.</li><li>A registry certificate has a scope that starts with <code>registry:</code>, for example <code>registry:com.example.</code>. A registry signed under it is recognised at once, so nobody sees the &quot;unknown signer&quot; question when they add it.</li></ul>
+<p>The commands for both are in <a href="https://sanctum.enigma.sh/docs/run-your-own-registry/" rel="noopener noreferrer">Run your own registry</a>, and <code>sanctum-bundle cert</code> prints its usage when run with no arguments. The helper scripts <code>scripts/sign-example.sh</code> and <code>scripts/sign-registry.sh</code> check for Enigma&#39;s root and your key will not match, so use the commands directly or copy the scripts and change the expected key.</p>
+<h4>4. A registry that is already there</h4>
+<p>The Welcome panel has a Browse signed tools button. It adds the Enigma registry in one click and opens the Catalogue. The address is a constant in two places, <code>ENIGMA_REGISTRY_URL</code> in <code>src/lib/registry.ts</code> and in <code>src-tauri/src/registry/link.rs</code>. Point both at your registry address and rename them, and the tests that compare them tell you if they drift.</p>
+<p>With your root compiled in and your registry signed under a registry certificate, that click is the whole setup. Sanctum does not add a registry by itself at first launch, and that is deliberate: the one thing it does on its own is check for updates. If your product needs a registry that is already present, call <code>Commands.addRegistry</code> from your own first-run code. That edit is small, but it is yours to make and test, and it is not part of the tool today.</p>
+<p>Delivering a registry to a machine from an organisation policy file is designed but not built. The pinned-checksum policy that exists today is described in <a href="https://github.com/Enigma-Technologies-Solutions/sanctum/blob/main/docs/policy.md" rel="noopener noreferrer">policy.md</a>.</p>
+<p>The <code>sanctum://install</code> links and the install redirect page in <code>workers/install</code> are Enigma&#39;s. Run your own copy of the worker or leave links out.</p>
+<h4>5. Updates and releases</h4>
+<ul><li><strong>Update address and key.</strong> <code>plugins.updater.endpoints</code> and <code>plugins.updater.pubkey</code> in <code>tauri.conf.json</code> decide where updates come from and which key they must be signed with. Make your own pair with <code>pnpm tauri signer generate</code>, put the public key in the file, and keep the private key in your release secrets, never in the repository.</li><li><strong>Signing identities.</strong> macOS needs your own Apple Developer identity for signing and notarising, and Windows needs your own code signing certificate. The release workflow in <code>.github/workflows/release.yml</code> is written for Enigma&#39;s accounts and secrets. Read it end to end before you reuse it.</li></ul>
+<h4>6. What to leave alone</h4>
+<ul><li><strong>Build apps with Codex</strong> is off by default and sends a person&#39;s messages to OpenAI when they turn it on. Whether another product may offer it depends on OpenAI&#39;s terms, which are not settled even for Enigma. Leave it off in a branded build until you have your own answer.</li><li><strong>The security model.</strong> The origin separation, the content policy, the hash checks and the rule that approvals start empty are what the product is. A change that loosens any of them is a different product, and it should not carry this design&#39;s claims.</li></ul>
+<h4>Before you ship</h4>
+<ul><li>Run <code>cargo test</code> in <code>src-tauri</code> and <code>pnpm test</code> at the root. Fix the tests that name Enigma on purpose.</li><li>Add a tool to your registry, install it from a clean library, and check that the publisher you expect is shown and that the approval screen starts empty.</li><li>Run the grep commands above again and read what is left.</li></ul>
+    </div>
+    <p class="blog__back"><a href="https://github.com/Enigma-Technologies-Solutions/sanctum/blob/main/docs/white-label.md" rel="noopener">Read this guide on GitHub</a></p>
+    </article>
+  </div>
+</main>
+
+<footer class="foot">
+  <div class="wrap">
+    <div class="foot__bar">
+      <span class="ets" aria-hidden="true">ETS</span>
+      <span>© 2026 Enigma Technologies Solutions</span>
+      <span class="foot__bar-sp">AGPL-3.0-only</span>
+    </div>
+  </div>
+</footer>
+</body>
+</html>

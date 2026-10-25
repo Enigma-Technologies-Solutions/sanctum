@@ -66,6 +66,7 @@ ${head}<link rel="stylesheet" href="${up}styles.css">
       <a href="${up}">Home</a>
       <a href="${up}apps/">Signed tools</a>
       <a href="${up}blog/">Blog</a>
+      <a href="${up}docs/">Docs</a>
     </div>
     <div class="nav__cta">
       <a class="btn btn--ghost btn--sm nav__gh" href="https://github.com/Enigma-Technologies-Solutions/sanctum" rel="noopener">GitHub</a>
