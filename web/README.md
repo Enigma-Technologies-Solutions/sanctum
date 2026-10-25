@@ -1,7 +1,9 @@
 # Sanctum landing site
 
-Single-page site with no build step, no dependencies and no JavaScript. It's hand-written
-HTML and CSS with self-hosted fonts, and the page makes no third-party requests.
+Static site with no dependencies and no JavaScript. The home page is hand-written HTML and
+CSS with self-hosted fonts and makes no third-party requests. The blog, the guides and the
+tool pages are generated from sources elsewhere in the repo by Node scripts and committed;
+there is no build step at deploy time.
 
 ## Run it locally
 
@@ -17,11 +19,18 @@ Or just open `index.html` in a browser. Every path is relative.
 
 ```
 web/
-├── index.html        # the entire site
-├── styles.css        # ETS brand system, no framework
+├── index.html        # the home page (hand-written)
+├── styles.css        # ETS brand system, no framework, shared by every page
 ├── _headers          # CSP + security headers (Cloudflare Pages / Netlify)
 ├── robots.txt
-├── sitemap.xml
+├── sitemap.xml       # hand-written, except the blog:begin/end and docs blocks
+├── blog/             # GENERATED from blog-src/ by scripts/build-blog.mjs; see docs/blog.md
+│   ├── index.html    #   post list
+│   ├── feed.xml      #   Atom feed
+│   └── <slug>/       #   index.html + cover.png + thumb.png per published post
+├── docs/             # GENERATED from docs/ by scripts/build-docs.mjs (guides in scripts/lib/docs.mjs)
+├── apps/             # GENERATED per-tool pages by scripts/build-registry.mjs
+├── registry/         # GENERATED signed registry by scripts/build-registry.mjs
 └── assets/
     ├── favicon.svg   # "st" monogram (assets/logo/, scripts/gen-monogram.py)
     ├── favicon-32.png, favicon-48.png, apple-touch-icon.png, icon-192.png, icon-512.png
@@ -132,6 +141,14 @@ The CSP is deliberately strict. If you ever add analytics or a script tag, **bot
 meta tag and `_headers` have to be relaxed. Treat that as a decision, not a formality.
 
 
+## Writing a blog post
+
+The full guide is [`docs/blog.md`](../docs/blog.md): prerequisites, every frontmatter field,
+generating the cover and thumbnail, building, previewing drafts locally and publishing. In
+short: write `blog-src/YYYY-MM-DD-slug.md`, run `node scripts/gen-brand.mjs blog` and
+`node scripts/build-blog.mjs`, commit `blog-src/` together with `web/blog/` and
+`web/sitemap.xml`, and merge to `main`.
+
 ## Brand images and the blog
 
 - `node scripts/gen-brand.mjs [icons|site|apps|blog]` draws every raster with headless Chrome:
@@ -140,7 +157,8 @@ meta tag and `_headers` have to be relaxed. Treat that as a decision, not a form
   thumbnail. Change the generator or `assets/logo/`, never the PNGs.
 - Posts are `blog-src/<date>-<slug>.md`. `node scripts/build-blog.mjs` writes `web/blog/` and the
   sitemap block, `--check` is what CI runs, and `--preview DIR` also renders drafts
-  (`draft: "true"`), which are never written to `web/`. Remove the `draft` line to publish, then
+  (`draft: "true"`), which are never written to `web/`. `gen-brand.mjs blog` skips drafts too;
+  `gen-brand.mjs blog --preview DIR` draws their images for a preview. Remove the `draft` line to publish, then
   run `gen-brand.mjs blog` if the title changed.
 - Posts use the same strict Markdown subset as registry manuals: no raw HTML, no images, no
   em or en dashes.

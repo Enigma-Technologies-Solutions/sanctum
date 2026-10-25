@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Introducing the Enigma Registry | Sanctum</title>
+<meta name="description" content="The Enigma Registry is the signed catalogue Sanctum ships with. Here is what it contains, what each signature proves, and how to publish a registry of your own.">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'none'; style-src 'self'; font-src 'self'; img-src 'self' data:; connect-src 'none'; form-action 'none'; base-uri 'none'">
+<meta name="referrer" content="strict-origin-when-cross-origin">
+<link rel="canonical" href="https://sanctum.enigma.sh/blog/enigma-registry/">
+<meta property="og:type" content="article">
+<meta property="og:site_name" content="Sanctum">
+<meta property="og:title" content="Introducing the Enigma Registry | Sanctum">
+<meta property="og:description" content="The Enigma Registry is the signed catalogue Sanctum ships with. Here is what it contains, what each signature proves, and how to publish a registry of your own.">
+<meta property="og:url" content="https://sanctum.enigma.sh/blog/enigma-registry/">
+<meta property="og:image" content="https://sanctum.enigma.sh/blog/enigma-registry/cover.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Introducing the Enigma Registry | Sanctum">
+<meta name="twitter:description" content="The Enigma Registry is the signed catalogue Sanctum ships with. Here is what it contains, what each signature proves, and how to publish a registry of your own.">
+<meta name="twitter:image" content="https://sanctum.enigma.sh/blog/enigma-registry/cover.png">
+<meta name="theme-color" content="#FFFFFF">
+<meta name="color-scheme" content="light">
+<link rel="icon" href="../../assets/favicon.svg" type="image/svg+xml">
+<link rel="icon" href="../../favicon.ico" sizes="32x32 48x48">
+<link rel="apple-touch-icon" href="../../assets/apple-touch-icon.png">
+<link rel="stylesheet" href="../../styles.css">
+</head>
+<body>
+<a class="skip" href="#main">Skip to content</a>
+<nav class="nav" aria-label="Primary">
+  <div class="wrap nav__inner">
+    <a class="wordmark" href="../../" aria-label="Sanctum home">SANCTUM<span class="wordmark__sq" aria-hidden="true"></span></a>
+    <div class="nav__links">
+      <a href="../../">Home</a>
+      <a href="../../apps/">Signed tools</a>
+      <a href="../../blog/">Blog</a>
+    </div>
+    <div class="nav__cta">
+      <a class="btn btn--ghost btn--sm nav__gh" href="https://github.com/Enigma-Technologies-Solutions/sanctum" rel="noopener">GitHub</a>
+      <a class="btn btn--volt btn--sm" href="https://github.com/Enigma-Technologies-Solutions/sanctum/releases/latest" rel="noopener">Download Sanctum</a>
+    </div>
+  </div>
+</nav>
+
+<main id="main" class="section apps">
+  <div class="wrap">
+    <article class="blog blog--post">
+    <p class="eyebrow"><a href="../">Blog</a></p>
+    <p class="blog__date">October 25, 2026</p>
+    <h1 class="h2 blog__h1">Introducing the Enigma Registry</h1>
+    <figure class="blog__cover"><img src="./cover.png" width="1200" height="630" alt=""></figure>
+    <div class="manual blog__body">
+<p>When we launched Sanctum, the Catalogue tab got a single paragraph. It deserves more, because the registry behind it is how most people first meet a tool in Sanctum, and because anyone can publish one in the same format.</p>
+<p>A registry is a set of static files on an HTTPS address. It holds a catalogue, a list of withdrawn versions, and one signed bundle for each tool. The Enigma Registry is the one Sanctum knows from the first launch. It is served from <code>sanctum.enigma.sh/registry/v1/</code>, and its root key is compiled into the application.</p>
+<h4>What is in it</h4>
+<p>The registry currently lists three tools, all published by Enigma and all free:</p>
+<ul><li><a href="https://sanctum.enigma.sh/apps/sh.enigma.shamir/" rel="noopener noreferrer">Shamir Secret Sharing</a> splits a secret into shares and rebuilds it from any chosen number of them. Each share carries a checksum, so a mistyped or missing share produces a clear error rather than a wrong secret. It asks Sanctum for no access.</li><li><a href="https://sanctum.enigma.sh/apps/sh.enigma.otp-vault/" rel="noopener noreferrer">OTP Vault</a> generates time based one time codes. The vault is encrypted in the tool&#39;s own storage, and with smart card access approved for the OATH applet it can write a secret to a YubiKey and let the key compute each code. It asks for storage and that one applet, and nothing on the network.</li><li><a href="https://sanctum.enigma.sh/apps/sh.enigma.pdf-watermark/" rel="noopener noreferrer">PDF Watermark</a> is new to the registry. It places a visible, traceable mark on a PDF before you share it, with the recipient&#39;s name on every page and a unique ID in the document. It also asks for no access.</li></ul>
+<p>Each is a single HTML file that does one narrow job without a network connection, the kind of tool that benefits most from being fixed and signed.</p>
+<h4>What a signature proves</h4>
+<p>Every tool in the registry is a bundle. The publisher signs a short statement naming the tool, its version, the SHA-256 of the file and the capabilities it declares. The registry key separately signs the catalogue. Before installing anything, Sanctum checks both signatures, checks that the file matches its hash, and scans the file itself. If the capabilities it finds differ from the signed declaration, the install is refused.</p>
+<p>The catalogue and the list of withdrawn versions both carry a serial number and an expiry date. A serial that goes backwards is rejected, so an old catalogue cannot be replayed to hide a withdrawal. The withdrawal list is valid for fourteen days and the catalogue for ninety, and a scheduled job checks them every week and fails as soon as either has lapsed, so that we renew them rather than leave them stale.</p>
+<p>None of this says that a tool is safe, and the interface never claims so. A signature establishes who published the file and that it has not changed. It does not grant access. A tool installed from the Enigma Registry starts with nothing approved, exactly like a file you drag into the window, and you approve each capability on the usual screen.</p>
+<h4>The registry is free, and it is not the only one</h4>
+<p>Enigma signs only its own tools. We take no cut and sell nothing through the registry. A third party who wants to distribute tools signs them with its own key, and that key appears as an unknown signer until the person installing chooses to trust it.</p>
+<p>For most organisations the more useful step is to run their own registry. A team can list the tools it has reviewed, and a vendor can publish its own. Nothing in the format requires a server that runs code, so GitHub Pages, an object store or an internal web server will do. The first time someone adds it, Sanctum shows the signing key and asks them to compare it with the one you published. Our guide, <a href="https://sanctum.enigma.sh/docs/run-your-own-registry/" rel="noopener noreferrer">Run your own registry</a>, takes you from nothing to a working registry in ten steps.</p>
+<h4>What comes next</h4>
+<p>Update notices for installed tools and a faster way to withdraw a harmful version are things we would like to build, though we have not scheduled them. More tools will follow when we have written ones we would rely on ourselves.</p>
+<p>To try the registry, open the Catalogue tab in <a href="https://github.com/Enigma-Technologies-Solutions/sanctum/releases/latest" rel="noopener noreferrer">Sanctum</a>, or choose Install in Sanctum on any tool&#39;s page. We would like to hear what you think at ultra@enigma.sh.</p>
+    </div>
+    <p class="blog__back"><a href="../">Back to the blog</a></p>
+    </article>
+  </div>
+</main>
+
+<footer class="foot">
+  <div class="wrap">
+    <div class="foot__bar">
+      <span class="ets" aria-hidden="true">ETS</span>
+      <span>© 2026 Enigma Technologies Solutions</span>
+      <span class="foot__bar-sp">AGPL-3.0-only</span>
+    </div>
+  </div>
+</footer>
+</body>
+</html>

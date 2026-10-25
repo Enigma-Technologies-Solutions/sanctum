@@ -30,6 +30,12 @@ pnpm tauri dev
 4. Open a PR against `main` and describe what it changes and why.
 5. A maintainer will review within a few business days.
 
+## Writing a blog post
+
+Posts live in `blog-src/` and are built into `web/blog/` by two Node scripts. The whole
+workflow (prerequisites, frontmatter fields, cover images, drafts, local preview, publishing)
+is in [docs/blog.md](docs/blog.md). The site itself is described in [web/README.md](web/README.md).
+
 ## Code style
 
 - Rust: `cargo fmt` before committing. Clippy warnings are errors in CI.

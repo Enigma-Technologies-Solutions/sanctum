@@ -4,8 +4,15 @@
   <link href="https://sanctum.enigma.sh/blog/feed.xml" rel="self"/>
   <link href="https://sanctum.enigma.sh/blog/"/>
   <id>https://sanctum.enigma.sh/blog/</id>
-  <updated>2026-10-16T12:00:00Z</updated>
+  <updated>2026-10-25T12:00:00Z</updated>
   <author><name>Enigma Technologies Solutions</name></author>
+  <entry>
+    <title>Introducing the Enigma Registry</title>
+    <link href="https://sanctum.enigma.sh/blog/enigma-registry/"/>
+    <id>https://sanctum.enigma.sh/blog/enigma-registry/</id>
+    <updated>2026-10-25T12:00:00Z</updated>
+    <summary>The Enigma Registry is the signed catalogue Sanctum ships with. Here is what it contains, what each signature proves, and how to publish a registry of your own.</summary>
+  </entry>
   <entry>
     <title>Personal software, on your terms</title>
     <link href="https://sanctum.enigma.sh/blog/introducing-sanctum/"/>
