@@ -12,7 +12,7 @@ Design background is in [registry.md](registry.md). This file is the order of wo
 | Phase | State |
 |---|---|
 | 0 to 7 | Built, tested, merged to `main` (PRs #10 to #22). Registry is live at `sanctum.enigma.sh/registry/v1/` with screenshots (index serial 2). |
-| Launch site | Merged (#22): `st` brand, Signed tools section, install buttons, blog generator, social images. The launch post is a hidden draft. |
+| Launch site | Merged (#22): `st` brand, Signed tools section, install buttons, blog generator, social images. The launch post was published on 2026-10-16. |
 | 8 updates and revocation | Not started. Not needed for 0.2.0 (see `docs/launch.md`). |
 | 9 release | Not started: security review, version bump to 0.2.0, signed release, upgrade test. |
 

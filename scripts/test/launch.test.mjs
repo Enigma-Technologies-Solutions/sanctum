@@ -206,7 +206,7 @@ test('the privacy answer still says registries are contacted only on request', (
 });
 
 test('every post source has its images, and every committed blog folder has a source', () => {
-  const src = existsSync(join(repo, 'blog-src')) ? readdirSync(join(repo, 'blog-src')).filter((f) => f.endsWith('.md')) : [];
+  const src = existsSync(join(repo, 'blog-src')) ? readdirSync(join(repo, 'blog-src')).filter((f) => f.endsWith('.md') && !/^draft:\s*"true"/m.test(readFileSync(join(repo, 'blog-src', f), 'utf8'))) : [];
   const slugs = src.map((f) => f.replace(/^\d{4}-\d{2}-\d{2}-/, '').replace(/\.md$/, ''));
   const dirs = existsSync(join(web, 'blog')) ? readdirSync(join(web, 'blog'), { withFileTypes: true }).filter((d) => d.isDirectory()).map((d) => d.name) : [];
   assert.deepEqual(dirs.sort(), slugs.sort());

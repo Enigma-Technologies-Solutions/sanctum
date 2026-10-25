@@ -6,11 +6,15 @@
 // type. Nothing here is hand-edited: change this file or assets/logo/, then run it.
 //
 //   node scripts/gen-brand.mjs [icons] [site] [apps] [blog]      (default: all)
+//   node scripts/gen-brand.mjs blog --preview DIR                 drafts too, into DIR
 //
 // icons  src-tauri/icons/icon.png, web favicons (ico, 32/192/512 png, apple touch icon)
 // site   web/assets/og.png, the social card for the home page
 // apps   web/apps/<app_id>/og.png, one social card per signed tool (from the registry index)
-// blog   web/blog/<slug>/cover.png (1200x630) and thumb.png (600x400), from blog-src/*.md
+// blog   web/blog/<slug>/cover.png (1200x630) and thumb.png (600x400), from blog-src/*.md.
+//        Drafts (`draft: "true"`) are skipped: web/ is what deploys, and a draft's cover
+//        would publish its title. With --preview DIR every post, drafts included, is drawn
+//        into DIR/<slug>/ instead, next to what `build-blog.mjs --preview DIR` writes.
 //
 // Needs Google Chrome (CHROME=/path to override) and ImageMagick for the .ico.
 
@@ -116,12 +120,16 @@ function apps() {
   }
 }
 
-function blog() {
+function blog(previewDir = null) {
   const src = join(repo, 'blog-src');
   if (!existsSync(src)) return;
   for (const f of readdirSync(src).filter((n) => n.endsWith('.md'))) {
     const { data } = frontmatter(readFileSync(join(src, f), 'utf8'));
-    const out = join(repo, 'web/blog', data.slug);
+    if (data.draft === 'true' && !previewDir) {
+      console.log(`  skip draft ${data.slug} (preview it with --preview DIR)`);
+      continue;
+    }
+    const out = join(previewDir ?? join(repo, 'web/blog'), data.slug);
     const card = { kicker: data.kicker ?? 'Sanctum blog', title: data.cover_title ?? data.title, sub: data.cover_sub ?? '', foot: data.date };
     shot(cardHtml({ ...card, size: 'og' }), join(out, 'cover.png'), 1200, 630);
     // Laid out at 600x400 and drawn at 2x, so it is sharp on a high-density screen.
@@ -130,12 +138,17 @@ function blog() {
 }
 
 if (process.argv[1] === fileURLToPath(import.meta.url)) {
-  const want = process.argv.slice(2);
+  const args = process.argv.slice(2);
+  const pi = args.indexOf('--preview');
+  if (pi >= 0 && !args[pi + 1]) throw new Error('--preview needs a directory');
+  const previewDir = pi >= 0 ? resolve(args[pi + 1]) : null;
+  const want = args.filter((a, i) => pi < 0 || (i !== pi && i !== pi + 1));
+  if (previewDir && want.some((n) => n !== 'blog')) throw new Error('--preview only applies to the blog target');
   const all = { icons, site, apps, blog };
-  for (const name of want.length ? want : Object.keys(all)) {
+  for (const name of want.length ? want : previewDir ? ['blog'] : Object.keys(all)) {
     if (!all[name]) throw new Error(`unknown target: ${name}`);
     console.log(`${name} ...`);
-    all[name]();
+    name === 'blog' ? blog(previewDir) : all[name]();
   }
   console.log('done');
 }

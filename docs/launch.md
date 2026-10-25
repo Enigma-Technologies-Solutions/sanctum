@@ -80,11 +80,8 @@ Say so in the release notes if asked; the post makes no platform-specific claim.
 
 ### Articles about Sanctum and what to use it for
 
-- Source: `blog-src/YYYY-MM-DD-slug.md` with front matter `title`, `date`, `slug`, `excerpt`,
-  `kicker`, `cover_title`, `cover_sub`. Add `draft: "true"` to keep a post out of `web/`.
-- Build: `node scripts/build-blog.mjs` (writes `web/blog/`, index, feed and sitemap entries);
-  `--check` is what CI runs; `--preview DIR` renders drafts outside `web/`.
-- Cover and thumbnail: `node scripts/gen-brand.mjs blog` (headless Chrome and ImageMagick).
+- How to write, preview and publish one: [`blog.md`](blog.md) (frontmatter, images, build,
+  drafts, deploy).
 - Rules: no em or en dashes, no AI voice, no emoji, Lucide icons only, English. CI scans
   `web/blog` and `blog-src`. Follow the style decisions above.
 - Ideas that fit what exists: generating keys with a tool you can inspect and still run in five
