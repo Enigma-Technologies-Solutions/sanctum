@@ -18,11 +18,11 @@ test('a guide becomes a page with its title, canonical address and no script', (
   assert.match(html, new RegExp(`rel="canonical" href="${SITE}/docs/${guide.slug}/"`));
   assert.match(html, /script-src 'none'/);
   assert.doesNotMatch(html, /<script/);
-  assert.match(html, /href="\.\.\/\.\.\/\.\.\/styles\.css"/);
+  assert.match(html, /href="\.\.\/\.\.\/styles\.css"/);
 });
 
 test('em and en dashes, a missing title and raw HTML are refused', () => {
-  assert.throws(() => guidePage(guide, '# T\n\nOne — two.\n', { siteUrl: SITE }), DocError);
+  assert.throws(() => guidePage(guide, '# T\n\nOne \u2014 two.\n', { siteUrl: SITE }), DocError);
   assert.throws(() => guidePage(guide, 'No title here.\n', { siteUrl: SITE }), DocError);
   assert.throws(() => guidePage(guide, '# T\n\n<b>x</b> and ![i](https://x.y/i.png)\n', { siteUrl: SITE }));
 });
@@ -51,5 +51,14 @@ test('the committed site page matches the guide', () => {
   const files = renderDocs((f) => readFileSync(join(repo, 'docs', f), 'utf8'), { siteUrl: SITE });
   for (const [rel, text] of files) {
     assert.equal(readFileSync(join(repo, 'web/docs', rel), 'utf8'), text, rel);
+  }
+});
+
+test('the docs index lists every guide, and every kind of page links to the docs', () => {
+  const files = renderDocs((f) => readFileSync(join(repo, 'docs', f), 'utf8'), { siteUrl: SITE });
+  const index = files.get('index.html');
+  for (const g of GUIDES) assert.ok(index.includes(`href="./${g.slug}/"`), g.slug);
+  for (const page of ['web/index.html', 'web/blog/index.html', 'web/apps/index.html', 'web/docs/index.html']) {
+    assert.match(readFileSync(join(repo, page), 'utf8'), /<a href="[^"]*docs\/">Docs<\/a>/, page);
   }
 });
