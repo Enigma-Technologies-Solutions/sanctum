@@ -245,7 +245,7 @@ deletes the old `.sig`, so a stale signature can never sit beside a new file.
 The registry is signed by its own key, not the publisher key that signs tools. The root
 certifies it once with the scope `registry:sh.enigma.`, so a leaked registry key cannot
 sign a tool and a leaked publisher key cannot sign a registry. Revocations must be re-issued
-every 14 days, so this key is the one that may later live on a server while the root and the
+every 30 days, so this key is the one that may later live on a server while the root and the
 publisher key stay offline.
 
 ## Verifying (what a client must do, in order)
@@ -297,7 +297,7 @@ previous good copy in place.
 
 `expires` exists so an attacker cannot freeze a client on an old index and hide a
 revocation. Since the signing key stays offline, someone has to re-sign before it lapses.
-Proposed defaults: index valid for 90 days, revocations for 14. A stale file warns; it does
+Defaults: index valid for 365 days, revocations for 30. The index may live long because a replayed old index cannot lower the serial or change a hash. The revocation list stays short because its expiry is what exposes a replayed copy that hides a new withdrawal. A stale file warns; it does
 not block browsing or installing, because bytes and signatures are still checked. Whether
 install should be blocked when revocations are stale is an open decision.
 
@@ -428,7 +428,7 @@ node --test spec/registry/test/*.test.mjs    # reference verifier against every 
 
 1. Registry ids use a `registry:` prefix to keep them out of the app id namespace. The
    alternative is a new certificate domain; this reuses existing certificate code.
-2. Index 90 days and revocations 14 days validity, warn only when stale.
+2. Index 365 days and revocations 30 days validity (first set at 90 and 14), warn only when stale.
 3. Revoked policy: block first-party, warn third-party (Phase 8).
 4. `licensed` entries are listed but not installable in v1.
 5. The icon may be SVG, shown only as an image.

@@ -5,7 +5,7 @@
 #   scripts/sign-registry.sh [--renew] [--bundles DIR]
 #
 # --renew re-issues both files with a new serial and a fresh expiry even if nothing changed.
-# Run it before they lapse (index 90 days, revocations 14 days). --bundles sets where the
+# Run it before they lapse (index 365 days, revocations 30 days). --bundles sets where the
 # signed .sanctum files are looked for (default: examples/).
 #
 # The registry is signed by its own key, which is certified by the root for registry ids only

@@ -56,7 +56,7 @@ on:
       - 'src-tauri/src/trust.rs'
       - 'docs/registry-format.md'
       - '.github/workflows/registry-spec.yml'
-  # A signed registry expires (index 90 days, revocations 14). This run fails once either
+  # A signed registry expires (index 365 days, revocations 30). This run fails once either
   # has lapsed, which is the reminder to run scripts/sign-registry.sh --renew.
   schedule:
     - cron: '17 6 * * 1'
