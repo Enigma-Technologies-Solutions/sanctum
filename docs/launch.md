@@ -14,8 +14,8 @@ next kinds of work. The registry design is in [registry-plan.md](registry-plan.m
 
 | Due | What | How |
 |---|---|---|
-| **2026-11-02** (renewed on 2026-10-19; renew again by 2026-10-30) | `revocations.json` expires 14 days after it is issued, so it needs renewing at least every two weeks. The weekly CI job only fails after a lapse and runs Mondays 06:17 UTC, so do not wait for it. | `scripts/sign-registry.sh --renew` (interactive, YubiKey, the maintainer runs it), then PR and merge. Pages deploys on merge. |
-| **2027-01-17** (renewed on 2026-10-19) | `index.json` expires 90 days after it is issued. | Same command, which renews both. |
+| **2026-11-02** (renewed on 2026-10-19; renew again by 2026-10-30) | `revocations.json` expires 14 days after it is issued (30 days once the next renewal is signed with the new `registry.json`), so it needs renewing before then. The weekly CI job only fails after a lapse and runs Mondays 06:17 UTC, so do not wait for it. | `scripts/sign-registry.sh --renew` (interactive, YubiKey, the maintainer runs it), then PR and merge. Pages deploys on merge. |
+| **2027-01-17** (renewed on 2026-10-19) | `index.json` expires 90 days after it is issued (365 days from the next renewal). | Same command, which renews both. |
 | Each Tauri or updater plugin update | Recheck `cargo audit`. Six advisories are accepted with reasons in `docs/security-review-0.2.0.md`. | `cd src-tauri && cargo audit`; `pnpm audit --prod`. |
 
 ## What shipped

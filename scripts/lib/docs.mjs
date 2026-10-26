@@ -20,7 +20,7 @@ export const GUIDES = [
   {
     src: 'run-your-own-registry.md',
     slug: 'run-your-own-registry',
-    updated: '2026-10-24',
+    updated: '2026-10-26',
     description: 'Make, sign, host and add your own registry of Sanctum tools, step by step.',
   },
   {

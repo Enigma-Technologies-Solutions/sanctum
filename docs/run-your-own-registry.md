@@ -77,8 +77,8 @@ registry-src/
   "name": "Example Tools",
   "kind": "public",
   "site_url": "https://tools.example.com",
-  "index_days": 90,
-  "revocations_days": 14
+  "index_days": 365,
+  "revocations_days": 30
 }
 ```
 
@@ -175,7 +175,7 @@ From then on the tools appear in the Catalogue. Installing one runs the same che
 
 ## 10. Keep it fresh
 
-Two files expire. The catalogue lasts 90 days by default and the list of withdrawn versions lasts 14. Renew them before they lapse. An expired file shows a warning in Sanctum and does not block browsing or installing, but a client can no longer rely on the list being current.
+Two files expire. With the settings above, the catalogue lasts a year and the list of withdrawn versions lasts 30 days. Keep the list of withdrawn versions short on purpose: its expiry is what shows that nobody is replaying an old copy to hide a new withdrawal, so a long life would remove that protection. Renew both before they lapse. An expired file shows a warning in Sanctum and does not block browsing or installing, but a client can no longer rely on the list being current.
 
 ```bash
 node scripts/build-registry.mjs --renew \
@@ -184,7 +184,7 @@ node scripts/build-registry.mjs --renew \
   --anchor "ed25519:YOUR_PUBLISHER_KEY_ID=Example Tools"
 ```
 
-Then sign both files again as in step 6 and upload them. A calendar reminder every ten days is enough.
+Then sign both files again as in step 6 and upload them. A calendar reminder every three weeks is enough.
 
 To publish a new version of a tool, sign the new bundle, add a section to its `CHANGELOG.md`, copy the bundle into `bundles/`, then build, sign, verify and upload.
 

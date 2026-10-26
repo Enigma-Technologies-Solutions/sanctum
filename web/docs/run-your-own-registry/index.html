@@ -93,8 +93,8 @@ sb keygen --out registry.key</code></pre>
   &quot;name&quot;: &quot;Example Tools&quot;,
   &quot;kind&quot;: &quot;public&quot;,
   &quot;site_url&quot;: &quot;https://tools.example.com&quot;,
-  &quot;index_days&quot;: 90,
-  &quot;revocations_days&quot;: 14
+  &quot;index_days&quot;: 365,
+  &quot;revocations_days&quot;: 30
 }</code></pre>
 <p><code>revocations.json</code> starts empty:</p>
 <pre><code>{ &quot;entries&quot;: [] }</code></pre>
@@ -147,12 +147,12 @@ sb registry-sign --kind revocations --key registry.key \
 <p>Open the Catalogue, choose Add a registry, and paste the address of the folder, for example <code>https://tools.example.com/registry/v1/</code>. Sanctum fetches the index, sees a signer it does not recognise, and shows the signing key. Compare it with your registry key id, which you should publish somewhere people can check, such as your own website. When it matches, tick the box and choose Add and trust this key.</p>
 <p>From then on the tools appear in the Catalogue. Installing one runs the same checks as a file you add by hand, and the tool starts with no approvals.</p>
 <h4>10. Keep it fresh</h4>
-<p>Two files expire. The catalogue lasts 90 days by default and the list of withdrawn versions lasts 14. Renew them before they lapse. An expired file shows a warning in Sanctum and does not block browsing or installing, but a client can no longer rely on the list being current.</p>
+<p>Two files expire. With the settings above, the catalogue lasts a year and the list of withdrawn versions lasts 30 days. Keep the list of withdrawn versions short on purpose: its expiry is what shows that nobody is replaying an old copy to hide a new withdrawal, so a long life would remove that protection. Renew both before they lapse. An expired file shows a warning in Sanctum and does not block browsing or installing, but a client can no longer rely on the list being current.</p>
 <pre><code>node scripts/build-registry.mjs --renew \
   --source registry-src --bundles bundles --out site/registry/v1 \
   --site scratch/apps --sitemap sitemap.xml \
   --anchor &quot;ed25519:YOUR_PUBLISHER_KEY_ID=Example Tools&quot;</code></pre>
-<p>Then sign both files again as in step 6 and upload them. A calendar reminder every ten days is enough.</p>
+<p>Then sign both files again as in step 6 and upload them. A calendar reminder every three weeks is enough.</p>
 <p>To publish a new version of a tool, sign the new bundle, add a section to its <code>CHANGELOG.md</code>, copy the bundle into <code>bundles/</code>, then build, sign, verify and upload.</p>
 <p>To withdraw a version, add an entry to <code>revocations.json</code> with the checksum of that tool&#39;s HTML, its app id, a reason (<code>compromised</code>, <code>vulnerable</code>, <code>withdrawn</code> or <code>mistake</code>) and the time it was revoked, then build, sign and upload. A client matches on the checksum, so the file is withdrawn wherever it came from.</p>
 <h4>If something goes wrong</h4>
