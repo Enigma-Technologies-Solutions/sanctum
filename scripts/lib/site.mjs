@@ -25,6 +25,8 @@ export function describeAccess(declared) {
 
 const date = (unix) => new Date(unix * 1000).toISOString().slice(0, 10);
 
+// The nav mirrors web/index.html, with the in-page anchors pointing back at the home page.
+// scripts/test/nav.test.mjs keeps the two in step.
 export function shell({ title, description, canonical, depth, body, image, ogType = 'website', siteUrl = 'https://sanctum.enigma.sh', head = '' }) {
   const up = '../'.repeat(depth);
   const img = image ? `${siteUrl}/${image}` : `${siteUrl}/assets/og.png`;
@@ -63,14 +65,18 @@ ${head}<link rel="stylesheet" href="${up}styles.css">
   <div class="wrap nav__inner">
     <a class="wordmark" href="${up}" aria-label="Sanctum home">SANCTUM<span class="wordmark__sq" aria-hidden="true"></span></a>
     <div class="nav__links">
-      <a href="${up}">Home</a>
-      <a href="${up}apps/">Signed tools</a>
+      <a href="${up}#how">How it works</a>
+      <a href="${up}#tools">Signed tools</a>
+      <a href="${up}#security">Security</a>
+      <a href="${up}#compare">Compare</a>
+      <a href="${up}#pricing">Pricing</a>
+      <a href="${up}#faq">FAQ</a>
       <a href="${up}blog/">Blog</a>
       <a href="${up}docs/">Docs</a>
     </div>
     <div class="nav__cta">
       <a class="btn btn--ghost btn--sm nav__gh" href="https://github.com/Enigma-Technologies-Solutions/sanctum" rel="noopener">GitHub</a>
-      <a class="btn btn--volt btn--sm" href="https://github.com/Enigma-Technologies-Solutions/sanctum/releases/latest" rel="noopener">Download Sanctum</a>
+      <a class="btn btn--volt btn--sm" href="https://github.com/Enigma-Technologies-Solutions/sanctum/releases/latest" rel="noopener">Download</a>
     </div>
   </div>
 </nav>
