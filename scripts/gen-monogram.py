@@ -21,8 +21,14 @@ from fontTools.ttLib import TTFont
 
 ROOT = Path(__file__).resolve().parent.parent
 INK, VOLT, PAPER = "#0A0A0A", "#FBFF00", "#FFFFFF"
-TRACKING = -20      # font units between s and t
+TRACKING = -20          # font units between the letters
 DOT, DOT_GAP = 150, 70  # volt terminal square and its gap, font units
+# One type size and one baseline for every ETS monogram (sg, st, vt), so the marks
+# match side by side: the em is EM of the tile's body, sized so the widest, "sg",
+# keeps clear of the frame. The x-height band is centred; ascenders and the g's
+# descender fall where they fall. Keep in step with the other repos' copies.
+EM, X_HEIGHT = 0.47, 558
+LETTERS, TITLE = "st", "Sanctum"
 
 
 def glyphs(text: str):
@@ -41,18 +47,18 @@ def glyphs(text: str):
     return parts, box
 
 
-def mark(size, pad, frame_inset, frame_w, letter_frac):
-    parts, (xmin, ymin, xmax, ymax) = glyphs("st")
+def mark(size, pad, frame_inset, frame_w):
+    parts, (xmin, _, xmax, _) = glyphs(LETTERS)
     body = size - 2 * pad
+    s = EM * body / 1000
     w_units = (xmax - xmin) + DOT_GAP + DOT
-    s = letter_frac * body / w_units
     tx = pad + (body - w_units * s) / 2 - xmin * s
-    baseline = pad + (body + (ymax - ymin) * s) / 2 + ymin * s
+    baseline = pad + (body + X_HEIGHT * s) / 2
     fi = pad + frame_inset + frame_w / 2
     inner = body - 2 * frame_inset - frame_w
     out = [
         f'<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 {size} {size}" width="{size}" height="{size}">',
-        "  <title>Sanctum</title>",
+        f"  <title>{TITLE}</title>",
         f'  <rect x="{pad}" y="{pad}" width="{body}" height="{body}" fill="{INK}"/>',
         f'  <rect x="{fi:.2f}" y="{fi:.2f}" width="{inner:.2f}" height="{inner:.2f}" fill="none" stroke="{VOLT}" stroke-width="{frame_w}"/>',
         f'  <g fill="{PAPER}" transform="translate({tx:.2f} {baseline:.2f}) scale({s:.5f} {-s:.5f})">',
@@ -70,6 +76,6 @@ def mark(size, pad, frame_inset, frame_w, letter_frac):
 if __name__ == "__main__":
     out = ROOT / "assets/logo"
     out.mkdir(parents=True, exist_ok=True)
-    (out / "app-icon.svg").write_text(mark(1024, 100, 64, 26, 0.60))
-    (out / "st-monogram.svg").write_text(mark(64, 0, 5, 3, 0.64))
+    (out / "app-icon.svg").write_text(mark(1024, 100, 64, 26))
+    (out / "st-monogram.svg").write_text(mark(64, 0, 5, 3))
     print("wrote", out / "app-icon.svg", out / "st-monogram.svg")
