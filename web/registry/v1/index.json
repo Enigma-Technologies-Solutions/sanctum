@@ -3,9 +3,9 @@
   "id": "registry:sh.enigma.public",
   "name": "Enigma Technologies Solutions",
   "kind": "public",
-  "serial": 6,
-  "issued_at": 1793022024,
-  "expires": 1824558024,
+  "serial": 7,
+  "issued_at": 1793211906,
+  "expires": 1824747906,
   "revocations": "revocations.json",
   "apps": [
     {
