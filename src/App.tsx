@@ -10,6 +10,8 @@ import { LINK_EVENT } from "@/lib/registry";
 import { LinkInstallDialog } from "@/components/catalogue/LinkInstallDialog";
 import { Library } from "@/components/Library";
 import { UpdateBanner } from "@/components/UpdateBanner";
+import { RegistryNoticeBanner } from "@/components/RegistryNoticeBanner";
+import { useRegistryChecks } from "@/lib/notices";
 import { AppHeader, type View } from "@/components/AppHeader";
 import { SettingsView } from "@/components/settings/SettingsView";
 import { CatalogueView } from "@/components/catalogue/CatalogueView";
@@ -25,6 +27,7 @@ function App() {
   // Catalogue after the link flow added a registry or installed something.
   const [link, setLink] = useState<LinkEvent | null>(null);
   const [catalogueKey, setCatalogueKey] = useState(0);
+  const checks = useRegistryChecks(libraryKey);
 
   useEffect(() => {
     // The event only says "a link arrived". The link itself is read from Rust, once, so a link
@@ -59,6 +62,7 @@ function App() {
       <div style={{ display: "flex", flexDirection: "column", height: "100vh", background: "var(--app-bg)", overflow: "hidden" }}>
         <AppHeader view={view} onNavigate={setView} version={version} />
         <UpdateBanner />
+        <RegistryNoticeBanner notices={checks.notices} onOpenCatalogue={() => setView("catalogue")} />
         <main style={{ flex: 1, overflow: "hidden", position: "relative" }}>
           {/* Both screens stay mounted so the Library keeps its inspect view and scroll position. */}
           <div hidden={view !== "vault"} style={{ height: "100%", display: view === "vault" ? "block" : "none" }}>
@@ -75,7 +79,7 @@ function App() {
             <CatalogueView key={catalogueKey} onLibraryChanged={() => setLibraryKey((k) => k + 1)} onOpenVault={() => setView("vault")} />
           </div>
           <div hidden={view !== "settings"} style={{ height: "100%", display: view === "settings" ? "block" : "none" }}>
-            <SettingsView version={version} />
+            <SettingsView version={version} registryChecks={checks} />
           </div>
         </main>
         {link && (

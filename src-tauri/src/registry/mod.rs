@@ -19,9 +19,9 @@
 //!
 //! 1. **A registry never grants a capability.** Nothing here installs a tool. Phase 5 will,
 //!    through the normal bundle verification, scan and approval screen.
-//! 2. **Network requests happen only when the user asks** (add or refresh). There is no
-//!    background timer yet. The privacy copy on the website says the update check is the
-//!    only request Sanctum makes by itself; keep that true, or change the copy first.
+//! 2. **Network requests happen only when the user asks**: add, refresh, install, "Check now",
+//!    or the optional timer, which is off until the user turns it on. The privacy copy on the
+//!    website says so; change the copy first if this ever changes.
 //! 3. **A bad registry cannot poison a good cached one.** A refresh that fails any check
 //!    changes nothing but a "last error" note.
 //! 4. **No telemetry.** Requests carry no identifiers, only the fixed user agent "Sanctum".
@@ -32,4 +32,5 @@ pub mod detail;
 pub mod fetch;
 pub mod install;
 pub mod link;
+pub mod notices;
 pub mod store;

@@ -27,6 +27,11 @@ section behind.
 - Tool windows can save files: from a page's own blob or data link they go to your Downloads
   folder with no prompt, never over an existing file, and programs and scripts are refused.
 - Enigma PDF Watermark, a signed tool that marks PDFs for each recipient, in the Catalogue.
+- Registry notices. A banner in the Tool Vault lists a newer version of a tool you installed, and a
+  tool its registry withdrew. A registry built into Sanctum stops a withdrawn version from opening.
+  A registry you pinned yourself only warns. Settings has a Check now button and an option to check
+  once a day while Sanctum is open, which is **off by default**. Neither changes what a tool is
+  approved to do.
 
 ## [0.2.0] - 2026-10-19
 

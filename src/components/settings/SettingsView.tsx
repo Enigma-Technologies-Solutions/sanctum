@@ -24,6 +24,7 @@ import { downloadLabel, signInNote, useAgent } from "@/lib/agent";
 import type { PolicyStatus, TrustAnchorInfo, UpdateInfo } from "@/lib/types";
 import { PageHeader } from "@/components/PageHeader";
 import { readTheme, saveTheme, type ThemeChoice } from "@/lib/theme";
+import type { RegistryChecks } from "@/lib/notices";
 import { ABOUT, HOW_IT_WORKS, LINKS, LINKS_NOTE, type HowItem } from "@/lib/content";
 
 const ICONS: Record<HowItem["icon"], LucideIcon> = {
@@ -418,13 +419,63 @@ function TrustSection() {
   );
 }
 
-export function SettingsView({ version }: { version: string | null }) {
+
+/** The optional timer and the manual check for the registries the user added. */
+function RegistryChecksSection({ checks }: { checks: RegistryChecks }) {
+  const last = checks.lastChecked ? new Date(checks.lastChecked).toLocaleString() : null;
+  return (
+    <Section id="s-registries" title="Registries">
+      <Row first>
+        <div style={{ flex: 1, minWidth: 0 }}>
+          <div>Check for updates and withdrawn tools</div>
+          <div role="status" style={{ marginTop: "4px", fontSize: "12px", color: checks.problem ? "var(--danger-ink)" : "var(--app-ink-2)" }}>
+            {checks.checking ? "Checking…" : (checks.problem ?? (last ? `Last checked ${last}.` : "Not checked yet."))}
+          </div>
+        </div>
+        <button
+          type="button"
+          onClick={() => void checks.checkNow()}
+          disabled={checks.checking}
+          style={{ ...buttonStyle, opacity: checks.checking ? 0.6 : 1, cursor: checks.checking ? "default" : "pointer" }}
+        >
+          {checks.checking ? <Loader2 size={13} className="animate-spin" aria-hidden="true" /> : <RefreshCw size={13} aria-hidden="true" />}
+          Check now
+        </button>
+      </Row>
+      <Row>
+        <label style={{ flex: 1, display: "flex", alignItems: "center", gap: "10px", cursor: "pointer" }}>
+          <input
+            type="checkbox"
+            checked={checks.auto}
+            onChange={(e) => checks.setAuto(e.target.checked)}
+          />
+          <span>
+            Check once a day while Sanctum is open
+            <span style={{ display: "block", color: "var(--app-ink-2)", fontSize: "12px", marginTop: "2px" }}>
+              Off by default. Turning it on lets Sanctum contact the registries you added about once a day. It sends no
+              identifier and installs nothing.
+            </span>
+          </span>
+        </label>
+      </Row>
+      <Row>
+        <span style={{ fontSize: "12px", color: "var(--app-ink-2)" }}>
+          A registry built into Sanctum can stop a withdrawn version from opening. A registry you pinned can only warn you. Neither one
+          changes what a tool is approved to do.
+        </span>
+      </Row>
+    </Section>
+  );
+}
+
+export function SettingsView({ version, registryChecks }: { version: string | null; registryChecks?: RegistryChecks }) {
   return (
     <div style={{ height: "100%", display: "flex", flexDirection: "column" }}>
-      <PageHeader title="Settings">Appearance, updates, publisher keys and how Sanctum works.</PageHeader>
+      <PageHeader title="Settings">Appearance, registries, updates, publisher keys and how Sanctum works.</PageHeader>
       <div style={{ flex: 1, minHeight: 0, overflowY: "auto", background: "var(--app-surface)" }}>
       <div style={{ maxWidth: "720px", margin: "0 auto", padding: "24px 24px 48px" }}>
         <AppearanceSection />
+        {registryChecks && <RegistryChecksSection checks={registryChecks} />}
 
         <Section id="s-about" title="About">
           <Row first>

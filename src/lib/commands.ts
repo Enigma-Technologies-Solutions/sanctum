@@ -2,7 +2,7 @@
 // Copyright (C) 2026 Enigma Technologies Solutions
 
 import { invoke } from "@tauri-apps/api/core";
-import { cleanAccount, cleanAdded, cleanCatalogue, cleanOutcome, cleanReport, cleanStarted, cleanVersions, cleanDetail, cleanRegistry } from "@/lib/text";
+import { cleanAccount, cleanAdded, cleanCatalogue, cleanCheckReport, cleanNotices, cleanOutcome, cleanReport, cleanStarted, cleanVersions, cleanDetail, cleanRegistry } from "@/lib/text";
 import type {
   AgentAccount,
   AddedDraft,
@@ -25,6 +25,8 @@ import type {
   RegistryAppDetail,
   RegistryBatchItem,
   RegistryCatalogue,
+  RegistryCheckReport,
+  RegistryNotices,
   RegistryInstallOutcome,
   RegistryRefreshReport,
   RegistrySummary,
@@ -193,6 +195,19 @@ export const Commands = {
   /** Fetch the registry again. A failed refresh leaves the cached catalogue unchanged. */
   refreshRegistry(id: string): Promise<RegistryRefreshReport> {
     return invoke("refresh_registry", { id });
+  },
+
+  /**
+   * Fetch every registry again, then say which installed tools have an update or were
+   * withdrawn. Contacts each registry. Runs when the user clicks, or from the optional timer.
+   */
+  checkRegistries(): Promise<RegistryCheckReport> {
+    return invoke<RegistryCheckReport>("check_registries").then(cleanCheckReport);
+  },
+
+  /** Updates and withdrawn tools for the library, from the cache. No network. */
+  registryNotices(): Promise<RegistryNotices> {
+    return invoke<RegistryNotices>("registry_notices").then(cleanNotices);
   },
 
   /** The cached, re-verified catalogue with install state per app. No network. */

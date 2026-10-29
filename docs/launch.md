@@ -51,10 +51,14 @@ theme, #26 security fixes, #27 version 0.2.0, #28 dependency audit, #29 release-
 
 ## Decisions made
 
-- **Phase 8 skipped for 0.2.0.** Registries are contacted only on a click, which keeps the privacy
-  copy true. Cost: a withdrawn tool is noticed only on a manual refresh. Phase 8 (refresh timer,
-  update-available notices, fast revocation feed, block first-party and warn third-party) must
-  change the privacy copy first.
+- **Phase 8 skipped for 0.2.0, built for 0.3.0.** Registries are contacted only on a click in
+  0.2.0, which keeps the privacy copy true. Phase 8 is on branch `feat/registry-phase-8`: "Check
+  now", an optional daily timer that is off by default, update and withdrawal notices, and the
+  rule that a built-in registry blocks a withdrawn version while a pinned one only warns. Do not
+  change `web/index.html` until 0.3.0 ships. Then replace "A registry is contacted only when you
+  add it, refresh it or install from it" with "A registry is contacted only when you add it,
+  check it, refresh it or install from it, or once a day if you turn on the optional timer,
+  which is off by default".
 - **`st` monogram is the brand mark.** The white site is the default.
 - **Post date stays 2026-10-16**, although the release is dated 2026-10-19.
 - **Blog style (maintainer's feedback):** formal and professional, no run of three-word
