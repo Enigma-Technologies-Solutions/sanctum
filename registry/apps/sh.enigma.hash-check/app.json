@@ -1,0 +1,25 @@
+{
+  "app_id": "sh.enigma.hash-check",
+  "summary": "Check a file against the checksum its publisher gave you. Runs offline and asks for no access.",
+  "description": "Hashes a file you choose with SHA-256, SHA-384 or SHA-512 and compares it with a checksum you paste. It reads a plain hash, GNU and BSD checksum lines and whole SHA256SUMS files, and picks the line that matches the file's name. Large files are read in pieces with a progress bar. Everything happens inside the tool window: nothing is stored, uploaded or sent. A match shows the file is the one the checksum was made from, not that the checksum came from the publisher. The tool asks Sanctum for no access at all.",
+  "license": "AGPL-3.0-only",
+  "source": "https://github.com/Enigma-Technologies-Solutions/sanctum/tree/main/examples/hash-check",
+  "screenshots": [
+    {
+      "file": "overview.png",
+      "alt": "Overview of Hash Check: choose a file, paste a checksum and check it."
+    },
+    {
+      "file": "ready.png",
+      "alt": "A file chosen and a SHA256SUMS list pasted, with the algorithm set by the checksum."
+    },
+    {
+      "file": "match.png",
+      "alt": "A match: the file's SHA-256 equals the pasted checksum, with a Copy hash button."
+    },
+    {
+      "file": "mismatch.png",
+      "alt": "A mismatch: the number of differing characters and a warning not to use the file."
+    }
+  ]
+}

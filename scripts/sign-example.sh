@@ -2,7 +2,7 @@
 # Guided: certify your publisher key, sign an example tool, verify the result.
 # Every prompt's default is the expected answer: press Enter.
 #
-#   scripts/sign-example.sh [--tool otp-vault|shamir|pdf-watermark] [--version 1.0.0]
+#   scripts/sign-example.sh [--tool otp-vault|shamir|pdf-watermark|hash-check] [--version 1.0.0]
 #                           [--name "OTP Vault"] [--app-id sh.enigma.otp-vault] [--no-start]
 #
 # Flags only set the prompt defaults, so Enter still accepts them. A bare word is taken as
@@ -38,7 +38,8 @@ case "$tool" in
   otp-vault) d_app="sh.enigma.otp-vault"; d_name="OTP Vault" ;;
   shamir)    d_app="sh.enigma.shamir";    d_name="Shamir Secret Sharing" ;;
   pdf-watermark) d_app="sh.enigma.pdf-watermark"; d_name="PDF Watermark" ;;
-  *) echo "Unknown tool '$tool'. Use: otp-vault, shamir or pdf-watermark." >&2; exit 1 ;;
+  hash-check) d_app="sh.enigma.hash-check"; d_name="Hash Check" ;;
+  *) echo "Unknown tool '$tool'. Use: otp-vault, shamir, pdf-watermark or hash-check." >&2; exit 1 ;;
 esac
 d_app=${o_app:-$d_app}; d_name=${o_name:-$d_name}
 

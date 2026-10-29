@@ -27,7 +27,7 @@ jobs:
     name: Checksums and provenance
     runs-on: ubuntu-latest
     # Attest only files whose tests pass and whose generated output matches its sources.
-    needs: [shamir, pdf-watermark]
+    needs: [shamir, pdf-watermark, hash-check]
     permissions:
       contents: read
       id-token: write      # Sigstore signing identity for the attestation
@@ -175,5 +175,52 @@ jobs:
                 bad=1
               fi
             done
+          done
+          exit "$bad"
+
+  # Hash Check is built like Shamir: a core with no platform dependencies, inlined into the page.
+  # The tests compare the hashing against known answers and Node's own on thousands of inputs.
+  hash-check:
+    name: Hash Check tests, build and capability check
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 22
+
+      - name: Run Hash Check tests
+        run: node --test examples/hash-check/test/*.test.mjs
+
+      - name: Check index.html matches its sources
+        run: |
+          set -euo pipefail
+          node examples/hash-check/build.mjs --out "$RUNNER_TEMP/hash-check-index.html"
+          if ! cmp examples/hash-check/index.html "$RUNNER_TEMP/hash-check-index.html"; then
+            echo "::error file=examples/hash-check/index.html::index.html is out of date. Run 'node examples/hash-check/build.mjs' and commit the result."
+            exit 1
+          fi
+
+      - name: Check Hash Check uses no extra capabilities
+        run: |
+          set -euo pipefail
+          file=examples/hash-check/index.html
+          scan=$(mktemp)
+          sed -E "s#xmlns=['\"]http://www\.w3\.org/2000/svg['\"]##g" "$file" > "$scan"
+          bad=0
+          for s in getUserMedia navigator.usb navigator.serial navigator.hid \
+                   navigator.bluetooth navigator.geolocation Notification \
+                   localStorage sessionStorage indexedDB caches.open 'fetch(' \
+                   XMLHttpRequest 'new WebSocket' 'new EventSource' \
+                   sanctum.smartcard 'http://' 'https://' Math.random 'eval(' \
+                   'new Function' importScripts 'new Worker'; do
+            if grep -nF -e "$s" "$scan"; then
+              echo "::error file=$file::Forbidden string found: $s"
+              bad=1
+            fi
           done
           exit "$bad"
