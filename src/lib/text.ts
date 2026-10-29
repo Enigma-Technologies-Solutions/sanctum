@@ -11,6 +11,8 @@ import type {
   SourceRequest,
   RegistryAppDetail,
   RegistryCatalogue,
+  RegistryCheckReport,
+  RegistryNotices,
   RegistrySummary,
 } from "@/lib/types";
 
@@ -97,5 +99,36 @@ export function cleanDetail(d: RegistryAppDetail): RegistryAppDetail {
       changes: e.changes.map((c) => ({ ...c, text: cleanText(c.text) })),
     })),
     screenshots: d.screenshots.map((s) => ({ ...s, alt: cleanText(s.alt) })),
+  };
+}
+
+/** Names and reasons in a notice come from a registry, so they are cleaned like its catalogue. */
+export function cleanNotices(n: RegistryNotices): RegistryNotices {
+  return {
+    updates: n.updates.map((u) => ({
+      ...u,
+      registryName: cleanText(u.registryName),
+      name: cleanText(u.name),
+      installedVersion: cleanText(u.installedVersion),
+      latest: cleanText(u.latest),
+    })),
+    revoked: n.revoked.map((r) => ({
+      ...r,
+      registryName: cleanText(r.registryName),
+      name: cleanText(r.name),
+      version: cleanText(r.version),
+      reason: cleanText(r.reason),
+    })),
+  };
+}
+
+export function cleanCheckReport(r: RegistryCheckReport): RegistryCheckReport {
+  return {
+    notices: cleanNotices(r.notices),
+    items: r.items.map((i) => ({
+      ...i,
+      registryName: cleanText(i.registryName),
+      ...(i.state === "failed" ? { message: cleanText(i.message) } : {}),
+    })) as RegistryCheckReport["items"],
   };
 }
