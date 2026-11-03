@@ -27,6 +27,8 @@ section behind.
 - Tool windows can save files: from a page's own blob or data link they go to your Downloads
   folder with no prompt, never over an existing file, and programs and scripts are refused.
 - Enigma PDF Watermark, a signed tool that marks PDFs for each recipient, in the Catalogue.
+- Enigma Hash Check, a signed tool that compares a file with the checksum its publisher gave you,
+  in the Catalogue once it is published.
 
 ## [0.2.0] - 2026-10-19
 

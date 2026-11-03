@@ -1,0 +1,446 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'unsafe-inline'; style-src 'unsafe-inline'; img-src data:; base-uri 'none'; form-action 'none'">
+<meta name="referrer" content="no-referrer">
+<meta name="theme-color" content="#0a0a0a">
+<title>Enigma Hash Check for Sanctum</title>
+<meta name="description" content="Check a downloaded file against the checksum its publisher gave you. Runs offline and asks for no access.">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32' width='32' height='32'%3E%3Crect width='32' height='32' rx='6' fill='%230A0A0A'/%3E%3Crect x='3' y='3' width='26' height='26' rx='5' fill='none' stroke='%23FBFF00' stroke-width='1.5'/%3E%3Ctext x='16' y='20.5' text-anchor='middle' font-family='Poppins,Helvetica,Arial,sans-serif' font-size='10' font-weight='700' fill='%23FFFFFF' letter-spacing='-0.3'%3Esha%3C/text%3E%3C/svg%3E">
+<style>
+  :root{
+    --ink:#000000; --panel:#111111; --paper:#FFFFFF; --volt:#FBFF00;
+    --ash:#8A8A8A; --line:rgba(255,255,255,.12); --line-strong:rgba(255,255,255,.24); --field:rgba(255,255,255,.5);
+    --danger:#FF5A4E; --ok:#7CFF8A;
+    --display:'Poppins',system-ui,-apple-system,'Segoe UI',Roboto,sans-serif;
+    --body:'Inter',system-ui,-apple-system,'Segoe UI',Roboto,'Helvetica Neue',Arial,sans-serif;
+    --mono:'Space Mono',ui-monospace,SFMono-Regular,Menlo,Consolas,'Liberation Mono',monospace;
+    --gap:clamp(16px,4vw,48px);
+    color-scheme:dark;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;background:#0A0A0A;color:var(--paper)}
+  body{font-family:var(--body);font-size:15px;line-height:1.6;-webkit-font-smoothing:antialiased;min-height:100vh;
+    padding:env(safe-area-inset-top,0) 0 env(safe-area-inset-bottom,0)}
+  [hidden]{display:none!important}
+  code{font-family:var(--mono);font-size:.92em}
+  .wrap{max-width:980px;margin:0 auto;padding:0 var(--gap)}
+  .i{width:16px;height:16px;flex:none;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+
+  header.bar{position:sticky;top:0;z-index:40;background:rgba(0,0,0,.88);backdrop-filter:blur(8px);border-bottom:1px solid var(--line)}
+  .bar-in{display:flex;align-items:center;gap:16px;min-height:60px;padding-block:8px}
+  .mark{display:flex;align-items:center;gap:12px}
+  .ets-badge{display:inline-flex;align-items:center;justify-content:center;width:42px;height:28px;background:var(--paper)}
+  .ets{font-family:var(--body);font-weight:800;font-size:13px;color:#000;letter-spacing:.01em;line-height:1}
+  .wordmark{font-family:var(--mono);font-size:12px;letter-spacing:.16em;text-transform:uppercase}
+  .wordmark b{color:var(--ash);font-weight:400}
+
+  .hero{padding:clamp(36px,7vw,80px) 0 clamp(24px,4vw,40px)}
+  .eyebrow{font-family:var(--mono);font-size:11px;letter-spacing:.28em;text-transform:uppercase;color:var(--ash);margin:0 0 18px}
+  h1{font-family:var(--display);font-weight:800;font-size:clamp(38px,8.5vw,88px);line-height:.95;letter-spacing:-.02em;margin:0}
+  .dash{display:inline-block;width:.46em;height:.13em;background:var(--volt);vertical-align:.3em;margin:0 .04em}
+  .lede{max-width:640px;margin:24px 0 0;font-size:16px}
+  .lede span{color:var(--ash)}
+
+  .facts{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:1px;background:var(--line);border:1px solid var(--line);margin:0 0 8px}
+  @media (max-width:760px){.facts{grid-template-columns:minmax(0,1fr)}}
+  .fact{background:var(--panel);padding:16px 18px;font-size:13.5px}
+  .fact h3{font-family:var(--mono);font-size:11px;letter-spacing:.2em;text-transform:uppercase;margin:0 0 8px;display:flex;gap:8px;align-items:center}
+  .fact p{margin:0;color:var(--ash)}
+
+  section.block{padding:clamp(24px,4vw,40px) 0;border-top:1px solid var(--line)}
+  .kicker{font-family:var(--mono);font-size:11px;letter-spacing:.26em;text-transform:uppercase;color:var(--ash);margin:0 0 12px;display:flex;gap:12px;align-items:center}
+  .kicker::before{content:"";width:28px;height:2px;background:var(--volt)}
+  h2{font-family:var(--display);font-weight:700;font-size:clamp(22px,3.4vw,32px);line-height:1.1;letter-spacing:-.015em;margin:0 0 6px}
+  .muted{color:var(--ash)}
+  .small{font-size:13px}
+
+  .lab{display:flex;justify-content:space-between;gap:10px;font-family:var(--mono);font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--ash);margin-bottom:6px}
+  textarea,input[type=text]{width:100%;background:#000;color:var(--paper);border:1px solid var(--field);border-radius:0;padding:10px 12px;font-family:var(--mono);font-size:13px;line-height:1.5;outline:none}
+  textarea{resize:vertical;min-height:96px}
+  textarea:focus,input[type=text]:focus{border-color:var(--volt);box-shadow:0 0 0 1px var(--volt)}
+  button{font-family:var(--body)}
+  button.btn{background:var(--volt);color:#000;border:1px solid var(--volt);border-radius:0;padding:10px 16px;font-weight:700;
+    font-size:12px;letter-spacing:.1em;text-transform:uppercase;cursor:pointer;display:inline-flex;gap:8px;align-items:center;justify-content:center;line-height:1.2}
+  button.btn:hover:not(:disabled){background:#fff;border-color:#fff}
+  button.ghost{background:transparent;color:var(--paper);border:1px solid var(--field)}
+  button.btn:disabled,button.ghost:disabled{background:transparent;color:var(--ash);border-color:var(--line-strong);cursor:not-allowed}
+  button.ghost:hover:not(:disabled){border-color:var(--volt);background:rgba(251,255,0,.08)}
+  button.sm{padding:6px 10px;font-size:11px}
+  button:focus-visible,input:focus-visible{outline:2px solid var(--volt);outline-offset:2px}
+  .seg{display:inline-flex;border:1px solid var(--field);flex-wrap:wrap}
+  .seg button{background:transparent;color:var(--ash);border:0;padding:0 14px;min-height:34px;font-family:var(--mono);font-size:11px;letter-spacing:.12em;text-transform:uppercase;cursor:pointer}
+  .seg button + button{border-left:1px solid var(--field)}
+  .seg button[aria-pressed="true"]{background:var(--paper);color:#000}
+  .seg button:disabled{cursor:not-allowed}
+  .seg button:disabled:not([aria-pressed="true"]){opacity:.45}
+  .actions{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+  .hint{font-size:12.5px;color:var(--ash);margin:8px 0 0}
+
+  .picker{display:flex;gap:16px;flex-wrap:wrap;align-items:center;border:1px dashed var(--field);padding:22px}
+  .picker input[type=file]{position:absolute;width:1px;height:1px;opacity:0;pointer-events:none}
+  .picker:focus-within{border-color:var(--volt)}
+  .picked{font-family:var(--mono);font-size:13px;overflow-wrap:anywhere;min-width:0}
+  .picked b{font-weight:700}
+
+  progress{width:100%;height:6px;appearance:none;-webkit-appearance:none;border:0;background:var(--line-strong);margin:16px 0 6px}
+  progress::-webkit-progress-bar{background:var(--line-strong)}
+  progress::-webkit-progress-value{background:var(--volt)}
+  progress::-moz-progress-bar{background:var(--volt)}
+
+  .verdict{border:1px solid var(--line-strong);padding:14px 16px;margin:20px 0 0;display:flex;gap:12px;align-items:flex-start}
+  .verdict .i{margin-top:3px}
+  .verdict strong{display:block;font-size:16px}
+  .verdict p{margin:4px 0 0;font-size:13.5px;color:var(--ash)}
+  .verdict.ok{border-color:var(--ok)}
+  .verdict.ok strong,.verdict.ok .i{color:var(--ok)}
+  .verdict.bad{border-color:var(--danger)}
+  .verdict.bad strong,.verdict.bad .i{color:var(--danger)}
+  .out{margin:16px 0 0}
+  .out output{display:block;font-family:var(--mono);font-size:13px;overflow-wrap:anywhere;word-break:break-all;background:#000;border:1px solid var(--line-strong);padding:10px 12px;user-select:all;-webkit-user-select:all}
+  .msg{min-height:1.5em;margin:10px 0 0;font-size:13px;color:var(--ash)}
+  footer{border-top:1px solid var(--line);padding:24px 0 40px;color:var(--ash);font-size:12.5px}
+  .sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+</style>
+</head>
+<body>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false">
+  <symbol id="i-shield" viewBox="0 0 24 24"><path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"/><path d="m9 12 2 2 4-4"/></symbol>
+  <symbol id="i-lock" viewBox="0 0 24 24"><rect width="18" height="11" x="3" y="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></symbol>
+  <symbol id="i-info" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/></symbol>
+  <symbol id="i-upload" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" x2="12" y1="3" y2="15"/></symbol>
+  <symbol id="i-copy" viewBox="0 0 24 24"><rect width="14" height="14" x="8" y="8" rx="2" ry="2"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/></symbol>
+  <symbol id="i-check" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="m9 12 2 2 4-4"/></symbol>
+  <symbol id="i-cross" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="m15 9-6 6"/><path d="m9 9 6 6"/></symbol>
+  <symbol id="i-hash" viewBox="0 0 24 24"><line x1="4" x2="20" y1="9" y2="9"/><line x1="4" x2="20" y1="15" y2="15"/><line x1="10" x2="8" y1="3" y2="21"/><line x1="16" x2="14" y1="3" y2="21"/></symbol>
+  <symbol id="i-x" viewBox="0 0 24 24"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></symbol>
+</svg>
+
+<header class="bar">
+  <div class="wrap bar-in">
+    <div class="mark">
+      <span class="ets-badge" aria-hidden="true"><span class="ets">ETS</span></span>
+      <span class="wordmark">Enigma <b>/</b> Hash Check</span>
+    </div>
+  </div>
+</header>
+
+<main class="wrap">
+  <div class="hero">
+    <p class="eyebrow">Tool for Sanctum</p>
+    <h1>Is it the<span class="dash" aria-hidden="true"></span>file?</h1>
+    <p class="lede">Compare a downloaded file with the checksum its publisher gave you. <span>Installers, disk images, firmware, documents. The file is read in this window and never leaves it.</span></p>
+  </div>
+
+  <div class="facts" role="list" aria-label="What this tool does with your files">
+    <div class="fact" role="listitem"><h3><svg class="i" aria-hidden="true"><use href="#i-lock"/></svg>Stays here</h3><p>The file is read in small pieces and hashed on this computer. Nothing is uploaded, stored or sent.</p></div>
+    <div class="fact" role="listitem"><h3><svg class="i" aria-hidden="true"><use href="#i-shield"/></svg>Asks for nothing</h3><p>No network, no devices, no storage. The approval screen in Sanctum is empty.</p></div>
+    <div class="fact" role="listitem"><h3><svg class="i" aria-hidden="true"><use href="#i-info"/></svg>A match has limits</h3><p>It shows the file is the one the checksum was made from. It does not show the checksum came from the publisher.</p></div>
+  </div>
+
+  <section class="block" aria-labelledby="h-file">
+    <p class="kicker">Step 1</p>
+    <h2 id="h-file">Choose the file</h2>
+    <p class="muted small" style="margin:0 0 18px">Any size. Large files take a while, and you can stop at any time.</p>
+    <div class="picker">
+      <button class="btn" type="button" id="choose"><svg class="i" aria-hidden="true"><use href="#i-upload"/></svg>Choose a file</button>
+      <input type="file" id="picker" aria-label="File to check" tabindex="-1">
+      <span class="picked muted" id="picked">No file chosen.</span>
+    </div>
+  </section>
+
+  <section class="block" aria-labelledby="h-sum">
+    <p class="kicker">Step 2</p>
+    <h2 id="h-sum">Paste the checksum</h2>
+    <p class="muted small" style="margin:0 0 18px">Optional. Paste one checksum, or the whole contents of a file such as SHA256SUMS. Without one, the tool only shows the file's hash.</p>
+    <label class="lab" for="expected"><span>Checksum from the publisher</span></label>
+    <textarea id="expected" spellcheck="false" autocomplete="off" aria-describedby="expected-note" placeholder="e3b0c442...  installer.dmg"></textarea>
+    <p class="hint" id="expected-note" role="status" aria-live="polite">Reads a plain hash, <code>sha256:</code> hash, GNU lines (<code>hash  name</code>) and BSD lines (<code>SHA256 (name) = hash</code>).</p>
+    <div style="margin-top:18px">
+      <span class="lab" id="lab-alg"><span>Algorithm</span></span>
+      <div class="seg" id="algs" role="group" aria-labelledby="lab-alg">
+        <button type="button" data-alg="sha256" aria-pressed="true">SHA-256</button>
+        <button type="button" data-alg="sha384" aria-pressed="false">SHA-384</button>
+        <button type="button" data-alg="sha512" aria-pressed="false">SHA-512</button>
+      </div>
+      <p class="hint" id="alg-note">SHA-256 is what most publishers use. A pasted checksum sets this by its length.</p>
+    </div>
+  </section>
+
+  <section class="block" aria-labelledby="h-run">
+    <p class="kicker">Step 3</p>
+    <h2 id="h-run">Check</h2>
+    <div class="actions" style="margin-top:14px">
+      <button class="btn" type="button" id="run" disabled><svg class="i" aria-hidden="true"><use href="#i-hash"/></svg>Check file</button>
+      <button class="btn ghost" type="button" id="cancel" hidden><svg class="i" aria-hidden="true"><use href="#i-x"/></svg>Stop</button>
+    </div>
+    <progress id="bar" max="1" value="0" hidden aria-label="Progress"></progress>
+    <p class="msg" id="msg" role="status" aria-live="polite"></p>
+    <div id="result" hidden>
+      <div class="verdict" id="verdict" role="status" aria-live="polite">
+        <svg class="i" aria-hidden="true" id="verdict-icon"><use href="#i-info"/></svg>
+        <div><strong id="verdict-title"></strong><p id="verdict-body"></p></div>
+      </div>
+      <div class="out">
+        <span class="lab"><span id="out-label">Hash of the file</span></span>
+        <p class="picked muted" id="out-file" style="margin:0 0 8px"></p>
+        <output id="computed" for="picker"></output>
+        <div class="actions" style="margin-top:10px">
+          <button class="btn ghost sm" type="button" id="copy"><svg class="i" aria-hidden="true"><use href="#i-copy"/></svg>Copy hash</button>
+        </div>
+      </div>
+    </div>
+  </section>
+</main>
+
+<footer>
+  <div class="wrap">Enigma Hash Check <span id="ver"></span>. Part of Sanctum, AGPL-3.0. SHA-2 as defined in FIPS 180-4. Icons from Lucide (ISC).</div>
+</footer>
+
+<script>
+/*__HASH_CORE__*/
+</script>
+<script>
+(function () {
+  "use strict";
+  var C = globalThis.HashCore;
+  var VERSION = "1.0.0";
+  var CHUNK = 4 * 1024 * 1024;
+  function $(id) { return document.getElementById(id); }
+
+  $("ver").textContent = VERSION;
+
+  var file = null;
+  var running = false;
+  var stop = false;
+  var chosenAlg = "sha256";
+  var parsed = { entries: [], unsupported: [], ignored: 0 };
+  // The last finished hash: { alg, hex, name, size }. Cleared when the file or algorithm changes.
+  var result = null;
+
+  function fmtSize(n) {
+    if (n < 1024) return n + " bytes";
+    var u = ["KB", "MB", "GB", "TB"], i = -1;
+    do { n /= 1024; i++; } while (n >= 1024 && i < u.length - 1);
+    return n.toFixed(n >= 100 ? 0 : 1) + " " + u[i];
+  }
+  function label(alg) { return C.ALGS[alg].label; }
+  function clear(node) { while (node.firstChild) node.removeChild(node.firstChild); }
+
+  // The entry that applies to the chosen file, if the pasted text has one.
+  function pick() { return C.pickEntry(parsed.entries, file ? file.name : ""); }
+
+  // The algorithm in force: the pasted checksum's, when it names one, else the buttons'.
+  function activeAlg() {
+    var p = pick();
+    if (p.entry) return p.entry.alg;
+    var algs = {};
+    parsed.entries.forEach(function (e) { algs[e.alg] = true; });
+    var keys = Object.keys(algs);
+    return keys.length === 1 ? keys[0] : chosenAlg;
+  }
+  function algLocked() {
+    var p = pick();
+    if (p.entry) return true;
+    var algs = {};
+    parsed.entries.forEach(function (e) { algs[e.alg] = true; });
+    return Object.keys(algs).length === 1;
+  }
+
+  function renderAlgs() {
+    var a = activeAlg(), locked = algLocked();
+    Array.prototype.forEach.call($("algs").querySelectorAll("button"), function (b) {
+      b.setAttribute("aria-pressed", b.getAttribute("data-alg") === a ? "true" : "false");
+      b.disabled = locked || running;
+    });
+    $("alg-note").textContent = locked
+      ? "Set by the pasted checksum, which is " + (label(a)) + " by its length."
+      : "SHA-256 is what most publishers use. A pasted checksum sets this by its length.";
+  }
+
+  function describeExpected() {
+    var note = $("expected-note");
+    var text = $("expected").value;
+    parsed = C.parseChecksums(text);
+    var n = parsed.entries.length;
+    var parts = [];
+    if (text.trim() === "") {
+      note.textContent = "Reads a plain hash, sha256: hash, GNU lines (hash  name) and BSD lines (SHA256 (name) = hash).";
+    } else {
+      if (n === 1) parts.push("Read 1 checksum (" + label(parsed.entries[0].alg) + ").");
+      else if (n > 1) {
+        var p = pick();
+        parts.push("Read " + n + " checksums." + (file
+          ? (p.how === "name" ? " Using the line named " + p.entry.name + "." : " No line matches the file name, so choose the right one by pasting only that line.")
+          : " Choose the file and the matching line is used."));
+      }
+      if (parsed.unsupported.length) {
+        var kinds = parsed.unsupported.filter(function (v, i, a) { return a.indexOf(v) === i; }).join(" and ");
+        parts.push(kinds + " sums are not supported here, because they are no longer safe to rely on. Ask the publisher for SHA-256 or better.");
+      }
+      if (parsed.ignored) parts.push(parsed.ignored + (parsed.ignored === 1 ? " line was" : " lines were") + " not a checksum and was skipped.");
+      if (!n && !parsed.unsupported.length) parts.push("No checksum found in this text.");
+      note.textContent = parts.join(" ");
+    }
+  }
+
+  function setMsg(t) { $("msg").textContent = t; }
+
+  function syncControls() {
+    $("run").disabled = !file || running;
+    $("cancel").hidden = !running;
+    $("choose").disabled = running;
+    $("expected").disabled = running;
+    renderAlgs();
+  }
+
+  function hideResult() { result = null; $("result").hidden = true; }
+
+  // Draw the verdict from the finished hash and the pasted text.
+  function renderResult() {
+    if (!result) return;
+    $("result").hidden = false;
+    var v = $("verdict"), icon = $("verdict-icon").firstElementChild, title = $("verdict-title"), body = $("verdict-body");
+    v.className = "verdict";
+    $("computed").textContent = result.hex;
+    $("out-label").textContent = label(result.alg) + " of the file";
+    $("out-file").textContent = result.name + " (" + fmtSize(result.size) + ")";
+
+    var p = C.pickEntry(parsed.entries, result.name);
+    var same = parsed.entries.filter(function (e) { return e.alg === result.alg; });
+    var any = same.filter(function (e) { return e.hex === result.hex; });
+
+    if (p.entry && p.entry.alg === result.alg) {
+      var cmp = C.compareHex(result.hex, p.entry.hex);
+      if (cmp.equal) {
+        v.className = "verdict ok";
+        icon.setAttribute("href", "#i-check");
+        title.textContent = "Match";
+        body.textContent = "This file's " + label(result.alg) + " is the same as the checksum you pasted. That shows it is the file the checksum was made from. Make sure the checksum came from the publisher by a channel you trust.";
+      } else {
+        v.className = "verdict bad";
+        icon.setAttribute("href", "#i-cross");
+        title.textContent = "No match. Do not use this file.";
+        body.textContent = cmp.different + " of " + result.hex.length + " characters differ. Download the file again and check it once more. If it still differs, the file is not the one the publisher meant, or the checksum belongs to a different file.";
+      }
+      return;
+    }
+    if (any.length && !p.entry) {
+      v.className = "verdict ok";
+      icon.setAttribute("href", "#i-check");
+      title.textContent = "Match, under another name";
+      body.textContent = "The hash equals the line for " + (any[0].name || "the pasted checksum") + ", but no line carries this file's name. Check that this is the file you meant.";
+      return;
+    }
+    if (parsed.entries.length > 1 && !p.entry) {
+      icon.setAttribute("href", "#i-info");
+      title.textContent = "Could not compare";
+      body.textContent = "The pasted list has several lines and none is named " + result.name + ". Paste only the line for this file.";
+      return;
+    }
+    if (parsed.entries.length && !same.length) {
+      icon.setAttribute("href", "#i-info");
+      title.textContent = "Different algorithm";
+      body.textContent = "The pasted checksum is " + label(parsed.entries[0].alg) + ", but this hash is " + label(result.alg) + ". Check the file again with the algorithm that matches.";
+      return;
+    }
+    icon.setAttribute("href", "#i-info");
+    title.textContent = "Nothing to compare with";
+    body.textContent = parsed.unsupported.length
+      ? "The pasted checksum is not one this tool supports. Compare the hash below with a SHA-256 or SHA-512 from the publisher."
+      : "Compare the hash below with the one the publisher gave you, or paste that checksum in step 2.";
+  }
+
+  async function run() {
+    if (!file || running) return;
+    var f = file;
+    var alg = activeAlg();
+    running = true; stop = false;
+    hideResult();
+    syncControls();
+    var bar = $("bar");
+    bar.hidden = false; bar.value = 0; bar.max = Math.max(f.size, 1);
+    setMsg("Reading " + f.name + "...");
+    var started = Date.now();
+    try {
+      var hasher = C.createHasher(alg);
+      for (var at = 0; at < f.size; at += CHUNK) {
+        if (stop) { setMsg("Stopped. Nothing was kept."); return; }
+        var buf = await f.slice(at, Math.min(at + CHUNK, f.size)).arrayBuffer();
+        hasher.update(new Uint8Array(buf));
+        bar.value = Math.min(at + CHUNK, f.size);
+        setMsg(fmtSize(Math.min(at + CHUNK, f.size)) + " of " + fmtSize(f.size) + " read.");
+      }
+      result = { alg: alg, hex: C.toHex(hasher.digest()), name: f.name, size: f.size };
+      var secs = ((Date.now() - started) / 1000).toFixed(1);
+      setMsg("Done in " + secs + " seconds.");
+      renderResult();
+    } catch (e) {
+      setMsg("The file could not be read. It may have been moved or changed while it was open. Choose it again.");
+    } finally {
+      running = false;
+      bar.hidden = true;
+      syncControls();
+    }
+  }
+
+  $("choose").addEventListener("click", function () { $("picker").click(); });
+  $("picker").addEventListener("change", function () {
+    var f = $("picker").files && $("picker").files[0];
+    if (!f) return;
+    file = f;
+    hideResult();
+    setMsg("");
+    var s = $("picked");
+    clear(s);
+    s.classList.remove("muted");
+    var b = document.createElement("b");
+    b.textContent = f.name;
+    s.appendChild(b);
+    s.appendChild(document.createTextNode(" (" + fmtSize(f.size) + ")"));
+    describeExpected();
+    syncControls();
+  });
+
+  $("expected").addEventListener("input", function () {
+    describeExpected();
+    // The verdict follows the text when the algorithm still fits; otherwise the old hash no longer applies.
+    if (result && result.alg !== activeAlg()) hideResult();
+    renderResult();
+    syncControls();
+  });
+
+  $("algs").addEventListener("click", function (ev) {
+    var b = ev.target.closest ? ev.target.closest("button[data-alg]") : null;
+    if (!b || b.disabled) return;
+    chosenAlg = b.getAttribute("data-alg");
+    hideResult();
+    renderAlgs();
+  });
+
+  $("run").addEventListener("click", function () { void run(); });
+  $("cancel").addEventListener("click", function () { stop = true; });
+
+  $("copy").addEventListener("click", function () {
+    var text = $("computed").textContent;
+    function selectIt() {
+      var r = document.createRange();
+      r.selectNodeContents($("computed"));
+      var sel = window.getSelection();
+      sel.removeAllRanges();
+      sel.addRange(r);
+      setMsg("Copy is blocked here. The hash is selected: press Ctrl+C or Cmd+C.");
+    }
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(text).then(function () { setMsg("Hash copied."); }, selectIt);
+    } else selectIt();
+  });
+
+  describeExpected();
+  syncControls();
+})();
+</script>
+</body>
+</html>
