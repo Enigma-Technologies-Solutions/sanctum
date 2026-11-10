@@ -453,4 +453,54 @@ mod tests {
             "bare .. must be rejected"
         );
     }
+
+    // ── Command permissions ───────────────────────────────────────────────────
+
+    #[test]
+    fn every_command_is_declared_for_the_permission_check() {
+        // A command left out of build.rs is refused in every window, and a build.rs without
+        // the list turns the check off for local origins, tool windows included.
+        let lib = include_str!("lib.rs");
+        let build = include_str!("../build.rs");
+        let start = lib.find("generate_handler![").expect("handler present");
+        let block = &lib[start..start + lib[start..].find(']').expect("closing bracket")];
+        let mut handler: Vec<String> = block
+            .lines()
+            .filter_map(|l| l.trim().strip_suffix(','))
+            .filter_map(|path| path.rsplit("::").next())
+            .map(str::to_owned)
+            .collect();
+        let mut declared: Vec<String> = build
+            .lines()
+            .filter_map(|l| l.trim().strip_prefix('"')?.strip_suffix("\","))
+            .map(str::to_owned)
+            .collect();
+        handler.sort();
+        declared.sort();
+        assert!(handler.len() > 40, "parsed too few commands: {handler:?}");
+        assert_eq!(handler, declared);
+        assert!(build.contains(".app_manifest("));
+    }
+
+    #[test]
+    fn tool_windows_are_granted_nothing() {
+        let tool: serde_json::Value =
+            serde_json::from_str(include_str!("../capabilities/tool-default.json")).unwrap();
+        assert_eq!(tool["windows"], serde_json::json!(["tool-*"]));
+        assert_eq!(tool["permissions"], serde_json::json!([]));
+        // No other capability may reach a tool window or a remote page.
+        for other in [
+            include_str!("../capabilities/main.json"),
+            include_str!("../capabilities/create.json"),
+        ] {
+            let v: serde_json::Value = serde_json::from_str(other).unwrap();
+            for w in v["windows"].as_array().unwrap() {
+                assert!(
+                    !w.as_str().unwrap().starts_with("tool"),
+                    "{w} reaches tool windows"
+                );
+            }
+            assert!(v.get("remote").is_none());
+        }
+    }
 }
