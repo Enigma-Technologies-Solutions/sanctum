@@ -1,0 +1,74 @@
+{
+  "format": "sanctum-registry-app/1",
+  "app_id": "sh.enigma.hash-check",
+  "description": "Hashes a file you choose with SHA-256, SHA-384 or SHA-512 and compares it with a checksum you paste. It reads a plain hash, GNU and BSD checksum lines and whole SHA256SUMS files, and picks the line that matches the file's name. Large files are read in pieces with a progress bar. Everything happens inside the tool window: nothing is stored, uploaded or sent. A match shows the file is the one the checksum was made from, not that the checksum came from the publisher. The tool asks Sanctum for no access at all.",
+  "source": "https://github.com/Enigma-Technologies-Solutions/sanctum/tree/main/examples/hash-check",
+  "license": "AGPL-3.0-only",
+  "changelog": [
+    {
+      "version": "1.0.0",
+      "date": "2026-10-29",
+      "changes": [
+        {
+          "type": "added",
+          "text": "Hash a file with SHA-256, SHA-384 or SHA-512 and compare it with a pasted checksum."
+        },
+        {
+          "type": "added",
+          "text": "Reads plain hashes, GNU and BSD checksum lines and whole SHA256SUMS files, and picks the line that matches the file name."
+        },
+        {
+          "type": "added",
+          "text": "Files of any size are read in pieces, with a progress bar and a Stop button."
+        },
+        {
+          "type": "added",
+          "text": "MD5 and SHA-1 sums are recognised and refused, never reported as a match."
+        },
+        {
+          "type": "added",
+          "text": "First release signed by Enigma Technologies Solutions."
+        }
+      ]
+    }
+  ],
+  "manual": {
+    "path": "apps/sh.enigma.hash-check/manual.md",
+    "sha256": "sha256:4595c2a0e26f40255bb5013f9bd319c646c14a41b80c2cdc5aee829d9255f702",
+    "size": 2178
+  },
+  "screenshots": [
+    {
+      "path": "apps/sh.enigma.hash-check/overview.png",
+      "sha256": "sha256:e08d3cc058271f49ee8d1277786c5a97f87b261e9502ed28d6730df1f1771346",
+      "size": 91338,
+      "width": 1600,
+      "height": 1131,
+      "alt": "Overview of Hash Check: choose a file, paste a checksum and check it."
+    },
+    {
+      "path": "apps/sh.enigma.hash-check/ready.png",
+      "sha256": "sha256:e9c074c55680dc953e074604454986cb80dc5d540ade018f033b4a83419a3d75",
+      "size": 90294,
+      "width": 1600,
+      "height": 1131,
+      "alt": "A file chosen and a SHA256SUMS list pasted, with the algorithm set by the checksum."
+    },
+    {
+      "path": "apps/sh.enigma.hash-check/match.png",
+      "sha256": "sha256:ae936a80220ea20c3a2e8872244618a6b29d0102e92264e60c7cdae568de51e2",
+      "size": 102467,
+      "width": 1600,
+      "height": 1131,
+      "alt": "A match: the file's SHA-256 equals the pasted checksum, with a Copy hash button."
+    },
+    {
+      "path": "apps/sh.enigma.hash-check/mismatch.png",
+      "sha256": "sha256:1cabf067749d212d4728755ac79ad2bcd231feaf95f9e5faa802150def692663",
+      "size": 103925,
+      "width": 1600,
+      "height": 1131,
+      "alt": "A mismatch: the number of differing characters and a warning not to use the file."
+    }
+  ]
+}

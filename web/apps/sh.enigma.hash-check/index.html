@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Hash Check, a signed tool for Sanctum</title>
+<meta name="description" content="Check a file against the checksum its publisher gave you. Runs offline and asks for no access.">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'none'; style-src 'self'; font-src 'self'; img-src 'self' data:; connect-src 'none'; form-action 'none'; base-uri 'none'">
+<meta name="referrer" content="strict-origin-when-cross-origin">
+<link rel="canonical" href="https://sanctum.enigma.sh/apps/sh.enigma.hash-check/">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Sanctum">
+<meta property="og:title" content="Hash Check, a signed tool for Sanctum">
+<meta property="og:description" content="Check a file against the checksum its publisher gave you. Runs offline and asks for no access.">
+<meta property="og:url" content="https://sanctum.enigma.sh/apps/sh.enigma.hash-check/">
+<meta property="og:image" content="https://sanctum.enigma.sh/apps/sh.enigma.hash-check/og.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Hash Check, a signed tool for Sanctum">
+<meta name="twitter:description" content="Check a file against the checksum its publisher gave you. Runs offline and asks for no access.">
+<meta name="twitter:image" content="https://sanctum.enigma.sh/apps/sh.enigma.hash-check/og.png">
+<meta name="theme-color" content="#FFFFFF">
+<meta name="color-scheme" content="light">
+<link rel="icon" href="../../assets/favicon.svg" type="image/svg+xml">
+<link rel="icon" href="../../favicon.ico" sizes="32x32 48x48">
+<link rel="apple-touch-icon" href="../../assets/apple-touch-icon.png">
+<link rel="stylesheet" href="../../styles.css">
+</head>
+<body>
+<a class="skip" href="#main">Skip to content</a>
+<nav class="nav" aria-label="Primary">
+  <div class="wrap nav__inner">
+    <a class="wordmark" href="../../" aria-label="Sanctum home">SANCTUM<span class="wordmark__sq" aria-hidden="true"></span></a>
+    <div class="nav__links">
+      <a href="../../#how">How it works</a>
+      <a href="../../#tools">Signed tools</a>
+      <a href="../../#security">Security</a>
+      <a href="../../#compare">Compare</a>
+      <a href="../../#pricing">Pricing</a>
+      <a href="../../#faq">FAQ</a>
+      <a href="../../blog/">Blog</a>
+      <a href="../../docs/">Docs</a>
+    </div>
+    <div class="nav__cta">
+      <a class="btn btn--ghost btn--sm nav__gh" href="https://github.com/Enigma-Technologies-Solutions/sanctum" rel="noopener">GitHub</a>
+      <a class="btn btn--volt btn--sm" href="https://github.com/Enigma-Technologies-Solutions/sanctum/releases/latest" rel="noopener">Download</a>
+    </div>
+  </div>
+</nav>
+
+<main id="main" class="section apps">
+  <div class="wrap">
+    <div class="appdoc">
+    <p class="eyebrow"><a href="../">Signed tools</a></p>
+    <h1 class="appdoc__title">Hash Check <span class="tag">v1.0.0</span></h1>
+    <p class="lede appdoc__lede">Check a file against the checksum its publisher gave you. Runs offline and asks for no access.</p>
+
+    <article class="card app">
+        <p class="app__desc">Hashes a file you choose with SHA-256, SHA-384 or SHA-512 and compares it with a checksum you paste. It reads a plain hash, GNU and BSD checksum lines and whole SHA256SUMS files, and picks the line that matches the file&#39;s name. Large files are read in pieces with a progress bar. Everything happens inside the tool window: nothing is stored, uploaded or sent. A match shows the file is the one the checksum was made from, not that the checksum came from the publisher. The tool asks Sanctum for no access at all.</p>
+        <p class="fine">Asks for no special access</p>
+        <p class="fine appdoc__links">Published by Enigma Technologies Solutions · <a href="https://github.com/Enigma-Technologies-Solutions/sanctum/tree/main/examples/hash-check" rel="noopener">Source</a> · <span>AGPL-3.0-only</span></p>
+        <dl class="app__hashes fine">
+          <dt>File SHA-256</dt><dd>d29f23b2f3871c139e60752dbc0538bb80106c362cff8ea68bd77e0c8e46c610</dd>
+          <dt>Tool SHA-256</dt><dd>e7f6ddd637cc0765878cef683a6316ed215e7fb1cdd1781b4bb610b2e5aa8c35</dd>
+          <dt>App id</dt><dd>sh.enigma.hash-check</dd>
+          <dt>Publisher key</dt><dd>ed25519:2daedA0n4NSI2p2McCqLBfGiKRmR5XCm8lypbQTT6hg</dd>
+        </dl>
+        <div class="btn-row">
+          <a class="btn btn--volt btn--sm" href="sanctum://install?app=sh.enigma.hash-check">Install in Sanctum</a>
+          <a class="btn btn--ghost btn--sm" href="../../registry/v1/bundles/sh.enigma.hash-check-1.0.0.sanctum" download>Download file (41.6 KB)</a>
+        </div>
+        <p class="fine">Install opens Sanctum, which shows this tool and what it asks for, then waits for your click. Nothing is installed from the page itself. Sanctum not installed? <a href="https://github.com/Enigma-Technologies-Solutions/sanctum/releases/latest" rel="noopener">Get Sanctum</a> first.</p>
+    </article>
+    <p class="notice">Verified means the publisher is who it says and the bytes have not changed. It does not mean safe. A signature never grants access: every tool still starts with nothing approved, and you approve each capability yourself.</p>
+
+    <h2 class="apps__sub">Screenshots</h2>
+      <figure class="screenshot"><img src="../../registry/v1/apps/sh.enigma.hash-check/overview.png" width="1600" height="1131" alt="Overview of Hash Check: choose a file, paste a checksum and check it." loading="lazy"></figure>
+      <figure class="screenshot"><img src="../../registry/v1/apps/sh.enigma.hash-check/ready.png" width="1600" height="1131" alt="A file chosen and a SHA256SUMS list pasted, with the algorithm set by the checksum." loading="lazy"></figure>
+      <figure class="screenshot"><img src="../../registry/v1/apps/sh.enigma.hash-check/match.png" width="1600" height="1131" alt="A match: the file&#39;s SHA-256 equals the pasted checksum, with a Copy hash button." loading="lazy"></figure>
+      <figure class="screenshot"><img src="../../registry/v1/apps/sh.enigma.hash-check/mismatch.png" width="1600" height="1131" alt="A mismatch: the number of differing characters and a warning not to use the file." loading="lazy"></figure>
+
+    <h2 class="apps__sub">What is new</h2>
+    <div class="changes">
+      <section>
+        <h3 class="changes__v">1.0.0 <span class="fine">2026-10-29</span></h3>
+        <ul class="changes__list"><li><strong>Added.</strong> Hash a file with SHA-256, SHA-384 or SHA-512 and compare it with a pasted checksum.</li><li><strong>Added.</strong> Reads plain hashes, GNU and BSD checksum lines and whole SHA256SUMS files, and picks the line that matches the file name.</li><li><strong>Added.</strong> Files of any size are read in pieces, with a progress bar and a Stop button.</li><li><strong>Added.</strong> MD5 and SHA-1 sums are recognised and refused, never reported as a match.</li><li><strong>Added.</strong> First release signed by Enigma Technologies Solutions.</li></ul>
+      </section>
+    </div>
+
+    <h2 class="apps__sub">Manual</h2>
+    <div class="manual">
+<h4>What it does</h4>
+<p>A checksum is a short fingerprint of a file. Publishers list one next to a download so you can tell whether the file you received is the file they made. Hash Check reads your file, works out its fingerprint on your computer and compares it with the one you paste.</p>
+<h4>What it asks Sanctum for</h4>
+<p>Nothing. The approval screen is empty: no storage, no network, no smart card and no device access. The file is read in this window and is never uploaded.</p>
+<h4>Check a file</h4>
+<ol><li>Press <strong>Choose a file</strong> and pick the download.</li><li>Paste the checksum from the publisher&#39;s page into the box. You can paste a single hash, or the whole contents of a file such as <code>SHA256SUMS</code>. If you skip this step the tool only shows the file&#39;s hash.</li><li>Press <strong>Check file</strong>. A large file shows a progress bar, and <strong>Stop</strong> ends the check at any time.</li></ol>
+<p>The result says <strong>Match</strong> or <strong>No match</strong>. After a mismatch the tool shows how many characters differ. Download the file again and check it once more before you decide the file is wrong.</p>
+<h4>Which checksums it reads</h4>
+<ul><li>A plain hash, in capitals or lower case.</li><li><code>sha256:</code> followed by a hash.</li><li>GNU lines, as <code>sha256sum</code> writes them: <code>hash  name</code>.</li><li>BSD lines: <code>SHA256 (name) = hash</code>.</li><li>A hash grouped with spaces or colons, as some pages show it.</li></ul>
+<p>When you paste a list, the line whose name matches the chosen file is used. If no line carries that name, paste only the line you need.</p>
+<p>The algorithm is set by the length of the pasted hash: 64 characters is SHA-256, 96 is SHA-384 and 128 is SHA-512. Without a checksum, choose the algorithm yourself. SHA-256 is what most publishers use.</p>
+<h4>Good to know</h4>
+<ul><li>MD5 and SHA-1 sums are recognised and not compared. They are no longer safe to rely on. Ask the publisher for a SHA-256 or SHA-512.</li><li>A match shows that the file is the one the checksum was made from. It does not show that the checksum came from the publisher. If an attacker can change the download page, they can change the checksum too. Prefer a checksum you got from a different channel, or one the publisher has signed.</li><li>Nothing is written to disk. <strong>Copy hash</strong> puts the file&#39;s hash on the clipboard, and nothing else does.</li></ul>
+    </div>
+
+    <h2 class="apps__sub">For tools and scripts</h2>
+    <p class="lede"><a href="../../registry/v1/apps/sh.enigma.hash-check.json"><code>apps/sh.enigma.hash-check.json</code></a> holds this page's data. It is pinned by hash in the signed <a href="../../registry/v1/index.json"><code>index.json</code></a>.</p>
+    </div>
+  </div>
+</main>
+
+<footer class="foot">
+  <div class="wrap">
+    <div class="foot__bar">
+      <span class="ets" aria-hidden="true">ETS</span>
+      <span>© 2026 Enigma Technologies Solutions</span>
+      <span class="foot__bar-sp">AGPL-3.0-only</span>
+    </div>
+  </div>
+</footer>
+</body>
+</html>

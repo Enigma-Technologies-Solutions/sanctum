@@ -33,7 +33,7 @@ section behind.
   once a day while Sanctum is open, which is **off by default**. Neither changes what a tool is
   approved to do.
 - Enigma Hash Check, a signed tool that compares a file with the checksum its publisher gave you,
-  in the Catalogue once it is published.
+  in the Catalogue.
 
 ### Security
 
