@@ -102,7 +102,7 @@ jobs:
           # Silicon, which is what release.yml has always done — so CI checks
           # the bundle shape that actually ships instead of one that doesn't.
           - name: macOS universal
-            os: macos-14
+            os: macos-15
             rust-target: aarch64-apple-darwin,x86_64-apple-darwin
             tauri-args: --target universal-apple-darwin
 
