@@ -200,11 +200,19 @@ pub fn has_smartcard_capability(approvals: &[DetectedCapability]) -> bool {
 /// * `70` MANAGE CHANNEL — a second logical channel is a second selection.
 /// * `C0` GET RESPONSE — chaining is driven by `transmit_chained`; a page
 ///   issuing its own GET RESPONSE would desynchronise it.
+///
+/// Class `FF` is refused outright, whatever the INS: it addresses the reader, not the card.
 pub fn is_forbidden_apdu(apdu: &[u8]) -> Option<&'static str> {
     if apdu.len() < 4 {
         return Some("APDU too short: needs at least CLA INS P1 P2.");
     }
     let (cla, ins) = (apdu[0], apdu[1]);
+    // CLA FF is not a card command. PC/SC readers take it as a command for the reader itself
+    // (LEDs, keys, and on some readers a "direct transmit" that wraps any APDU, SELECT
+    // included), so it would get around the applet check entirely.
+    if cla == 0xFF {
+        return Some("CLA FF is a command to the reader, not the card, and is not allowed.");
+    }
     if cla & 0x80 != 0 {
         return None;
     }
@@ -864,6 +872,18 @@ mod tests {
                 "SELECT allowed under CLA {cla:#04x}"
             );
         }
+    }
+
+    #[test]
+    fn reader_commands_are_refused() {
+        // Get data (UID), load keys, and an ACR122U direct transmit wrapping a SELECT of PIV.
+        assert!(is_forbidden_apdu(&[0xFF, 0xCA, 0x00, 0x00, 0x00]).is_some());
+        assert!(is_forbidden_apdu(&[0xFF, 0x82, 0x00, 0x00, 0x06, 0, 0, 0, 0, 0, 0]).is_some());
+        assert!(is_forbidden_apdu(&[
+            0xFF, 0x00, 0x00, 0x00, 0x0E, 0xD4, 0x40, 0x01, 0x00, 0xA4, 0x04, 0x00, 0x05, 0xA0,
+            0x00, 0x00, 0x03, 0x08
+        ])
+        .is_some());
     }
 
     #[test]

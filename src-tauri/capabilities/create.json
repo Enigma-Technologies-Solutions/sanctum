@@ -1,9 +1,28 @@
 {
   "identifier": "create",
-  "description": "The Create window: Sanctum's own interface for building an app with Codex. Same trust as the main window, with only what the chat needs (events, and copying a link).",
-  "windows": ["create"],
+  "description": "The Create window: Sanctum's own interface for building an app with Codex. Same trust as the main window, with only what the chat needs (the agent commands, events, and copying a link).",
+  "windows": [
+    "create"
+  ],
   "permissions": [
     "core:default",
-    "clipboard-manager:allow-write-text"
+    "clipboard-manager:allow-write-text",
+    "allow-agent-setup",
+    "allow-agent-set-enabled",
+    "allow-agent-account",
+    "allow-agent-sign-in",
+    "allow-agent-cancel-sign-in",
+    "allow-agent-sign-out",
+    "allow-agent-chat-start",
+    "allow-agent-chat-send",
+    "allow-agent-scan-draft",
+    "allow-agent-add-draft",
+    "allow-agent-preview-draft",
+    "allow-agent-draft-history",
+    "allow-agent-restore-draft",
+    "allow-agent-get-instructions",
+    "allow-agent-set-instructions",
+    "allow-agent-chat-stop",
+    "allow-agent-chat-close"
   ]
 }

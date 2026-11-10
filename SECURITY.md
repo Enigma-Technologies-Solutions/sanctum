@@ -27,7 +27,8 @@ We follow coordinated disclosure. Please allow us time to patch before publishin
 
 In scope:
 - Sandbox escape from a tool window to the host OS
-- IPC bypass (tool accessing Tauri bridge despite initialization script)
+- IPC bypass (a tool window running any Sanctum or Tauri command, which its capability file does not grant)
+- Smart card broker bypass (a tool reaching an applet, a logical channel or the reader itself beyond what was approved)
 - Path traversal in the `sanctum-tool://` protocol handler
 - Integrity check bypass (running a quarantined or tampered tool)
 - CSP injection or bypass via crafted tool HTML

@@ -12,7 +12,14 @@ use crate::ActiveToolPaths;
 use crate::AppDataDir;
 
 /// Initialization script injected into every tool window BEFORE the tool's
-/// HTML is parsed. Removes Tauri IPC globals so tools have zero OS bridge.
+/// HTML is parsed. Hides the Tauri IPC globals it can.
+///
+/// It is not the control. Tauri defines `__TAURI_INTERNALS__` as non-configurable before
+/// this runs, so that property cannot be hidden and the `defineProperty` below throws
+/// (and is caught) for it. What keeps a tool away from app commands is the capability
+/// check: `build.rs` declares every command, and `capabilities/tool-default.json` grants
+/// none of them. Behind that, the isolation pattern's encryption key lives in a frame
+/// the tool's `frame-src 'none'` will not load.
 const BLOCK_TAURI_IPC: &str = r#"
 (function () {
   'use strict';
@@ -259,6 +266,19 @@ fn is_allowed_tool_navigation(url: &url::Url, expected_host: &str) -> bool {
     }
 }
 
+/// Refuse every `window.open` and `target=_blank` from a tool window.
+///
+/// With no handler set, WebView2 opens such a request in a popup of its own, which has none of
+/// the tool's policy and is not covered by `on_navigation`, so a tool could send data anywhere
+/// with `window.open("https://…?" + data)`. macOS and Linux already refuse when no handler is
+/// set; this makes all three the same.
+fn deny_new_window(
+    _url: url::Url,
+    _features: tauri::webview::NewWindowFeatures,
+) -> tauri::webview::NewWindowResponse<tauri::Wry> {
+    tauri::webview::NewWindowResponse::Deny
+}
+
 /// Build a human-readable summary of what a tool is actually allowed to do,
 /// based on its approved (not just detected) capabilities.
 fn approved_summary(approvals: &[DetectedCapability]) -> String {
@@ -312,6 +332,7 @@ pub fn open_draft_window(
         .title("Draft | Not added to Sanctum, no access granted")
         .initialization_script(BLOCK_TAURI_IPC)
         .on_navigation(move |url| is_allowed_tool_navigation(url, &nav_host))
+        .on_new_window(deny_new_window)
         .on_download(crate::commands::downloads::handler(
             app.clone(),
             label.clone(),
@@ -474,6 +495,7 @@ pub async fn open_tool_window(
         .title(title)
         .initialization_script(BLOCK_TAURI_IPC)
         .on_navigation(move |url| is_allowed_tool_navigation(url, &nav_host))
+        .on_new_window(deny_new_window)
         .on_download(crate::commands::downloads::handler(
             app.clone(),
             label.clone(),

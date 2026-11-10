@@ -35,6 +35,18 @@ section behind.
 - Enigma Hash Check, a signed tool that compares a file with the checksum its publisher gave you,
   in the Catalogue once it is published.
 
+### Security
+
+- Sanctum's own commands now run only in the windows granted them. Before, nothing in the
+  permission files kept a tool window away from them; an encryption step of the isolation
+  pattern did. Tool windows are granted none, and a test fails if a command is added without
+  being declared.
+- A tool cannot open a new window. On Windows such a window would have had none of the tool's
+  limits.
+- A tool approved for a smart card can no longer send commands addressed to the reader itself
+  (class `FF`), which on some readers could reach an applet the tool was not approved for.
+  Review: `docs/security-review-threat-model.md`.
+
 ## [0.2.0] - 2026-10-19
 
 ### Added

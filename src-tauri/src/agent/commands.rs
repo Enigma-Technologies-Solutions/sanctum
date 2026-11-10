@@ -2175,10 +2175,16 @@ mod window_rules {
             .iter()
             .map(|p| p.as_str().unwrap())
             .collect();
+        // Two plugin permissions, then the agent commands the chat calls and nothing else:
+        // no library, registry, approval or update command.
         assert_eq!(
-            perms,
+            perms[..2],
             ["core:default", "clipboard-manager:allow-write-text"]
         );
+        for p in &perms[2..] {
+            assert!(p.starts_with("allow-agent-"), "create window granted {p}");
+        }
+        assert!(!perms.contains(&"allow-agent-open-create-window"));
         // The main window's capability does not name it, and tool windows have none at all.
         assert_eq!(
             capability("main.json")["windows"],
