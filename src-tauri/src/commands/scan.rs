@@ -555,6 +555,17 @@ mod tests {
         assert!(icon.starts_with("data:image/svg+xml"), "{icon}");
     }
 
+    /// The Hash Check example reads a file the person picks and shows a hash. Neither is a
+    /// capability, so its approval screen must stay empty.
+    #[test]
+    fn hash_check_example_asks_for_nothing() {
+        let html = include_str!("../../../examples/hash-check/index.html");
+        let caps = scan_html(html);
+        assert!(caps.is_empty(), "unexpected capabilities: {caps:?}");
+        let icon = extract_icon(html).expect("example has a complete icon");
+        assert!(icon.starts_with("data:image/svg+xml"), "{icon}");
+    }
+
     /// The OTP vault example asks for exactly two things: its own storage and
     /// the YubiKey OATH applet. A regression here changes what users are asked
     /// to approve, so it is pinned.

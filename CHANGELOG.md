@@ -32,6 +32,8 @@ section behind.
   A registry you pinned yourself only warns. Settings has a Check now button and an option to check
   once a day while Sanctum is open, which is **off by default**. Neither changes what a tool is
   approved to do.
+- Enigma Hash Check, a signed tool that compares a file with the checksum its publisher gave you,
+  in the Catalogue once it is published.
 
 ## [0.2.0] - 2026-10-19
 
