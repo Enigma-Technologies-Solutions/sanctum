@@ -1394,4 +1394,139 @@ mod tests {
         assert_eq!(v[0]["appId"], "sh.test.w1");
         assert_eq!(v[0]["state"], "alreadyInstalled");
     }
+
+    // ── Phase 8: updates and withdrawals after install ────────────────────────
+
+    use super::super::notices::{CheckOutcome, RevokedAction};
+
+    fn version_hex(t: &Tool) -> String {
+        checksum_of(&t.html)
+            .trim_start_matches("sha256:")
+            .to_string()
+    }
+
+    #[tokio::test]
+    async fn a_version_withdrawn_after_install_blocks_and_names_the_registry() {
+        let w = World::new().await;
+        let v1 = w.listed(plain("omega", "1.0.0"));
+        w.publish(std::slice::from_ref(&v1), 1, &[]);
+        w.add().await;
+        w.install("omega").await.unwrap();
+        assert!(w.client.notices().await.unwrap().revoked.is_empty());
+        assert!(w
+            .client
+            .blocked_reason(&version_hex(&v1.tool))
+            .await
+            .is_none());
+
+        w.publish(std::slice::from_ref(&v1), 2, &[checksum_of(&v1.tool.html)]);
+        let report = w.client.check_all().await.unwrap();
+        assert!(matches!(
+            report.items[0].outcome,
+            CheckOutcome::Checked { .. }
+        ));
+        let n = &report.notices.revoked;
+        assert_eq!(n.len(), 1);
+        assert_eq!(n[0].app_id, "sh.test.omega");
+        assert_eq!(n[0].version, "1.0.0");
+        assert_eq!(n[0].action, RevokedAction::Block);
+        let why = w
+            .client
+            .blocked_reason(&version_hex(&v1.tool))
+            .await
+            .unwrap();
+        assert!(
+            why.contains("Test Registry") && why.contains("vulnerable"),
+            "{why}"
+        );
+    }
+
+    #[tokio::test]
+    async fn a_newer_version_is_a_notice_and_a_withdrawn_newer_one_is_not() {
+        let w = World::new().await;
+        let v1 = w.listed(plain("psi", "1.0.0"));
+        w.publish(std::slice::from_ref(&v1), 1, &[]);
+        w.add().await;
+        w.install("psi").await.unwrap();
+        assert!(w.client.notices().await.unwrap().updates.is_empty());
+
+        let v2 = w.listed(plain("psi", "1.1.0"));
+        w.publish(&[v1.clone(), v2.clone()], 2, &[]);
+        let u = w.client.check_all().await.unwrap().notices.updates;
+        assert_eq!(u.len(), 1);
+        assert_eq!(
+            (u[0].installed_version.as_str(), u[0].latest.as_str()),
+            ("1.0.0", "1.1.0")
+        );
+
+        // The new version is withdrawn too: there is nothing safe to offer.
+        w.publish(&[v1, v2.clone()], 3, &[checksum_of(&v2.tool.html)]);
+        assert!(w
+            .client
+            .check_all()
+            .await
+            .unwrap()
+            .notices
+            .updates
+            .is_empty());
+    }
+
+    #[tokio::test]
+    async fn an_offline_check_reports_the_failure_and_keeps_every_notice() {
+        let w = World::new().await;
+        let v1 = w.listed(plain("chi", "1.0.0"));
+        w.publish(std::slice::from_ref(&v1), 1, &[]);
+        w.add().await;
+        w.install("chi").await.unwrap();
+        w.publish(std::slice::from_ref(&v1), 2, &[checksum_of(&v1.tool.html)]);
+        w.client.check_all().await.unwrap();
+
+        w.mock.route(
+            &format!("{BASE}index.json"),
+            crate::registry::fetch::testing::Script::Down("offline".into()),
+        );
+        let report = w.client.check_all().await.unwrap();
+        assert!(matches!(
+            report.items[0].outcome,
+            CheckOutcome::Failed { .. }
+        ));
+        assert_eq!(
+            report.notices.revoked.len(),
+            1,
+            "a lost connection must not forget a withdrawal"
+        );
+        assert!(w
+            .client
+            .blocked_reason(&version_hex(&v1.tool))
+            .await
+            .is_some());
+    }
+
+    #[tokio::test]
+    async fn a_tampered_feed_changes_nothing() {
+        let w = World::new().await;
+        let v1 = w.listed(plain("rho", "1.0.0"));
+        w.publish(std::slice::from_ref(&v1), 1, &[]);
+        w.add().await;
+        w.install("rho").await.unwrap();
+        w.publish(std::slice::from_ref(&v1), 2, &[checksum_of(&v1.tool.html)]);
+        // The signature no longer matches the revocation list.
+        let mut rev = serde_json::to_vec(&json!({
+            "format": "sanctum-registry-revocations/1", "registry": ID, "serial": 9,
+            "issued_at": NOW - 500, "expires": NOW + 14 * DAY, "entries": []
+        }))
+        .unwrap();
+        rev.push(b' ');
+        w.mock.serve(&format!("{BASE}revocations.json"), &rev);
+        let report = w.client.check_all().await.unwrap();
+        assert!(
+            report.notices.revoked.is_empty(),
+            "the unsigned list must not count"
+        );
+        assert!(w
+            .client
+            .blocked_reason(&version_hex(&v1.tool))
+            .await
+            .is_none());
+    }
 }

@@ -354,6 +354,7 @@ pub async fn open_tool_window(
     db: tauri::State<'_, DbState>,
     data_dir: tauri::State<'_, AppDataDir>,
     paths: tauri::State<'_, ActiveToolPaths>,
+    registries: tauri::State<'_, crate::registry::commands::RegistryState>,
     tool_id: String,
 ) -> Result<(), String> {
     // 1. Load current version + user approvals
@@ -403,6 +404,14 @@ pub async fn open_tool_window(
     //     the bytes we are about to serve, which the integrity check above just confirmed.
     crate::policy::check_run(&crate::policy::load(), &actual_sha)
         .map_err(|why| format!("Cannot run '{tool_name}'. {why}"))?;
+
+    // 2c. A registry built into Sanctum can withdraw a version. A registry the user pinned
+    //     can only warn (see registry::notices), so it never reaches this refusal.
+    if let Ok(client) = registries.client.as_ref() {
+        if let Some(why) = client.blocked_reason(&actual_sha).await {
+            return Err(format!("Cannot run '{tool_name}'. {why}"));
+        }
+    }
 
     // 3. Check not already quarantined
     let ver_row = sqlx::query("SELECT quarantined, manifest FROM tool_versions WHERE id = $1")
@@ -519,9 +528,12 @@ mod tests {
         let gate = body
             .find("crate::policy::check_run(&crate::policy::load(), &actual_sha)")
             .expect("policy gate must call check_run with the verified hash");
+        let revoked = body
+            .find("client.blocked_reason(&actual_sha)")
+            .expect("withdrawn versions must be checked with the verified hash");
         let window = body.find("WebviewWindowBuilder").expect("window creation");
         assert!(
-            integrity < gate && gate < window,
+            integrity < gate && gate < revoked && revoked < window,
             "policy gate is out of order"
         );
     }

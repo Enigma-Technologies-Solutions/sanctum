@@ -154,6 +154,45 @@ export interface RegistryRefreshReport {
   registry: RegistrySummary;
 }
 
+/** What Sanctum does about a withdrawn tool: an anchored registry blocks, a pinned one warns. */
+export type RevokedAction = "block" | "warn";
+
+export interface RegistryUpdateNotice {
+  registryId: string;
+  registryName: string;
+  appId: string;
+  name: string;
+  installedVersion: string;
+  latest: string;
+}
+
+export interface RegistryRevokedNotice {
+  toolId: string;
+  name: string;
+  appId: string;
+  version: string;
+  /** Written by the registry. Shown as plain text only. */
+  reason: string;
+  registryId: string;
+  registryName: string;
+  action: RevokedAction;
+}
+
+export interface RegistryNotices {
+  updates: RegistryUpdateNotice[];
+  revoked: RegistryRevokedNotice[];
+}
+
+export type RegistryCheckItem = { registryId: string; registryName: string } & (
+  | { state: "checked"; report: RegistryRefreshReport }
+  | { state: "failed"; code: string; message: string }
+);
+
+export interface RegistryCheckReport {
+  items: RegistryCheckItem[];
+  notices: RegistryNotices;
+}
+
 export interface RegistryCatalogVersion {
   version: string;
   publishedAt: number;

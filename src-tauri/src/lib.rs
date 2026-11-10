@@ -250,6 +250,8 @@ pub fn run() {
             registry::commands::list_registries,
             registry::commands::add_registry,
             registry::commands::refresh_registry,
+            registry::commands::check_registries,
+            registry::commands::registry_notices,
             registry::commands::remove_registry,
             registry::commands::registry_catalogue,
             registry::commands::registry_app_detail,

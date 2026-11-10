@@ -154,7 +154,13 @@ Maintainer check: click-through on macOS, Windows, Linux from a browser, email a
 1. Refresh, "update available", fast `revocations.json` feed.
 2. Revoked policy: block first-party, warn third-party.
 
-Tests: revoke after install, stale or tampered feed, offline refresh.
+Built (unreleased, ships with 0.3.0): `registry/notices.rs`, the `check_registries` and
+`registry_notices` commands, a gate in `open_tool_window`, a banner in the app and a Registries
+section in Settings. The timer is a per-window preference, off by default, checking at most once a
+day. A "fast feed" needed no new file: `revocations.json` already has a 30-day lifetime and is
+renewed on its own schedule, and the check fetches it with the index.
+
+Tests: revoke after install, stale or tampered feed, offline refresh (all in `registry/install.rs`).
 
 ## Phase 9: release (2 days)
 

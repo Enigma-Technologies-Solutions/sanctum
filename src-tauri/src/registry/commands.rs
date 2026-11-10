@@ -3,12 +3,13 @@
 
 //! Tauri commands for registries. Thin: every rule lives in `client.rs`.
 //!
-//! These run only when the user acts (add, refresh, remove, list). There is no background
-//! polling. Tool windows have no IPC at all, so a tool cannot call any of this.
+//! These run only when the user acts (add, refresh, remove, list, check), or when the user has
+//! turned on the optional timer in the interface, which is off by default. Tool windows have no IPC at all, so a tool cannot call any of this.
 
 use super::client::{ClientError, RefreshReport, RegistryClient, RegistrySummary};
 use super::detail::AppDetailView;
 use super::install::{BatchItem, Catalogue, InstallOutcome};
+use super::notices::{CheckReport, Notices};
 use crate::AppDataDir;
 use serde::Serialize;
 use tauri::State;
@@ -98,6 +99,20 @@ pub async fn remove_registry(
     id: String,
 ) -> Result<(), CommandError> {
     Ok(client(&state)?.remove(&id).await?)
+}
+
+/// Refresh every registry, then report updates and withdrawn tools. Contacts each registry.
+#[tauri::command]
+pub async fn check_registries(
+    state: State<'_, RegistryState>,
+) -> Result<CheckReport, CommandError> {
+    Ok(client(&state)?.check_all().await?)
+}
+
+/// Updates and withdrawn tools for the library, from the cache. No network.
+#[tauri::command]
+pub async fn registry_notices(state: State<'_, RegistryState>) -> Result<Notices, CommandError> {
+    Ok(client(&state)?.notices().await?)
 }
 
 /// The catalogue from the cached, re-verified index, with install state. No network.
