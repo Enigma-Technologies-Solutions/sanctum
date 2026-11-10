@@ -3,11 +3,45 @@
   "id": "registry:sh.enigma.public",
   "name": "Enigma Technologies Solutions",
   "kind": "public",
-  "serial": 7,
-  "issued_at": 1793211906,
-  "expires": 1824747906,
+  "serial": 9,
+  "issued_at": 1794338574,
+  "expires": 1825874574,
   "revocations": "revocations.json",
   "apps": [
+    {
+      "app_id": "sh.enigma.hash-check",
+      "name": "Hash Check",
+      "summary": "Check a file against the checksum its publisher gave you. Runs offline and asks for no access.",
+      "publisher": {
+        "keyid": "ed25519:2daedA0n4NSI2p2McCqLBfGiKRmR5XCm8lypbQTT6hg",
+        "name": "Enigma Technologies Solutions"
+      },
+      "access": "free",
+      "latest": "1.0.0",
+      "icon": {
+        "path": "apps/sh.enigma.hash-check/icon.svg",
+        "sha256": "sha256:9c55e37136979d59cc965fb156261d1de790244ba71c489f5f000cf5ad22fd44",
+        "size": 411
+      },
+      "detail": {
+        "path": "apps/sh.enigma.hash-check.json",
+        "sha256": "sha256:cdf4f911c61840a477890c5c59947d6f4fb35e33bf1b714a08e4bed747be4483",
+        "size": 3076
+      },
+      "versions": [
+        {
+          "version": "1.0.0",
+          "published_at": 1793678049,
+          "bundle": {
+            "path": "bundles/sh.enigma.hash-check-1.0.0.sanctum",
+            "sha256": "sha256:d29f23b2f3871c139e60752dbc0538bb80106c362cff8ea68bd77e0c8e46c610",
+            "size": 42576
+          },
+          "checksum": "sha256:e7f6ddd637cc0765878cef683a6316ed215e7fb1cdd1781b4bb610b2e5aa8c35",
+          "declared": []
+        }
+      ]
+    },
     {
       "app_id": "sh.enigma.otp-vault",
       "name": "OTP Vault",

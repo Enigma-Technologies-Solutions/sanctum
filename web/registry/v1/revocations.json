@@ -1,8 +1,8 @@
 {
   "format": "sanctum-registry-revocations/1",
   "registry": "registry:sh.enigma.public",
-  "serial": 6,
-  "issued_at": 1793211906,
-  "expires": 1795803906,
+  "serial": 7,
+  "issued_at": 1794338574,
+  "expires": 1796930574,
   "entries": []
 }
