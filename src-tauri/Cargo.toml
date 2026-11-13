@@ -4,6 +4,8 @@ version = "0.2.0"
 description = "Desktop sandbox for AI-generated HTML tools"
 authors = ["Sanctum"]
 edition = "2021"
+# Lowest Rust that builds the locked dependencies (image, plist and time need 1.88).
+rust-version = "1.88"
 
 [lib]
 name = "sanctum_lib"

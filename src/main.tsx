@@ -5,6 +5,7 @@ import React from "react";
 import ReactDOM from "react-dom/client";
 import App from "./App";
 import { CreateWindow } from "./CreateWindow";
+import "./fonts.css";
 import "./index.css";
 import { initTheme } from "./lib/theme";
 

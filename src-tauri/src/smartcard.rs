@@ -34,7 +34,7 @@
 //! [`SmartcardCapability`]: crate::models::SmartcardCapability
 
 use std::collections::HashMap;
-use std::sync::Mutex;
+use std::sync::{Arc, Mutex};
 
 use crate::models::DetectedCapability;
 
@@ -241,9 +241,21 @@ pub struct Session {
     pub selected_aid: Option<String>,
 }
 
+/// One open session as the map holds it. The owner is kept outside the
+/// session's own lock so ownership checks and counts never wait on card I/O.
+pub struct SessionEntry {
+    pub tool_id: String,
+    /// `None` once the session is closed. A call that looked the session up
+    /// just before a close finds it empty and gets "unknown session".
+    slot: Arc<Mutex<Option<Session>>>,
+}
+
+/// The map lock is held only to look a session up, add or remove one. Card
+/// I/O (up to [`MAX_CHAIN_ROUNDS`] rounds) runs under that session's own lock,
+/// so one tool's slow exchange never stalls another tool's broker calls.
 #[derive(Default)]
 pub struct SmartcardState {
-    pub sessions: Mutex<HashMap<String, Session>>,
+    pub sessions: Mutex<HashMap<String, SessionEntry>>,
 }
 
 impl SmartcardState {
@@ -254,16 +266,32 @@ impl SmartcardState {
     /// Drop every session belonging to `tool_id`. Called when a tool window
     /// closes so a card is never left connected to a page that is gone.
     pub fn close_tool_sessions(&self, tool_id: &str) {
-        let mut map = self.sessions.lock().unwrap();
-        let ids: Vec<String> = map
-            .iter()
-            .filter(|(_, s)| s.tool_id == tool_id)
-            .map(|(id, _)| id.clone())
-            .collect();
-        for id in ids {
-            if let Some(session) = map.remove(&id) {
-                release(session.card);
-            }
+        let removed: Vec<SessionEntry> = {
+            let mut map = self.sessions.lock().unwrap();
+            let ids: Vec<String> = map
+                .iter()
+                .filter(|(_, s)| s.tool_id == tool_id)
+                .map(|(id, _)| id.clone())
+                .collect();
+            ids.iter().filter_map(|id| map.remove(id)).collect()
+        };
+        // Outside the map lock: waiting for an in-flight exchange on one of
+        // these sessions must not hold up anyone else.
+        for entry in removed {
+            close_entry(entry);
+        }
+    }
+
+    /// The session `session_id` if `tool_id` owns it. The map lock is released
+    /// before this returns.
+    fn owned(
+        &self,
+        tool_id: &str,
+        session_id: &str,
+    ) -> Result<Arc<Mutex<Option<Session>>>, BrokerError> {
+        match self.sessions.lock().unwrap().get(session_id) {
+            Some(e) if e.tool_id == tool_id => Ok(e.slot.clone()),
+            _ => Err(BrokerError::BadRequest("unknown session".into())),
         }
     }
 
@@ -303,6 +331,15 @@ fn context() -> Result<pcsc::Context, BrokerError> {
 /// is explicit and leaves the card as it was found.
 fn release(card: pcsc::Card) {
     let _ = card.disconnect(pcsc::Disposition::LeaveCard);
+}
+
+/// Empty a removed session's slot and disconnect its card. Waits for an
+/// exchange already running on that session, and only that one.
+fn close_entry(entry: SessionEntry) {
+    let taken = entry.slot.lock().unwrap().take();
+    if let Some(session) = taken {
+        release(session.card);
+    }
 }
 
 /// Did this PC/SC failure mean the card is no longer usable on this handle?
@@ -433,11 +470,14 @@ pub fn open_session(
     let id = uuid::Uuid::new_v4().to_string();
     state.sessions.lock().unwrap().insert(
         id.clone(),
-        Session {
+        SessionEntry {
             tool_id: tool_id.to_string(),
-            reader: reader.to_string(),
-            card,
-            selected_aid: None,
+            slot: Arc::new(Mutex::new(Some(Session {
+                tool_id: tool_id.to_string(),
+                reader: reader.to_string(),
+                card,
+                selected_aid: None,
+            }))),
         },
     );
 
@@ -453,18 +493,19 @@ pub fn close_session(
     tool_id: &str,
     session_id: &str,
 ) -> Result<(), BrokerError> {
-    let mut map = state.sessions.lock().unwrap();
-    match map.get(session_id) {
-        // Same answer for "not yours" as for "does not exist": a tool must not
-        // be able to probe for other tools' session ids.
-        Some(s) if s.tool_id == tool_id => {
-            if let Some(session) = map.remove(session_id) {
-                release(session.card);
-            }
-            Ok(())
+    let removed = {
+        let mut map = state.sessions.lock().unwrap();
+        match map.get(session_id) {
+            // Same answer for "not yours" as for "does not exist": a tool must
+            // not be able to probe for other tools' session ids.
+            Some(s) if s.tool_id == tool_id => map.remove(session_id),
+            _ => return Err(BrokerError::BadRequest("unknown session".into())),
         }
-        _ => Err(BrokerError::BadRequest("unknown session".into())),
+    };
+    if let Some(entry) = removed {
+        close_entry(entry);
     }
+    Ok(())
 }
 
 // ── APDU exchange ─────────────────────────────────────────────────────────────
@@ -625,11 +666,11 @@ pub fn select_applet(
     let aid_bytes = from_hex(&aid)?;
     let apdu = select_apdu(&aid_bytes);
 
-    let mut map = state.sessions.lock().unwrap();
-    let session = match map.get_mut(session_id) {
-        Some(s) if s.tool_id == tool_id => s,
-        _ => return Err(BrokerError::BadRequest("unknown session".into())),
-    };
+    let slot = state.owned(tool_id, session_id)?;
+    let mut guard = slot.lock().unwrap();
+    let session = guard
+        .as_mut()
+        .ok_or_else(|| BrokerError::BadRequest("unknown session".into()))?;
 
     let result = exchange(session, &apdu)?;
     // Only a successful selection unlocks raw transmit. `61 XX` was already
@@ -658,11 +699,11 @@ pub fn transmit(
         return Err(BrokerError::Denied(why));
     }
 
-    let mut map = state.sessions.lock().unwrap();
-    let session = match map.get_mut(session_id) {
-        Some(s) if s.tool_id == tool_id => s,
-        _ => return Err(BrokerError::BadRequest("unknown session".into())),
-    };
+    let slot = state.owned(tool_id, session_id)?;
+    let mut guard = slot.lock().unwrap();
+    let session = guard
+        .as_mut()
+        .ok_or_else(|| BrokerError::BadRequest("unknown session".into()))?;
     if session.selected_aid.is_none() {
         return Err(BrokerError::Denied(
             "no applet selected; call session.select(aid) first.",

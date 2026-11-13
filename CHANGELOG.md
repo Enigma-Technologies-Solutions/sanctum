@@ -45,6 +45,10 @@ section behind.
   limits.
 - A tool approved for a smart card can no longer send commands addressed to the reader itself
   (class `FF`), which on some readers could reach an applet the tool was not approved for.
+- One tool's long smart card exchange no longer holds up other tools' card calls.
+- Tool windows also refuse to save AppleScript, macro-enabled Office files and Windows shell
+  formats such as `.library-ms` and `.settingcontent-ms`.
+- The app no longer contacts Google Fonts when it starts. Its fonts are bundled.
   Review: `docs/security-review-threat-model.md`.
 
 ## [0.2.0] - 2026-10-19

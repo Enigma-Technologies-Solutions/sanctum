@@ -58,7 +58,11 @@ Building tools that work within Sanctum: [SANCTUM_FOR_AGENTS.md](SANCTUM_FOR_AGE
 
 ## Building from source
 
-**Prerequisites:** Rust ≥ 1.77 · Node.js ≥ 20 · pnpm
+**Prerequisites:** Rust ≥ 1.88 · Node.js ≥ 20 · pnpm
+
+Some dependencies (`image`, `plist`, `time`) need Rust 1.88, so an older compiler, such as the
+1.85 that Debian 13 ships, fails before anything is built. Install Rust with
+[rustup](https://rustup.rs) rather than a distribution package.
 
 ```bash
 git clone https://github.com/Enigma-Technologies-Solutions/sanctum
