@@ -40,13 +40,15 @@ shortening for long secrets and non-default periods.
   can save a file through a download link, which goes to the Downloads folder. This tool was
   written before that was possible, and its backup still goes where you choose to paste it.)
   See #5.
-- **Codes on request for YubiKey accounts.** `CALCULATE ALL` is `00 A4 00 01`. The broker
-  refuses interindustry INS `A4` as SELECT whatever the selected applet, so the tool falls
-  back to `LIST` and computes each code when clicked. A touch-protected account blinks the
-  key at that point. See #3.
-- **Long OATH answers.** The OATH applet continues long responses with `SEND REMAINING`
-  (`A5`) and answers `GET RESPONSE` (`C0`) with `6D00`. The broker drives chaining with
-  `C0`, so a key whose account list does not fit in one response cannot be listed. See #4.
+- **Codes on request for YubiKey accounts, before Sanctum 0.3.0.** `CALCULATE ALL` is
+  `00 A4 00 01`. Sanctum 0.2.0 refuses interindustry INS `A4` as SELECT whatever the selected
+  applet, so the tool falls back to `LIST` and computes each code when clicked. A
+  touch-protected account blinks the key at that point. Later versions allow it while the OATH
+  applet is selected (#3), and the tool uses it.
+- **Long OATH answers, before Sanctum 0.3.0.** The OATH applet continues long responses with
+  `SEND REMAINING` (`A5`) and answers `GET RESPONSE` (`C0`) with `6D00`. Sanctum 0.2.0 drives
+  chaining with `C0`, so a key whose account list does not fit in one response cannot be
+  listed. Later versions continue with `A5` for the OATH applet (#4).
 
 Other gaps found while building this tool: storage is lost on delete and re-add (#6), a
 tool cannot read its own checksum or approvals (#7), there is no CLI for scanning and

@@ -253,7 +253,7 @@ anything the page can set. Enforcement lives in `smartcard.rs`:
 |-------|--------|
 | Capability check | No approval → no readers, no sessions, no APDUs. |
 | AID allow-list | `select` refused unless that exact AID was approved. |
-| No re-selection | Raw `transmit` refuses interindustry `SELECT`, `MANAGE CHANNEL`, `GET RESPONSE`, so a tool approved for FIDO can't pivot to PIV or OpenPGP on the same card. |
+| No re-selection | Raw `transmit` refuses interindustry `SELECT`, `MANAGE CHANNEL`, `GET RESPONSE`, so a tool approved for FIDO can't pivot to PIV or OpenPGP on the same card. One exception: while Yubico's OATH applet is selected, its CALCULATE ALL (`00 A4 00 00/01` with a challenge) is allowed; SELECT by name (`P1 = 04`) is still refused. |
 | Select-before-transmit | Raw APDUs are refused until an approved applet is selected. |
 | Session ownership | Sessions are bound to the opening tool and dropped when its window closes. |
 | Non-destructive disconnect | Every disconnect uses `LeaveCard`; Sanctum never power-cycles a card it did not have to. |
