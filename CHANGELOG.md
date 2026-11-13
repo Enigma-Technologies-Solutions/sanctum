@@ -42,6 +42,8 @@ section behind.
   applet is selected, and SELECT by name is still refused (#3).
 - Long answers from the YubiKey OATH applet are read in full. Sanctum now continues them with
   the applet's SEND REMAINING instead of GET RESPONSE, which it rejects (#4).
+- A smart card reader the system still lists but can no longer use (a key just unplugged) no
+  longer turns the whole reader list into an error; it is left out and the other readers work.
 
 ### Security
 
