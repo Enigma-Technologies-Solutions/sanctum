@@ -35,6 +35,16 @@ section behind.
 - Enigma Hash Check, a signed tool that compares a file with the checksum its publisher gave you,
   in the Catalogue.
 
+### Fixed
+
+- Tools can read every code from a YubiKey's OATH (TOTP) applet in one request. CALCULATE ALL
+  was refused because it shares an instruction byte with SELECT; it is now allowed while that
+  applet is selected, and SELECT by name is still refused (#3).
+- Long answers from the YubiKey OATH applet are read in full. Sanctum now continues them with
+  the applet's SEND REMAINING instead of GET RESPONSE, which it rejects (#4).
+- A smart card reader the system still lists but can no longer use (a key just unplugged) no
+  longer turns the whole reader list into an error; it is left out and the other readers work.
+
 ### Security
 
 - Sanctum's own commands now run only in the windows granted them. Before, nothing in the

@@ -228,6 +228,48 @@ pub fn is_forbidden_apdu(apdu: &[u8]) -> Option<&'static str> {
     }
 }
 
+// ── Applet quirks ─────────────────────────────────────────────────────────────
+
+/// Yubico's OATH (TOTP/HOTP) applet. Matched as a prefix, since some clients
+/// select it with a trailing version byte.
+const YUBICO_OATH_AID: &str = "a0000005272101";
+
+fn is_yubico_oath(aid: Option<&str>) -> bool {
+    aid.is_some_and(|a| a.starts_with(YUBICO_OATH_AID))
+}
+
+/// Yubico OATH CALCULATE ALL: `00 A4 00 {00|01}` carrying a challenge TLV
+/// (tag `74`). It reuses the SELECT instruction byte. Allowed only with basic
+/// CLA `00` and `P1 = 00`: SELECT by name (`P1 = 04`), the form that switches
+/// applets, stays refused, and so does any logical channel.
+fn is_oath_calculate_all(apdu: &[u8]) -> bool {
+    apdu.len() >= 6
+        && apdu[..3] == [0x00, 0xA4, 0x00]
+        && matches!(apdu[3], 0x00 | 0x01)
+        && apdu[5] == 0x74
+}
+
+/// The refusal for `apdu` sent while `selected` is the selected applet, or
+/// `None` when it may go to the card. Applet-specific instructions that reuse
+/// an interindustry code are let through here and nowhere else.
+pub fn is_forbidden_apdu_for(apdu: &[u8], selected: Option<&str>) -> Option<&'static str> {
+    if is_yubico_oath(selected) && is_oath_calculate_all(apdu) {
+        return None;
+    }
+    is_forbidden_apdu(apdu)
+}
+
+/// The command that fetches the rest of a `61 XX` answer. Yubico's OATH
+/// applet answers GET RESPONSE with `6D00` and expects SEND REMAINING
+/// (`00 A5 00 00`) instead; every other applet gets ISO GET RESPONSE.
+fn continuation_apdu(selected: Option<&str>, sw2: u8) -> Vec<u8> {
+    if is_yubico_oath(selected) {
+        vec![0x00, 0xA5, 0x00, 0x00]
+    } else {
+        vec![0x00, 0xC0, 0x00, 0x00, sw2]
+    }
+}
+
 // ── Sessions ──────────────────────────────────────────────────────────────────
 
 pub struct Session {
@@ -571,7 +613,11 @@ impl ApduResult {
 /// CTAP2's own `9100` keep-alive is *not* handled here: it is an application
 /// convention of the FIDO applet, and answering it means sending
 /// `NFCCTAP_GETRESPONSE`, which belongs to the CTAP client in the page.
-fn transmit_chained(card: &mut pcsc::Card, apdu: &[u8]) -> Result<ApduResult, BrokerError> {
+fn transmit_chained(
+    card: &mut pcsc::Card,
+    apdu: &[u8],
+    applet: Option<&str>,
+) -> Result<ApduResult, BrokerError> {
     // A PC/SC transaction keeps other processes on this machine — on macOS
     // that includes CryptoTokenKit's own pollers — from interleaving an APDU
     // or resetting the card between our command and its chained continuations.
@@ -616,7 +662,7 @@ fn transmit_chained(card: &mut pcsc::Card, apdu: &[u8]) -> Result<ApduResult, Br
         }
 
         // 61 XX — XX more bytes waiting (00 means "256 or unknown").
-        let get_response = [0x00u8, 0xC0, 0x00, 0x00, sw2];
+        let get_response = continuation_apdu(applet, sw2);
         let mut recv_n = vec![0u8; RECV_BUF_BYTES];
         response = card
             .transmit(&get_response, &mut recv_n)
@@ -648,8 +694,14 @@ fn select_apdu(aid_bytes: &[u8]) -> Vec<u8> {
 ///
 /// If the card is physically absent, reconnect fails and the tool gets
 /// `CardGone` — a prompt to re-present it, not a dead session.
-fn exchange(session: &mut Session, apdu: &[u8]) -> Result<ApduResult, BrokerError> {
-    match transmit_chained(&mut session.card, apdu) {
+/// `applet` is the applet the APDU is meant for, which decides how a chained
+/// answer is continued.
+fn exchange(
+    session: &mut Session,
+    apdu: &[u8],
+    applet: Option<&str>,
+) -> Result<ApduResult, BrokerError> {
+    match transmit_chained(&mut session.card, apdu, applet) {
         Err(BrokerError::CardGone) => {}
         other => return other,
     }
@@ -665,7 +717,7 @@ fn exchange(session: &mut Session, apdu: &[u8]) -> Result<ApduResult, BrokerErro
 
     if let Some(aid) = session.selected_aid.clone() {
         let aid_bytes = from_hex(&aid)?;
-        let reselect = transmit_chained(&mut session.card, &select_apdu(&aid_bytes))?;
+        let reselect = transmit_chained(&mut session.card, &select_apdu(&aid_bytes), Some(&aid))?;
         if !reselect.ok {
             // The card came back but the applet did not. Refuse rather than
             // send the tool's APDU to an unknown applet.
@@ -676,7 +728,7 @@ fn exchange(session: &mut Session, apdu: &[u8]) -> Result<ApduResult, BrokerErro
         }
     }
 
-    transmit_chained(&mut session.card, apdu)
+    transmit_chained(&mut session.card, apdu, applet)
 }
 
 /// SELECT an applet by AID, after checking the AID against the tool's approvals.
@@ -702,7 +754,7 @@ pub fn select_applet(
         .as_mut()
         .ok_or_else(|| BrokerError::BadRequest("unknown session".into()))?;
 
-    let result = exchange(session, &apdu)?;
+    let result = exchange(session, &apdu, Some(&aid))?;
     // Only a successful selection unlocks raw transmit. `61 XX` was already
     // resolved by the chaining loop, so 0x9000 is the whole success case.
     if result.sw == 0x9000 {
@@ -725,8 +777,13 @@ pub fn transmit(
             apdu.len()
         )));
     }
+    // Checked before the session lookup too, so a refused command gets the
+    // same answer whatever session id it names. The one applet exception is
+    // decided below, once the selected applet is known.
     if let Some(why) = is_forbidden_apdu(&apdu) {
-        return Err(BrokerError::Denied(why));
+        if !is_oath_calculate_all(&apdu) {
+            return Err(BrokerError::Denied(why));
+        }
     }
 
     let slot = state.owned(tool_id, session_id)?;
@@ -739,8 +796,12 @@ pub fn transmit(
             "no applet selected; call session.select(aid) first.",
         ));
     }
+    let selected = session.selected_aid.clone();
+    if let Some(why) = is_forbidden_apdu_for(&apdu, selected.as_deref()) {
+        return Err(BrokerError::Denied(why));
+    }
 
-    exchange(session, &apdu)
+    exchange(session, &apdu, selected.as_deref())
 }
 
 // ── HTTP surface ──────────────────────────────────────────────────────────────
@@ -975,6 +1036,75 @@ mod tests {
     fn proprietary_class_keeps_its_own_ins_bytes() {
         // 0xA4 under a proprietary CLA is not SELECT and must not be blocked.
         assert!(is_forbidden_apdu(&[0x80, 0xA4, 0x00, 0x00]).is_none());
+    }
+
+    const OATH: &str = "a0000005272101";
+    const CALCULATE_ALL: [u8; 15] = [
+        0x00, 0xA4, 0x00, 0x01, 0x0A, 0x74, 0x08, 0, 0, 0, 0, 0, 0, 0, 0x01,
+    ];
+
+    #[test]
+    fn oath_calculate_all_is_allowed_only_on_the_oath_applet() {
+        assert!(is_forbidden_apdu_for(&CALCULATE_ALL, Some(OATH)).is_none());
+        assert!(is_forbidden_apdu_for(&CALCULATE_ALL, Some("a000000527210101")).is_none());
+        let mut p2_zero = CALCULATE_ALL;
+        p2_zero[3] = 0x00;
+        assert!(is_forbidden_apdu_for(&p2_zero, Some(OATH)).is_none());
+        // Any other applet, or none, still sees a SELECT.
+        assert!(is_forbidden_apdu_for(&CALCULATE_ALL, Some(FIDO)).is_some());
+        assert!(is_forbidden_apdu_for(&CALCULATE_ALL, None).is_some());
+    }
+
+    #[test]
+    fn the_oath_exception_never_lets_a_real_select_through() {
+        // SELECT by name, the form that switches applets.
+        let by_name = select_apdu(&hex::decode(FIDO).unwrap());
+        assert!(is_forbidden_apdu_for(&by_name, Some(OATH)).is_some());
+        let mut p1_four = CALCULATE_ALL;
+        p1_four[2] = 0x04;
+        assert!(is_forbidden_apdu_for(&p1_four, Some(OATH)).is_some());
+        // A logical channel, a secure-messaging CLA, another P2, no TLV, another tag.
+        for (i, v) in [(0, 0x01), (0, 0x0C), (3, 0x02)] {
+            let mut a = CALCULATE_ALL;
+            a[i] = v;
+            assert!(is_forbidden_apdu_for(&a, Some(OATH)).is_some(), "{a:02x?}");
+        }
+        assert!(is_forbidden_apdu_for(&CALCULATE_ALL[..4], Some(OATH)).is_some());
+        assert!(
+            is_forbidden_apdu_for(&[0x00, 0xA4, 0x00, 0x00, 0x02, 0x3F, 0x00], Some(OATH))
+                .is_some()
+        );
+        // The other refusals are untouched by the applet.
+        assert!(is_forbidden_apdu_for(&[0x00, 0xC0, 0x00, 0x00, 0x10], Some(OATH)).is_some());
+        assert!(is_forbidden_apdu_for(&[0x00, 0x70, 0x00, 0x00], Some(OATH)).is_some());
+        assert!(
+            is_forbidden_apdu_for(&[0xFF, 0xA4, 0x00, 0x01, 0x02, 0x74, 0x00], Some(OATH))
+                .is_some()
+        );
+    }
+
+    #[test]
+    fn chained_answers_continue_with_the_applets_own_command() {
+        assert_eq!(
+            continuation_apdu(Some(OATH), 0x20),
+            vec![0x00, 0xA5, 0x00, 0x00]
+        );
+        assert_eq!(
+            continuation_apdu(Some(FIDO), 0x20),
+            vec![0x00, 0xC0, 0x00, 0x00, 0x20]
+        );
+        assert_eq!(
+            continuation_apdu(None, 0x00),
+            vec![0x00, 0xC0, 0x00, 0x00, 0x00]
+        );
+    }
+
+    #[test]
+    fn calculate_all_with_a_missing_session_is_unknown_not_refused() {
+        // It passes the early filter, then fails on the session like any allowed command.
+        let state = SmartcardState::new();
+        let err = transmit(&state, "tool-a", "missing", &to_hex(&CALCULATE_ALL)).unwrap_err();
+        assert!(matches!(err, BrokerError::BadRequest(ref m) if m == "unknown session"));
     }
 
     #[test]
