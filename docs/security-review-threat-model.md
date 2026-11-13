@@ -34,8 +34,8 @@ The Rust layer does add reach in three places, and those are where the findings 
 | F3 | Smart card filter let reader commands (`CLA FF`) through | Medium | Fixed |
 | F4 | Applet approval follows Sanctum's idea of the selection, not the card's | Medium | Open |
 | F5 | Windows origin checks expect `*.localhost`; wry produces another form | Medium on Windows | Open |
-| F6 | Smart card session lock is held during card I/O | Low | Open |
-| F7 | Download refusal list misses some script and macro types | Low | Open |
+| F6 | Smart card session lock is held during card I/O | Low | Fixed |
+| F7 | Download refusal list misses some script and macro types | Low | Fixed |
 | F8 | System web engine patch level, WebKitGTK in particular | Accepted | |
 
 **F1. Commands were reachable in principle from tool windows (high, fixed).**
@@ -92,13 +92,18 @@ address is not a loopback host, so a tool is probably not a secure context there
 Proposed fix: match the exact host, then run a tool on a real Windows machine. Until then,
 Windows is untested, as the 0.2.0 review already says.
 
-**F6. Session lock during card I/O (low, open).** One tool's exchange, up to 32 rounds of
-response chaining, holds the lock every other tool's broker call needs. Denial of service only.
+**F6. Session lock during card I/O (low, fixed).** One tool's exchange, up to 32 rounds of
+response chaining, held the lock every other tool's broker call needs. Denial of service only.
+Fix: the shared map is locked only to look a session up, add or remove one; card I/O runs under
+that session's own lock, and a close waits only for that session.
 
-**F7. Download refusal list (low, open).** Missing: `.applescript`, `.scptd`, macro-enabled
+**F7. Download refusal list (low, fixed for the names below).** Was missing: `.applescript`, `.scptd`, macro-enabled
 Office files (`.docm`, `.xlsm`, `.pptm`), `.msc`, `.library-ms`, `.settingcontent-ms`, `.xll`,
 `.iqy`, `.sct`, `.wsc`. A browser downloads anything, so this is still no wider than a browser,
 provided the system's downloaded-file mark is applied. That mark has not been checked on Windows.
+Fix: those extensions are refused, plus `.dotm`, `.xltm`, `.xlam`, `.potm`, `.ppam`, `.search-ms`,
+`.searchconnector-ms`, `.vb`, `.jnlp`, `.appref-ms` and `.application`. The Windows mark is still
+unchecked.
 
 **F8. System web engine (accepted).** WKWebView follows macOS updates, WebView2 updates itself,
 and WebKitGTK follows the Linux distribution, which often lags. A renderer exploit in a tool gets

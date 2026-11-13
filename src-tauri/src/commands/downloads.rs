@@ -24,13 +24,18 @@ pub const MAX_PER_WINDOW: usize = 25;
 /// Longest file name kept, extension included.
 const MAX_NAME_CHARS: usize = 120;
 
-/// Extensions of things that run when opened. A tool cannot save these.
+/// Extensions of things that run when opened. A tool cannot save these. Includes script bundles,
+/// macro-enabled Office files and Windows shell formats (`.library-ms`, `.settingcontent-ms`).
+#[rustfmt::skip]
 const REFUSED: &[&str] = &[
-    "app", "command", "sh", "bash", "zsh", "csh", "ksh", "fish", "pkg", "dmg", "mpkg", "exe",
-    "msi", "msp", "bat", "cmd", "com", "scr", "pif", "ps1", "psm1", "psd1", "vbs", "vbe", "js",
-    "jse", "wsf", "wsh", "hta", "cpl", "dll", "sys", "lnk", "reg", "jar", "py", "pl", "rb", "php",
+    "app", "command", "sh", "bash", "zsh", "csh", "ksh", "fish", "pkg", "dmg", "mpkg", "exe", "msi",
+    "msp", "bat", "cmd", "com", "scr", "pif", "ps1", "psm1", "psd1", "vbs", "vbe", "js", "jse",
+    "wsf", "wsh", "hta", "cpl", "dll", "sys", "lnk", "reg", "jar", "py", "pl", "rb", "php",
     "appimage", "deb", "rpm", "run", "desktop", "workflow", "action", "scpt", "terminal", "url",
-    "webloc", "inetloc", "iso", "img", "apk", "msix", "appx", "gadget", "ws", "chm",
+    "webloc", "inetloc", "iso", "img", "apk", "msix", "appx", "gadget", "ws", "chm", "applescript",
+    "scptd", "docm", "dotm", "xlsm", "xltm", "xlam", "pptm", "potm", "ppam", "msc", "library-ms",
+    "search-ms", "searchconnector-ms", "settingcontent-ms", "xll", "iqy", "sct", "wsc", "vb",
+    "jnlp", "appref-ms", "application",
 ];
 
 /// The name to save under, or `None` when the file is refused. Keeps the last path part only,
@@ -202,6 +207,18 @@ mod tests {
             "x.js",
             "x.bat",
             "x.ps1",
+            "x.applescript",
+            "x.scptd",
+            "budget.XLSM",
+            "letter.docm",
+            "deck.pptm",
+            "x.msc",
+            "x.library-ms",
+            "x.settingcontent-ms",
+            "x.xll",
+            "x.iqy",
+            "x.sct",
+            "x.wsc",
         ] {
             assert_eq!(safe_name(bad), None, "{bad}");
         }
