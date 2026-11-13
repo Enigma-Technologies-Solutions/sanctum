@@ -360,6 +360,17 @@ fn card_gone(e: &pcsc::Error) -> bool {
     )
 }
 
+/// Did this failure mean the reader itself is no longer there? Such a reader
+/// is left out of the list rather than failing it.
+fn reader_gone(e: &pcsc::Error) -> bool {
+    matches!(
+        e,
+        pcsc::Error::ReaderUnavailable
+            | pcsc::Error::UnknownReader
+            | pcsc::Error::NoReadersAvailable
+    )
+}
+
 fn pcsc_error(e: pcsc::Error) -> BrokerError {
     if card_gone(&e) {
         BrokerError::CardGone
@@ -394,10 +405,29 @@ pub fn list_readers() -> Result<Vec<ReaderInfo>, BrokerError> {
         .collect();
 
     // Zero timeout: report the current state, never block a tool's UI.
-    match ctx.get_status_change(Some(std::time::Duration::ZERO), &mut states) {
-        Ok(()) | Err(pcsc::Error::Timeout) => {}
-        Err(e) => return Err(BrokerError::Pcsc(e.to_string())),
-    }
+    let now = Some(std::time::Duration::ZERO);
+    let states = match ctx.get_status_change(now, &mut states) {
+        Ok(()) | Err(pcsc::Error::Timeout) => states,
+        // One reader the system still lists but can no longer use (a key just
+        // unplugged, an interface switched off) fails the query for all of
+        // them. Ask again one reader at a time and leave out the ones that
+        // are gone, so the rest stay usable.
+        Err(_) => {
+            let mut kept = Vec::with_capacity(states.len());
+            let mut other: Option<pcsc::Error> = None;
+            for mut state in states {
+                match ctx.get_status_change(now, std::slice::from_mut(&mut state)) {
+                    Ok(()) | Err(pcsc::Error::Timeout) => kept.push(state),
+                    Err(e) if reader_gone(&e) => {}
+                    Err(e) => other = Some(e),
+                }
+            }
+            match other {
+                Some(e) if kept.is_empty() => return Err(BrokerError::Pcsc(e.to_string())),
+                _ => kept,
+            }
+        }
+    };
 
     let mut out = Vec::with_capacity(states.len());
     for state in &states {
@@ -1015,6 +1045,15 @@ mod tests {
         // still the behaviour under test: it must not panic or clear globally.
         state.close_tool_sessions("tool-a");
         assert!(state.sessions.lock().unwrap().is_empty());
+    }
+
+    #[test]
+    fn a_reader_that_is_gone_is_told_apart_from_other_failures() {
+        assert!(reader_gone(&pcsc::Error::ReaderUnavailable));
+        assert!(reader_gone(&pcsc::Error::UnknownReader));
+        assert!(reader_gone(&pcsc::Error::NoReadersAvailable));
+        assert!(!reader_gone(&pcsc::Error::NoService));
+        assert!(!reader_gone(&pcsc::Error::RemovedCard));
     }
 
     // ── SELECT construction ───────────────────────────────────────────────────
