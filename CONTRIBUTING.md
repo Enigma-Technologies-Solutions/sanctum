@@ -45,9 +45,13 @@ is in [docs/blog.md](docs/blog.md). The site itself is described in [web/README.
 
 ## Licensing
 
-By submitting a pull request you agree that your contribution is licensed under
-AGPL-3.0-only and that Enigma Technologies Solutions may re-license it under a
-commercial license as part of the dual-license model described in the README.
+Sanctum is licensed under AGPL-3.0-only. Enigma Technologies Solutions also offers it under a
+commercial licence (see the README), so every contributor signs the
+[Contributor License Agreement](CLA.md) once before their first pull request is merged. You keep
+the copyright in your work; the agreement lets Enigma release it under both licences.
+
+The CLA check on your pull request explains how to sign: you post one comment, and it covers all
+your later contributions.
 
 All source files must include the SPDX header:
 ```
