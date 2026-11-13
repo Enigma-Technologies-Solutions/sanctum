@@ -18,7 +18,10 @@ export const HOW_IT_WORKS: HowItem[] = [
   { icon: "permissions", text: "Tools start with no permissions. You approve each one." },
   { icon: "hash", text: "Each time you open a tool, Sanctum hashes the stored file again. A tool that has changed is quarantined and does not run." },
   { icon: "privacy", text: "There is no account and no telemetry." },
-  { icon: "update", text: "The only request Sanctum makes by itself is an update check against its GitHub releases." },
+  {
+    icon: "update",
+    text: "The only requests Sanctum makes by itself are an update check against its GitHub releases and, if you turn it on in Settings, a daily check of your registries.",
+  },
 ];
 
 export const LINKS: { label: string; url: string }[] = [

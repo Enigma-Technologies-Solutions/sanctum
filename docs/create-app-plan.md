@@ -311,7 +311,10 @@ Copy for `web/index.html`, to publish in the same change as the release that con
   request Sanctum makes by itself is an update check against its GitHub releases. There is an
   optional feature, off until you turn it on in Settings, that lets you build a tool by describing
   it: it downloads OpenAI's Codex to your computer, and your messages and the drafts Codex writes
-  are sent to OpenAI under your own ChatGPT account. Sanctum sends none of it."
+  are sent to OpenAI under your own ChatGPT account. It counts against your plan's usage limits.
+  Sanctum sends none of it." If the daily registry check (Phase 8, off by default) ships in the same
+  release, the first sentence becomes "The only requests Sanctum makes by itself are an update
+  check against its GitHub releases and, if you turn it on, a daily check of your registries."
 - The line "Sanctum has no account and sends no telemetry" stays true as written.
 - A feature list entry only once the OpenAI answer is in and the checklist has been run.
 
@@ -333,10 +336,22 @@ old `codex`, prompt asking the agent to read `~/.ssh` and to call `curl`), then 
 
 ## Risks and open questions
 
-- **Terms.** OpenAI documents the protocol for rich clients, but I found no statement that a
-  third-party app may use ChatGPT-plan sign-in through it. Ask OpenAI before Phase 2 ships. If the
-  answer is no, the only compliant fallback is an API key, which we chose to avoid. Do not release
-  without the answer.
+- **Terms (settled 2026-11-13).** OpenAI's app-server documentation now says: "If you've built a
+  local or open-source application using Codex app-server authentication, you can continue using
+  it, though we recommend migrating to Sign in with ChatGPT so users have greater control over and
+  visibility into their usage. [...] App-server authentication has never been permitted for
+  commercial or hosted services." Sanctum is open source, runs locally, and is free for everyone,
+  with one build; Enigma charges only for private registries, registry publishing and a separate
+  white-label engine, none of which involves OpenAI. Decision: Create counts as non-commercial and
+  keeps the Codex-managed sign-in. No question was sent to OpenAI. Codex is Apache-2.0, so
+  downloading it is allowed with its licence notice shown.
+- **Sign in with ChatGPT (deferred).** OpenAI's open-source "Sign in with ChatGPT" flow registers
+  Sanctum as its own app, so people can see its usage, cap it and disconnect it in ChatGPT
+  settings, and its token cannot read conversations. The cost is that Sanctum would hold, refresh
+  and revoke the tokens itself (breaking rule 1 in `agent/mod.rs`) and restart Codex about hourly.
+  Deferred until after 0.3.0; revisit if OpenAI restricts app-server sign-in or people ask for
+  per-app limits. Organisations that want Create off get a policy setting (issue #9), not a
+  separate build.
 - **Protocol drift.** The app-server surface changes between Codex releases. Because Sanctum pins
   the exact binary, the pinned schema and the binary always move together, and CI parses fixtures against it.
 - **Quality.** Codex is a general coding agent; the prompt and `AGENTS.md` decide whether it produces

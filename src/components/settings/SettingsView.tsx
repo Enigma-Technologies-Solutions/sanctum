@@ -331,7 +331,8 @@ function AgentSection() {
       <Row>
         <span style={{ fontSize: "12px", color: "var(--app-ink-2)" }}>
           {agent.setup ? signInNote(agent.setup) : null} Codex runs on this computer and starts only when you use it.
-          Your messages and the drafts Codex writes are sent to OpenAI. Apps you make can save files to your Downloads folder without asking.
+          Your messages and the drafts Codex writes are sent to OpenAI. Building counts against your ChatGPT plan's limits, and ChatGPT
+          lists the usage under Codex. Apps you make can save files to your Downloads folder without asking.
         </span>
       </Row>
       <Row>
