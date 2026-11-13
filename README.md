@@ -138,6 +138,9 @@ What turning it on means:
   or started before that, and Codex stops when you quit Sanctum.
 - **You sign in with your own ChatGPT account** in your browser. Sanctum never sees your
   password or sign-in token, and there is no Sanctum account.
+- **It runs on your ChatGPT plan.** Building a tool counts against your plan's usage limits, and
+  ChatGPT lists that usage under Codex in its usage settings (chatgpt.com/settings/usage).
+  Sanctum charges nothing for it.
 - **Your messages and the drafts Codex writes are sent to OpenAI.** That is how it works, and it is
   the one place Sanctum's data leaves your computer on your behalf. Sanctum itself sends nothing.
 - **Codex works in a private folder** with no network access of its own, and the folder is deleted
