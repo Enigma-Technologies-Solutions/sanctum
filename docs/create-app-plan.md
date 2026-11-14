@@ -281,6 +281,38 @@ the proxy would still show.
   control. To test directly with `codex sandbox macos`, without the model.
 - **HTML.** A tip calculator came back as one offline file with nothing for the scanner to report.
 
+`externalSandbox` spike, same day, macOS, Codex 0.163.0, no model involved. The app-server ran under
+a Sanctum Seatbelt profile (deny by default; reads of system folders, the Codex binary, `CODEX_HOME`
+and the work folder; writes to `CODEX_HOME` and the work folder; network only to the local proxy),
+and commands were sent with `command/exec` and `sandboxPolicy: {type: "externalSandbox",
+networkAccess: "restricted"}`.
+
+- **Nesting.** Codex's own sandbox cannot start inside Sanctum's (`sandbox_apply: Operation not
+  permitted`), so Layer 2 must use `externalSandbox`. With it, the app-server runs normally.
+- **Codex's own sandbox, for comparison** (`codex sandbox`, workspace-write): writing to the home
+  folder fails with "Operation not permitted", reading `~/.zshrc` succeeds, network and localhost
+  are refused.
+- **Under Sanctum's profile:** writes outside the work folder, reads of `~/.zshrc` and `~/.ssh`, and
+  direct network all fail. Here-documents (with `TMPDIR` in the work folder) and `python3` work.
+  `python3` needs read access to `/Library/Developer/CommandLineTools`, `/Applications/Xcode.app`
+  and `/private/var/select`.
+- **Proxy leak, confirmed and closed.** Commands inherit the profile's localhost access and the
+  `HTTPS_PROXY` variable, so a command reached `example.com` through an open proxy. A secret token in
+  the proxy address does not help: a command reads the app-server's environment with the
+  `KERN_PROCARGS2` sysctl, and no Seatbelt rule (`sysctl-read`, `process-info*`) blocks that. What
+  works: the proxy looks up which process owns the connecting socket and accepts only the
+  app-server's own pid. Every command connection was refused, `chatgpt.com` included, and the
+  app-server's own requests went through. The prototype used `lsof`; Sanctum's proxy would use
+  libproc (`proc_pidfdinfo`). `shell_environment_policy.exclude` keeps the proxy variables out of
+  commands as a second layer.
+- **More hosts on a fresh `CODEX_HOME`:** at startup the app-server also asks for `api.github.com`,
+  `codeload.github.com` and `files.openai.com`. Refusing them did not break `command/exec`; a real
+  turn with them refused is still to be checked.
+- **Still open for Phase 5:** sign-in under the profile (it needs to listen on `127.0.0.1:1455`), a
+  real turn under the profile, narrowing `mach-lookup` (allowed broadly in the spike), and whether
+  `file-read-metadata` everywhere is acceptable (it reveals that files exist, not their contents).
+  Linux and Windows are not started.
+
 **Phase 1, client and sign-in.** `src-tauri/src/agent/`: process supervisor, JSON-RPC framing, typed
 messages from the checked-in schema, a fake app-server for tests, and the sign-in commands
 (`agent_status`, `agent_sign_in`, `agent_sign_out`). UI: the Welcome panel button and a Settings,
