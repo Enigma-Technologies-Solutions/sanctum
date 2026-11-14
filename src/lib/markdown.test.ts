@@ -82,6 +82,27 @@ describe("the manual Markdown subset", () => {
     expect(hrefs).toEqual(["https://a.test", "https://b.test/x", "https://c.test"]);
   });
 
+  it("turns other links into their label only when asked, for chat replies", () => {
+    const src = "Created [app.html](app.html), see [x](javascript:void) and [s](https://s.test).\n\n- **[b](file:///etc/passwd)**";
+    expect(() => parseMarkdown(src)).toThrow(MarkdownError);
+    const blocks = parseMarkdown(src, { otherLinks: "text" });
+    expect(blocks[0]).toEqual({
+      t: "p",
+      children: [
+        { t: "text", text: "Created " },
+        { t: "text", text: "app.html" },
+        { t: "text", text: ", see " },
+        { t: "text", text: "x" },
+        { t: "text", text: " and " },
+        { t: "link", href: "https://s.test", text: "s" },
+        { t: "text", text: "." },
+      ],
+    });
+    expect(blocks[1]).toEqual({ t: "ul", items: [[{ t: "strong", children: [{ t: "text", text: "b" }] }]] });
+    // Everything else stays strict in replies too.
+    expect(() => parseMarkdown("hi <b>x</b>", { otherLinks: "text" })).toThrow(MarkdownError);
+  });
+
   it("reports the line of a problem", () => {
     try {
       parseMarkdown("fine\n\nbad <b>html</b>");

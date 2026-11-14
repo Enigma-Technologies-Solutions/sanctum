@@ -119,14 +119,19 @@ function renderBlock(b: Block, i: number): ReactNode {
   }
 }
 
-export function Markdown({ source }: { source: string }) {
+/**
+ * `kind="reply"` is for Codex replies in the Create chat: a link that is not https (often a
+ * local file name) shows as its label instead of failing the whole reply.
+ */
+export function Markdown({ source, kind = "manual" }: { source: string; kind?: "manual" | "reply" }) {
   const parsed = useMemo(() => {
     try {
-      return { blocks: parseMarkdown(source), error: null as string | null };
+      const opts = kind === "reply" ? ({ otherLinks: "text" } as const) : {};
+      return { blocks: parseMarkdown(source, opts), error: null as string | null };
     } catch (e) {
       return { blocks: null, error: e instanceof Error ? e.message : "unreadable" };
     }
-  }, [source]);
+  }, [source, kind]);
 
   const base = { fontFamily: font, fontSize: 14, lineHeight: 1.65, color: "var(--app-ink-1)", maxWidth: "68ch" } as const;
 
@@ -135,7 +140,7 @@ export function Markdown({ source }: { source: string }) {
     return (
       <div style={base}>
         <p role="note" style={{ margin: "0 0 8px", fontSize: 12, color: "var(--app-mute)" }}>
-          This manual could not be formatted, so it is shown as plain text.
+          This {kind === "reply" ? "reply" : "manual"} could not be formatted, so it is shown as plain text.
         </p>
         <pre style={{ margin: 0, whiteSpace: "pre-wrap", fontFamily: mono, fontSize: 12 }}>{source}</pre>
       </div>
