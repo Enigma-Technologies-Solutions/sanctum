@@ -61,4 +61,14 @@ describe("the manual renderer", () => {
     expect(container.querySelectorAll("div")).toHaveLength(1);
     expect(container.textContent).toContain("5 < 6 & 7 > 3");
   });
+
+  it("shows a local file link in a reply as its name, and says reply in the fallback", () => {
+    const { container, unmount } = render(<Markdown kind="reply" source="Created [app.html](app.html) for you." />);
+    expect(container.textContent).toBe("Created app.html for you.");
+    expect(screen.queryByRole("note")).toBeNull();
+    expect(container.querySelector("a")).toBeNull();
+    unmount();
+    render(<Markdown kind="reply" source="Use <b>this</b>" />);
+    expect(screen.getByRole("note")).toHaveTextContent("This reply could not be formatted");
+  });
 });

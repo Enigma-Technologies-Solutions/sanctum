@@ -259,6 +259,60 @@ Phase 1 (off in release builds, tokens redacted): the exact login callback behav
 how a blocked action fails, and how good the HTML is. Phase 5 does not start until the last two are
 answered.
 
+Measured 2026-11-14 on macOS with a development build, Codex 0.163.0 and a real ChatGPT sign-in.
+Codex was started with `HTTPS_PROXY` pointing at a local proxy that logged only `CONNECT` host and
+port, and a watcher listed every TCP socket the Codex process opened, so a connection that ignored
+the proxy would still show.
+
+- **Hosts.** Chat turns reach only `chatgpt.com:443`. Sign-out and the token exchange after sign-in
+  reach `auth.openai.com:443`. No connection went around the proxy. Sign-in also listens on
+  `127.0.0.1:1455` for the browser callback. Token refresh was not seen (the token was fresh); it
+  uses `auth.openai.com`. The Layer 2 allowlist is these two hosts on port 443.
+- **Network block.** `curl https://example.com` fails as a failed command step (exit 7), shown in
+  the chat. Codex passes `HTTPS_PROXY` on to commands: curl tried the local proxy and was refused by
+  Codex's own sandbox. Under `externalSandbox` that sandbox is gone, so Layer 2 must keep commands
+  away from the proxy (a profile that gives localhost to the app-server but not to its children, or
+  a proxy that checks the caller). To settle in the `externalSandbox` spike.
+- **Reads outside the work folder.** `head -n 1 ~/.zshrc` ran and returned the line. This is the
+  known Layer 1 gap, now observed.
+- **Writes outside the work folder.** Not proven. The file was not created, but no command step ran:
+  the agent answered "operation not permitted" without running anything. Asked in plain words, the
+  agent also declines both reads and writes outside the folder on its own, which is guidance, not a
+  control. To test directly with `codex sandbox macos`, without the model.
+- **HTML.** A tip calculator came back as one offline file with nothing for the scanner to report.
+
+`externalSandbox` spike, same day, macOS, Codex 0.163.0, no model involved. The app-server ran under
+a Sanctum Seatbelt profile (deny by default; reads of system folders, the Codex binary, `CODEX_HOME`
+and the work folder; writes to `CODEX_HOME` and the work folder; network only to the local proxy),
+and commands were sent with `command/exec` and `sandboxPolicy: {type: "externalSandbox",
+networkAccess: "restricted"}`.
+
+- **Nesting.** Codex's own sandbox cannot start inside Sanctum's (`sandbox_apply: Operation not
+  permitted`), so Layer 2 must use `externalSandbox`. With it, the app-server runs normally.
+- **Codex's own sandbox, for comparison** (`codex sandbox`, workspace-write): writing to the home
+  folder fails with "Operation not permitted", reading `~/.zshrc` succeeds, network and localhost
+  are refused.
+- **Under Sanctum's profile:** writes outside the work folder, reads of `~/.zshrc` and `~/.ssh`, and
+  direct network all fail. Here-documents (with `TMPDIR` in the work folder) and `python3` work.
+  `python3` needs read access to `/Library/Developer/CommandLineTools`, `/Applications/Xcode.app`
+  and `/private/var/select`.
+- **Proxy leak, confirmed and closed.** Commands inherit the profile's localhost access and the
+  `HTTPS_PROXY` variable, so a command reached `example.com` through an open proxy. A secret token in
+  the proxy address does not help: a command reads the app-server's environment with the
+  `KERN_PROCARGS2` sysctl, and no Seatbelt rule (`sysctl-read`, `process-info*`) blocks that. What
+  works: the proxy looks up which process owns the connecting socket and accepts only the
+  app-server's own pid. Every command connection was refused, `chatgpt.com` included, and the
+  app-server's own requests went through. The prototype used `lsof`; Sanctum's proxy would use
+  libproc (`proc_pidfdinfo`). `shell_environment_policy.exclude` keeps the proxy variables out of
+  commands as a second layer.
+- **More hosts on a fresh `CODEX_HOME`:** at startup the app-server also asks for `api.github.com`,
+  `codeload.github.com` and `files.openai.com`. Refusing them did not break `command/exec`; a real
+  turn with them refused is still to be checked.
+- **Still open for Phase 5:** sign-in under the profile (it needs to listen on `127.0.0.1:1455`), a
+  real turn under the profile, narrowing `mach-lookup` (allowed broadly in the spike), and whether
+  `file-read-metadata` everywhere is acceptable (it reveals that files exist, not their contents).
+  Linux and Windows are not started.
+
 **Phase 1, client and sign-in.** `src-tauri/src/agent/`: process supervisor, JSON-RPC framing, typed
 messages from the checked-in schema, a fake app-server for tests, and the sign-in commands
 (`agent_status`, `agent_sign_in`, `agent_sign_out`). UI: the Welcome panel button and a Settings,

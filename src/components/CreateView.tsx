@@ -378,7 +378,7 @@ function Chat({
               </div>
             ) : (
               <div key={m.id} style={{ fontFamily: font, fontSize: 13.5, lineHeight: 1.55, overflowWrap: "anywhere" }}>
-                <Markdown source={m.text} />
+                <Markdown source={m.text} kind="reply" />
               </div>
             ),
           )}

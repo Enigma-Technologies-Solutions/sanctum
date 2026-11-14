@@ -52,7 +52,14 @@ function plain(s: string, line: number): Inline[] {
   return s === "" ? [] : [{ t: "text", text: s }];
 }
 
-function inline(text: string, line: number): Inline[] {
+/**
+ * `otherLinks: "text"` is for the Create chat, not for manuals: an agent often links a local
+ * file such as `[app.html](app.html)`. Such a link, or any link that is not https, becomes its
+ * label as plain text instead of failing the whole reply. Manuals keep the strict default.
+ */
+export type ParseOptions = { otherLinks?: "error" | "text" };
+
+function inline(text: string, line: number, opts: ParseOptions = {}): Inline[] {
   // An image is a link with a bang in front; the link syntax alone would hide it.
   if (text.replace(/`[^`\n]*`/g, "").includes("![")) {
     throw new MarkdownError("images are not allowed in a manual", line);
@@ -64,12 +71,13 @@ function inline(text: string, line: number): Inline[] {
     out.push(...plain(text.slice(last, index), line));
     const tok = m[0];
     if (m[1]) out.push({ t: "code", text: tok.slice(1, -1) });
-    else if (m[2]) out.push({ t: "strong", children: inline(tok.slice(2, -2), line) });
-    else if (m[3]) out.push({ t: "em", children: inline(tok.slice(1, -1), line) });
+    else if (m[2]) out.push({ t: "strong", children: inline(tok.slice(2, -2), line, opts) });
+    else if (m[3]) out.push({ t: "em", children: inline(tok.slice(1, -1), line, opts) });
     else {
       const link = LINK.exec(tok);
-      if (!link) throw new MarkdownError(`link must be [text](https://...): ${tok}`, line);
-      out.push({ t: "link", href: link[2], text: link[1] });
+      if (link) out.push({ t: "link", href: link[2], text: link[1] });
+      else if (opts.otherLinks === "text") out.push({ t: "text", text: tok.slice(1, tok.indexOf("](")) });
+      else throw new MarkdownError(`link must be [text](https://...): ${tok}`, line);
     }
     last = index + tok.length;
   }
@@ -78,7 +86,7 @@ function inline(text: string, line: number): Inline[] {
 }
 
 /** Parse a manual. Throws MarkdownError on anything outside the subset. */
-export function parseMarkdown(src: string): Block[] {
+export function parseMarkdown(src: string, opts: ParseOptions = {}): Block[] {
   if (src.includes("\r")) throw new MarkdownError("use LF line endings", 1);
   const lines = src.split("\n");
   const blocks: Block[] = [];
@@ -86,7 +94,7 @@ export function parseMarkdown(src: string): Block[] {
   let para: { text: string; n: number }[] = [];
   const flush = () => {
     if (para.length) {
-      blocks.push({ t: "p", children: inline(para.map((p) => p.text).join(" "), para[0].n) });
+      blocks.push({ t: "p", children: inline(para.map((p) => p.text).join(" "), para[0].n, opts) });
       para = [];
     }
   };
@@ -111,7 +119,7 @@ export function parseMarkdown(src: string): Block[] {
     const h = /^(#{1,4})\s+(.+?)\s*$/.exec(raw);
     if (h) {
       flush();
-      blocks.push({ t: "heading", level: h[1].length + 2, children: inline(h[2], n) });
+      blocks.push({ t: "heading", level: h[1].length + 2, children: inline(h[2], n, opts) });
       i++;
       continue;
     }
@@ -123,7 +131,7 @@ export function parseMarkdown(src: string): Block[] {
       const re = ul ? /^[-*]\s+(.*)$/ : /^\d+\.\s+(.*)$/;
       const items: Inline[][] = [];
       while (i < lines.length && re.test(lines[i])) {
-        items.push(inline((re.exec(lines[i]) as RegExpExecArray)[1], i + 1));
+        items.push(inline((re.exec(lines[i]) as RegExpExecArray)[1], i + 1, opts));
         i++;
       }
       blocks.push({ t: ul ? "ul" : "ol", items });
@@ -134,7 +142,7 @@ export function parseMarkdown(src: string): Block[] {
       const quote: string[] = [];
       const first = n;
       while (i < lines.length && /^>\s?/.test(lines[i])) quote.push(lines[i++].replace(/^>\s?/, ""));
-      blocks.push({ t: "quote", children: inline(quote.join(" ").trim(), first) });
+      blocks.push({ t: "quote", children: inline(quote.join(" ").trim(), first, opts) });
       continue;
     }
     if (/^\|/.test(raw)) throw new MarkdownError("tables are not allowed", n);
