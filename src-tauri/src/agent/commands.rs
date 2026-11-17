@@ -60,6 +60,8 @@ pub struct AgentState {
     enabled_path: PathBuf,
     enabled: AtomicBool,
     process: Mutex<Option<Arc<AgentProcess>>>,
+    /// Layer 2's proxy, started with the first sandboxed process and kept for later ones.
+    outer_proxy: Mutex<Option<Arc<super::outer::Proxy>>>,
     signing_in: AtomicBool,
     cancelled: AtomicBool,
     /// The one open build session, if any.
@@ -155,6 +157,7 @@ impl AgentState {
             transport,
             program_override: debug_override(),
             process: Mutex::new(None),
+            outer_proxy: Mutex::new(None),
             signing_in: AtomicBool::new(false),
             cancelled: AtomicBool::new(false),
             chat: Mutex::new(None),
@@ -235,9 +238,52 @@ impl AgentState {
             }
         }
         let program = self.program().await?;
-        let p = Arc::new(AgentProcess::start(&program, &self.home, &self.version).await?);
+        let p = if super::outer::active() {
+            self.start_outer(&program).await?
+        } else {
+            AgentProcess::start(&program, &self.home, &self.version).await?
+        };
+        let p = Arc::new(p);
         *slot = Some(p.clone());
         Ok(p)
+    }
+
+    /// Starts the process under Layer 2: Sanctum's sandbox, network only through the proxy.
+    async fn start_outer(&self, program: &Path) -> Result<AgentProcess, AgentCommandError> {
+        let spawn_err = |m: String| AgentCommandError::from(AgentError::Spawn(m));
+        let proxy = {
+            let mut slot = self.outer_proxy.lock().await;
+            match slot.as_ref() {
+                Some(p) => p.clone(),
+                None => {
+                    let p = super::outer::Proxy::start(super::outer::pid_owns_connection)
+                        .await
+                        .map_err(|e| spawn_err(format!("cannot start the agent's proxy: {e}")))?;
+                    let p = Arc::new(p);
+                    *slot = Some(p.clone());
+                    p
+                }
+            }
+        };
+        for dir in [&self.home, &self.sessions_dir] {
+            std::fs::create_dir_all(dir)
+                .map_err(|e| spawn_err(format!("cannot create the agent folder: {e}")))?;
+        }
+        // Seatbelt matches resolved paths, so name the folders by their real paths.
+        let real = |p: &Path| {
+            p.canonicalize()
+                .map_err(|e| spawn_err(format!("cannot resolve {}: {e}", p.display())))
+        };
+        let folders = super::outer::Folders {
+            program: real(program.parent().unwrap_or(program))?,
+            codex_home: real(&self.home)?,
+            sessions: real(&self.sessions_dir)?,
+        };
+        let outer = super::process::Outer {
+            proxy: &proxy,
+            folders: &folders,
+        };
+        Ok(AgentProcess::start_in(program, &self.home, &self.version, Some(outer)).await?)
     }
 
     /// Downloads Codex if it is not there. A no-op when it is, or when a development override

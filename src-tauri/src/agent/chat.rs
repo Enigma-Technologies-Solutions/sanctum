@@ -115,7 +115,13 @@ pub fn agents_md() -> String {
 
 /// The sandbox for commands the agent runs. Writes only in `scratch`, no network. The system
 /// temporary folders are excluded so the only place to write is the scratch folder.
-pub fn sandbox_policy(scratch: &Path) -> Value {
+///
+/// Under Layer 2 (`outer`), Codex's own sandbox cannot start inside Sanctum's, so the policy is
+/// `externalSandbox`: Codex runs commands as they are and Sanctum's profile confines them.
+pub fn sandbox_policy(scratch: &Path, outer: bool) -> Value {
+    if outer {
+        return json!({"type": "externalSandbox", "networkAccess": "restricted"});
+    }
     json!({
         "type": "workspaceWrite",
         "writableRoots": [scratch.to_string_lossy()],
@@ -135,12 +141,30 @@ pub const TMP_DIR: &str = ".tmp";
 /// `cat > file <<EOF`, which is how an agent writes a file. Without this the write fails with
 /// "can't create temp file for here document" and leaves an empty file. `TMPPREFIX` is the
 /// variable zsh uses; `TMPDIR` is for everything else.
+/// Proxy variables kept out of commands' environment.
+pub const PROXY_VARS: &[&str] = &[
+    "HTTP_PROXY",
+    "HTTPS_PROXY",
+    "ALL_PROXY",
+    "NO_PROXY",
+    "http_proxy",
+    "https_proxy",
+    "all_proxy",
+    "no_proxy",
+];
+
 pub fn shell_environment(scratch: &Path) -> Value {
     let tmp = scratch.join(TMP_DIR);
-    json!({"shell_environment_policy": {"set": {
-        "TMPDIR": tmp.to_string_lossy(),
-        "TMPPREFIX": tmp.join("zsh").to_string_lossy(),
-    }}})
+    json!({"shell_environment_policy": {
+        "set": {
+            "TMPDIR": tmp.to_string_lossy(),
+            "TMPPREFIX": tmp.join("zsh").to_string_lossy(),
+        },
+        // Commands have no network, so they have no use for a proxy. Under Layer 2 this also
+        // keeps the address of Sanctum's proxy out of their environment (the proxy refuses them
+        // anyway; see `outer`).
+        "exclude": PROXY_VARS,
+    }})
 }
 
 pub fn thread_start_params(scratch: &Path) -> Value {
@@ -154,12 +178,12 @@ pub fn thread_start_params(scratch: &Path) -> Value {
     })
 }
 
-pub fn turn_start_params(thread_id: &str, scratch: &Path, text: &str) -> Value {
+pub fn turn_start_params(thread_id: &str, scratch: &Path, text: &str, outer: bool) -> Value {
     json!({
         "threadId": thread_id,
         "cwd": scratch.to_string_lossy(),
         "approvalPolicy": "never",
-        "sandboxPolicy": sandbox_policy(scratch),
+        "sandboxPolicy": sandbox_policy(scratch, outer),
         "input": [{"type": "text", "text": text}],
     })
 }
@@ -683,7 +707,7 @@ async fn drive(
     let started = rpc
         .request(
             M_TURN_START,
-            turn_start_params(thread_id, scratch, text),
+            turn_start_params(thread_id, scratch, text, super::outer::active()),
             REQUEST_TIMEOUT,
         )
         .await?;
@@ -812,13 +836,24 @@ mod tests {
     #[test]
     fn commands_can_write_only_in_the_scratch_folder_and_have_no_network() {
         let s = Path::new("/work/session-1");
-        let p = sandbox_policy(s);
+        let p = sandbox_policy(s, false);
         assert_eq!(p["type"], "workspaceWrite");
         assert_eq!(p["networkAccess"], false);
         assert_eq!(p["writableRoots"], json!(["/work/session-1"]));
         assert_eq!(p["excludeSlashTmp"], true);
         assert_eq!(p["excludeTmpdirEnvVar"], true);
         assert_eq!(p.as_object().unwrap().len(), 5, "no other setting is sent");
+    }
+
+    #[test]
+    fn under_layer_2_commands_run_in_the_outer_sandbox_without_network() {
+        let p = sandbox_policy(Path::new("/work/s"), true);
+        assert_eq!(p["type"], "externalSandbox");
+        assert_eq!(p["networkAccess"], "restricted");
+        assert_eq!(p.as_object().unwrap().len(), 2, "no other setting is sent");
+        let t = turn_start_params("T", Path::new("/work/s"), "x", true);
+        assert_eq!(t["sandboxPolicy"], p);
+        assert_eq!(t["approvalPolicy"], "never");
     }
 
     #[test]
@@ -838,6 +873,17 @@ mod tests {
         assert_eq!(set["TMPDIR"], "/work/s/.tmp");
         assert_eq!(set["TMPPREFIX"], "/work/s/.tmp/zsh");
         assert_eq!(set.as_object().unwrap().len(), 2, "nothing else is set");
+        // Proxy settings never reach commands.
+        let excluded = &v["shell_environment_policy"]["exclude"];
+        for k in [
+            "HTTPS_PROXY",
+            "HTTP_PROXY",
+            "ALL_PROXY",
+            "https_proxy",
+            "http_proxy",
+        ] {
+            assert!(excluded.as_array().unwrap().iter().any(|e| e == k), "{k}");
+        }
         // Neither points at the system's temporary folders, which the sandbox keeps closed.
         assert!(!v.to_string().contains("\"/tmp"));
         assert!(!v.to_string().contains("/var/folders"));
@@ -845,11 +891,14 @@ mod tests {
 
     #[test]
     fn every_turn_carries_the_whole_policy() {
-        let p = turn_start_params("T", Path::new("/work/s"), "make a timer");
+        let p = turn_start_params("T", Path::new("/work/s"), "make a timer", false);
         assert_eq!(p["threadId"], "T");
         assert_eq!(p["approvalPolicy"], "never");
         assert_eq!(p["cwd"], "/work/s");
-        assert_eq!(p["sandboxPolicy"], sandbox_policy(Path::new("/work/s")));
+        assert_eq!(
+            p["sandboxPolicy"],
+            sandbox_policy(Path::new("/work/s"), false)
+        );
         assert_eq!(
             p["input"],
             json!([{"type": "text", "text": "make a timer"}])
@@ -868,6 +917,8 @@ mod tests {
             "\"networkAccess\"",
             "\"ephemeral\"",
             "\"serviceName\"",
+            "\"externalSandbox\"",
+            "\"restricted\"",
         ] {
             assert!(SCHEMA.contains(needle), "{needle} missing from the schema");
         }
@@ -1393,7 +1444,10 @@ mod tests {
         ));
         let req = fake.answer(turn_answer()).await;
         assert_eq!(req["method"], "turn/start");
-        assert_eq!(req["params"], turn_start_params("TH", &dir, "make a timer"));
+        assert_eq!(
+            req["params"],
+            turn_start_params("TH", &dir, "make a timer", false)
+        );
         // Other threads' events and other methods are ignored.
         fake.send(json!({"method": "item/agentMessage/delta",
             "params": {"threadId": "OTHER", "itemId": "x", "delta": "no"}}))

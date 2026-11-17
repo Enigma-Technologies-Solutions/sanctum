@@ -33,6 +33,7 @@ pub mod commands;
 pub mod draft;
 pub mod history;
 pub mod install;
+pub mod outer;
 pub mod process;
 pub mod protocol;
 pub mod rpc;

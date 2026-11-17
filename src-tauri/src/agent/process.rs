@@ -71,6 +71,12 @@ pub fn child_env(
     out
 }
 
+/// Layer 2 settings for [`AgentProcess::start_in`].
+pub struct Outer<'a> {
+    pub proxy: &'a super::outer::Proxy,
+    pub folders: &'a super::outer::Folders,
+}
+
 pub struct AgentProcess {
     pub rpc: Rpc,
     child: tokio::sync::Mutex<Child>,
@@ -84,6 +90,17 @@ impl AgentProcess {
         codex_home: &Path,
         version: &str,
     ) -> Result<AgentProcess, AgentError> {
+        Self::start_in(binary, codex_home, version, None).await
+    }
+
+    /// As [`AgentProcess::start`]; with `outer`, the process runs under Sanctum's own sandbox
+    /// and reaches the network only through `outer.proxy` (Layer 2, see [`super::outer`]).
+    pub async fn start_in(
+        binary: &Path,
+        codex_home: &Path,
+        version: &str,
+        outer: Option<Outer<'_>>,
+    ) -> Result<AgentProcess, AgentError> {
         std::fs::create_dir_all(codex_home)
             .map_err(|e| AgentError::Spawn(format!("cannot create the agent folder: {e}")))?;
         #[cfg(unix)]
@@ -92,10 +109,33 @@ impl AgentProcess {
             let _ = std::fs::set_permissions(codex_home, std::fs::Permissions::from_mode(0o700));
         }
 
-        let mut cmd = Command::new(binary);
-        cmd.arg("app-server")
-            .env_clear()
-            .envs(child_env(codex_home, std::env::vars()))
+        let mut env = child_env(codex_home, std::env::vars());
+        let mut cmd = match &outer {
+            None => {
+                let mut c = Command::new(binary);
+                c.arg("app-server");
+                c
+            }
+            Some(o) => {
+                std::fs::create_dir_all(codex_home.join("tmp")).map_err(|e| {
+                    AgentError::Spawn(format!("cannot create the agent's temporary folder: {e}"))
+                })?;
+                let port = o.proxy.port();
+                let profile = super::outer::profile(o.folders, port);
+                let (program, args) = super::outer::wrapped_command(binary, &profile);
+                let overrides = super::outer::env_overrides(codex_home, port);
+                env.retain(|(k, _)| {
+                    !super::outer::ENV_REMOVED.contains(&k.as_str())
+                        && !overrides.iter().any(|(o, _)| o == k)
+                });
+                env.extend(overrides);
+                let mut c = Command::new(program);
+                c.args(args);
+                c
+            }
+        };
+        cmd.env_clear()
+            .envs(env)
             .stdin(Stdio::piped())
             .stdout(Stdio::piped())
             .stderr(Stdio::piped())
@@ -115,6 +155,14 @@ impl AgentProcess {
                 Err(e) => return Err(AgentError::Spawn(format!("cannot start the agent: {e}"))),
             }
         };
+
+        if let Some(o) = &outer {
+            // `sandbox-exec` replaces itself with Codex, so this is the app-server's pid.
+            match child.id() {
+                Some(pid) => o.proxy.set_app_pid(pid),
+                None => return Err(AgentError::Spawn("the agent stopped at once".into())),
+            }
+        }
 
         let stdin = child
             .stdin

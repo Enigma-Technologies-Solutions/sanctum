@@ -41,7 +41,9 @@ export class MarkdownError extends Error {
   }
 }
 
-const INLINE = /(`[^`\n]+`)|(\*\*[^*\n]+\*\*)|(\*[^*\s][^*\n]*\*)|(\[[^\]\n]+\]\([^)\s]*\))/g;
+// A link target may be wrapped in angle brackets, which is how Codex writes a local path
+// with spaces: [app.html](</Users/me/Library/Application Support/.../app.html>).
+const INLINE = /(`[^`\n]+`)|(\*\*[^*\n]+\*\*)|(\*[^*\s][^*\n]*\*)|(\[[^\]\n]+\]\((?:<[^<>\n]*>|[^)\s]*)\))/g;
 const LINK =
   /^\[([^\]]+)\]\((https:\/\/[A-Za-z0-9.-]+(?::[0-9]{1,5})?(?:\/[A-Za-z0-9._~%/?=&#+:@!$'*,;-]*)?)\)$/;
 
