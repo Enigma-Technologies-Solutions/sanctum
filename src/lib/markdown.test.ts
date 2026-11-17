@@ -103,6 +103,25 @@ describe("the manual Markdown subset", () => {
     expect(() => parseMarkdown("hi <b>x</b>", { otherLinks: "text" })).toThrow(MarkdownError);
   });
 
+  it("reads an angle-bracket link target with spaces as the label, as Codex writes local paths", () => {
+    const src = "Built it in [app.html](</Users/me/Library/Application Support/s/app.html>).";
+    expect(() => parseMarkdown(src)).toThrow(MarkdownError);
+    expect(parseMarkdown(src, { otherLinks: "text" })).toEqual([
+      {
+        t: "p",
+        children: [
+          { t: "text", text: "Built it in " },
+          { t: "text", text: "app.html" },
+          { t: "text", text: "." },
+        ],
+      },
+    ]);
+    // An https target in brackets is not trusted as a link either.
+    expect(parseMarkdown("[s](<https://s.test>)", { otherLinks: "text" })).toEqual([
+      { t: "p", children: [{ t: "text", text: "s" }] },
+    ]);
+  });
+
   it("reports the line of a problem", () => {
     try {
       parseMarkdown("fine\n\nbad <b>html</b>");
