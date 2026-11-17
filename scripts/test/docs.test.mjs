@@ -7,6 +7,7 @@ import { readFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { GUIDES, DocError, docsSitemap, guidePage, renderDocs } from '../lib/docs.mjs';
+import { withoutDownloadScript } from '../lib/download.mjs';
 
 const repo = join(dirname(fileURLToPath(import.meta.url)), '..', '..');
 const SITE = 'https://sanctum.enigma.sh';
@@ -16,8 +17,8 @@ test('a guide becomes a page with its title, canonical address and no script', (
   const html = guidePage(guide, '# Hello guide\n\nSome text with `code`.\n', { siteUrl: SITE });
   assert.match(html, /<title>Hello guide \| Sanctum<\/title>/);
   assert.match(html, new RegExp(`rel="canonical" href="${SITE}/docs/${guide.slug}/"`));
-  assert.match(html, /script-src 'none'/);
-  assert.doesNotMatch(html, /<script/);
+  assert.match(html, /script-src 'self'/);
+  assert.doesNotMatch(withoutDownloadScript(html), /<script/);
   assert.match(html, /href="\.\.\/\.\.\/styles\.css"/);
 });
 

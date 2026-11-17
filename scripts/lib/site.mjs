@@ -1,14 +1,15 @@
 // SPDX-License-Identifier: AGPL-3.0-only
 // Copyright (C) 2026 Enigma Technologies Solutions
 //
-// Static pages for the registry: /apps/ and /apps/<app_id>/. Zero JavaScript, and the same
-// strict CSP as the rest of the site. Everything shown comes from the registry files, so a
-// page cannot say something the signed index does not.
+// Static pages for the registry: /apps/ and /apps/<app_id>/. No script of their own, and the
+// same strict CSP as the rest of the site. The only script is assets/download.js, loaded from
+// 'self' by every page (scripts/lib/download.mjs). Everything shown comes from the registry
+// files, so a page cannot say something the signed index does not.
 
 const esc = (s) => String(s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]);
 
 const CSP =
-  "default-src 'none'; script-src 'none'; style-src 'self'; font-src 'self'; img-src 'self' data:; connect-src 'none'; form-action 'none'; base-uri 'none'";
+  "default-src 'none'; script-src 'self'; style-src 'self'; font-src 'self'; img-src 'self' data:; connect-src 'none'; form-action 'none'; base-uri 'none'";
 
 const LABELS = { storage: 'Storage', smartcard: 'Smart card', net: 'Network' };
 
@@ -58,6 +59,7 @@ export function shell({ title, description, canonical, depth, body, image, ogTyp
 <link rel="icon" href="${up}favicon.ico" sizes="32x32 48x48">
 <link rel="apple-touch-icon" href="${up}assets/apple-touch-icon.png">
 ${head}<link rel="stylesheet" href="${up}styles.css">
+<script src="${up}assets/download.js" defer></script>
 </head>
 <body>
 <a class="skip" href="#main">Skip to content</a>
@@ -76,7 +78,7 @@ ${head}<link rel="stylesheet" href="${up}styles.css">
     </div>
     <div class="nav__cta">
       <a class="btn btn--ghost btn--sm nav__gh" href="https://github.com/Enigma-Technologies-Solutions/sanctum" rel="noopener">GitHub</a>
-      <a class="btn btn--volt btn--sm" href="https://github.com/Enigma-Technologies-Solutions/sanctum/releases/latest" rel="noopener">Download</a>
+      <a class="btn btn--volt btn--sm" href="${up}download/" data-download>Download</a>
     </div>
   </div>
 </nav>
@@ -189,7 +191,7 @@ ${hashes}
           <a class="btn btn--volt btn--sm" href="${esc(installLink(id))}">Install in Sanctum</a>
           <a class="btn btn--ghost btn--sm" href="${reg}${esc(v.bundle.path)}" download>Download file (${(v.bundle.size / 1024).toFixed(1)} KB)</a>
         </div>
-        <p class="fine">Install opens Sanctum, which shows this tool and what it asks for, then waits for your click. Nothing is installed from the page itself. Sanctum not installed? <a href="https://github.com/Enigma-Technologies-Solutions/sanctum/releases/latest" rel="noopener">Get Sanctum</a> first.</p>
+        <p class="fine">Install opens Sanctum, which shows this tool and what it asks for, then waits for your click. Nothing is installed from the page itself. Sanctum not installed? <a href="../../download/" data-download>Get Sanctum</a> first.</p>
     </article>
     <p class="notice">Verified means the publisher is who it says and the bytes have not changed. It does not mean safe. A signature never grants access: every tool still starts with nothing approved, and you approve each capability yourself.</p>
 ${shots ? `\n    <h2 class="apps__sub">Screenshots</h2>\n${shots}\n` : ''}

@@ -11,7 +11,7 @@
      carry is delivered here instead. frame-ancestors is not honoured in a meta tag;
      see web/README.md for what that costs. Keep this before any subresource.
      style-src 'self' also forbids style="" attributes: all styling lives in styles.css. -->
-<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'none'; style-src 'self'; font-src 'self'; img-src 'self' data:; connect-src 'none'; form-action 'none'; base-uri 'none'">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self'; style-src 'self'; font-src 'self'; img-src 'self' data:; connect-src 'none'; form-action 'none'; base-uri 'none'">
 <meta name="referrer" content="strict-origin-when-cross-origin">
 
 <link rel="canonical" href="https://sanctum.enigma.sh/">
@@ -37,6 +37,7 @@
 <link rel="preload" href="./assets/fonts/Inter-var.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="preload" href="./assets/fonts/Poppins-700.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="stylesheet" href="./styles.css">
+<script src="./assets/download.js" defer></script>
 </head>
 
 <body>
@@ -58,7 +59,7 @@
     </div>
     <div class="nav__cta">
       <a class="btn btn--ghost btn--sm nav__gh" href="https://github.com/Enigma-Technologies-Solutions/sanctum" rel="noopener">GitHub</a>
-      <a class="btn btn--volt btn--sm" href="https://github.com/Enigma-Technologies-Solutions/sanctum/releases/latest" rel="noopener">Download</a>
+      <a class="btn btn--volt btn--sm" href="./download/" data-download>Download</a>
     </div>
   </div>
 </nav>
@@ -84,7 +85,7 @@
       </p>
 
       <div class="btn-row">
-        <a class="btn btn--volt" href="https://github.com/Enigma-Technologies-Solutions/sanctum/releases/latest" rel="noopener">Download <svg class="i" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg></a>
+        <a class="btn btn--volt" href="./download/" data-download="label">Download <svg class="i" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg></a>
         <a class="btn btn--ghost" href="./apps/">Browse signed tools</a>
       </div>
 
@@ -347,7 +348,7 @@
         </div>
       </article>
     </div>
-    <p class="fine tools__note">Install in Sanctum opens the app, which shows the tool and what it asks for, then waits for your click. Sanctum not installed yet? <a href="https://github.com/Enigma-Technologies-Solutions/sanctum/releases/latest" rel="noopener">Download it</a> first.</p>
+    <p class="fine tools__note">Install in Sanctum opens the app, which shows the tool and what it asks for, then waits for your click. Sanctum not installed yet? <a href="./download/" data-download>Download it</a> first.</p>
   </div>
 </section>
 
@@ -565,7 +566,7 @@
           <li>macOS, Windows and Linux</li>
           <li>Full source under AGPL-3.0</li>
         </ul>
-        <a class="btn btn--ghost btn--block" href="https://github.com/Enigma-Technologies-Solutions/sanctum/releases/latest" rel="noopener">Download</a>
+        <a class="btn btn--ghost btn--block" href="./download/" data-download>Download</a>
         <p class="plan__foot">No account or telemetry</p>
       </article>
 
@@ -650,7 +651,7 @@
     <h2 class="cta__h">The source is on GitHub.</h2>
     <p class="lede">The sandbox is implemented in Rust under <code>src-tauri/src</code>, licensed AGPL-3.0.</p>
     <div class="btn-row btn-row--center">
-      <a class="btn btn--volt" href="https://github.com/Enigma-Technologies-Solutions/sanctum/releases/latest" rel="noopener">Download <svg class="i" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg></a>
+      <a class="btn btn--volt" href="./download/" data-download="label">Download <svg class="i" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg></a>
       <a class="btn btn--ghost" href="https://github.com/Enigma-Technologies-Solutions/sanctum" rel="noopener">Source on GitHub</a>
     </div>
     <p class="fine">Free for individuals · macOS, Windows, Linux · AGPL-3.0</p>
@@ -684,7 +685,7 @@
       <div>
         <h4>Download</h4>
         <ul>
-          <li><a href="https://github.com/Enigma-Technologies-Solutions/sanctum/releases/latest" rel="noopener">Latest release</a></li>
+          <li><a href="./download/">Latest release</a></li>
           <li><a href="https://github.com/Enigma-Technologies-Solutions/sanctum/blob/main/CHANGELOG.md" rel="noopener">Changelog</a></li>
           <li><a href="https://github.com/Enigma-Technologies-Solutions/sanctum/releases" rel="noopener">All releases</a></li>
           <li><a href="./apps/">Signed tools</a></li>

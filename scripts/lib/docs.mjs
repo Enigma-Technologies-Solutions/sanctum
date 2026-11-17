@@ -3,7 +3,7 @@
 //
 // Guides that live in docs/ and are also published on the site. The Markdown in docs/ is the
 // only source: the page under web/docs/ is generated from it, so the two cannot drift. Same
-// rules as the rest of the site: zero JavaScript, strict CSP, no em or en dashes, and the
+// rules as the rest of the site: no script of its own, strict CSP, no em or en dashes, and the
 // strict Markdown subset the registry manuals use (no raw HTML, no images, no relative links).
 
 import { renderMarkdown } from './markdown.mjs';

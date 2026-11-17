@@ -20,6 +20,10 @@ on:
       - 'docs/run-your-own-registry.md'
       - 'docs/white-label.md'
       - 'scripts/build-docs.mjs'
+      - 'scripts/build-download.mjs'
+      - 'web/download/**'
+      - 'web/_headers'
+      - '.github/workflows/release.yml'
       - 'web/index.html'
       - 'web/assets/**'
       - 'assets/logo/**'
@@ -46,6 +50,10 @@ on:
       - 'docs/run-your-own-registry.md'
       - 'docs/white-label.md'
       - 'scripts/build-docs.mjs'
+      - 'scripts/build-download.mjs'
+      - 'web/download/**'
+      - 'web/_headers'
+      - '.github/workflows/release.yml'
       - 'web/index.html'
       - 'web/assets/**'
       - 'assets/logo/**'
@@ -95,6 +103,8 @@ jobs:
         run: node --test scripts/test/*.test.mjs
       - name: Install worker (enigmahq.sh/install) tests
         run: node --test workers/install/*.test.mjs
+      - name: Committed download page and script match scripts/lib/download.mjs
+        run: node scripts/build-download.mjs --check
       - name: Committed blog matches blog-src
         run: node scripts/build-blog.mjs --check
       - name: Committed guides match docs/
