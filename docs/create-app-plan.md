@@ -375,6 +375,25 @@ Copy for `web/index.html`, to publish in the same change as the release that con
 **Phase 5, layer 2.** macOS first, then Linux. Local allowlist proxy, Seatbelt or bubblewrap
 profile, `externalSandbox`. Windows decision recorded.
 
+Status: macOS built behind a development switch (`SANCTUM_OUTER_SANDBOX=1`, debug builds only),
+in `agent/outer.rs`. The app-server starts under `sandbox-exec` with a profile Sanctum writes
+(deny by default; reads of system folders, the Codex program, `CODEX_HOME` and the work folders;
+writes to `CODEX_HOME` and the work folders, except `config.toml` and `AGENTS.md` in `CODEX_HOME`;
+network only to the proxy; the sign-in callback port). Its `HTTPS_PROXY` is Sanctum's proxy on a
+free local port and its `TMPDIR` is inside `CODEX_HOME`. The proxy serves only `CONNECT` to
+`chatgpt.com:443` and `auth.openai.com:443`, and only when the app-server's own pid holds the
+connecting socket (libproc, checked against real sockets in a test). Turns use `externalSandbox`,
+and every thread keeps proxy variables out of commands. A live test against Codex 0.163.0 (run by
+hand, fresh `CODEX_HOME`) passes: writes outside the work folder, writes to `config.toml`, reads of
+`~/.zshrc` and `~/.ssh`, direct network and commands using the proxy are all refused; here-documents
+and `python3` work.
+
+Still to do before it is on by default: a sign-in and real turns under it; narrow `mach-lookup`
+(allowed broadly); decide on `file-read-metadata` everywhere; chain to a company proxy when one is
+set (the proxy connects directly today); commands can still read `CODEX_HOME`, including the
+sign-in token, though they cannot send it anywhere but the model conversation; Linux; the Windows
+decision.
+
 **Phase 6, review.** Security review note in the style of `security-review-0.2.0.md`, a dependency
 audit, a manual checklist (sign in, sign out, kill the process mid-turn, offline, no `codex`, an
 old `codex`, prompt asking the agent to read `~/.ssh` and to call `curl`), then a release.
