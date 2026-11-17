@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>OTP Vault, a signed tool for Sanctum</title>
 <meta name="description" content="Time-based one-time codes (TOTP) kept in Sanctum storage and optionally on a smart card.">
-<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'none'; style-src 'self'; font-src 'self'; img-src 'self' data:; connect-src 'none'; form-action 'none'; base-uri 'none'">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self'; style-src 'self'; font-src 'self'; img-src 'self' data:; connect-src 'none'; form-action 'none'; base-uri 'none'">
 <meta name="referrer" content="strict-origin-when-cross-origin">
 <link rel="canonical" href="https://sanctum.enigma.sh/apps/sh.enigma.otp-vault/">
 <meta property="og:type" content="website">
@@ -26,6 +26,7 @@
 <link rel="icon" href="../../favicon.ico" sizes="32x32 48x48">
 <link rel="apple-touch-icon" href="../../assets/apple-touch-icon.png">
 <link rel="stylesheet" href="../../styles.css">
+<script src="../../assets/download.js" defer></script>
 </head>
 <body>
 <a class="skip" href="#main">Skip to content</a>
@@ -44,7 +45,7 @@
     </div>
     <div class="nav__cta">
       <a class="btn btn--ghost btn--sm nav__gh" href="https://github.com/Enigma-Technologies-Solutions/sanctum" rel="noopener">GitHub</a>
-      <a class="btn btn--volt btn--sm" href="https://github.com/Enigma-Technologies-Solutions/sanctum/releases/latest" rel="noopener">Download</a>
+      <a class="btn btn--volt btn--sm" href="../../download/" data-download>Download</a>
     </div>
   </div>
 </nav>
@@ -70,7 +71,7 @@
           <a class="btn btn--volt btn--sm" href="sanctum://install?app=sh.enigma.otp-vault">Install in Sanctum</a>
           <a class="btn btn--ghost btn--sm" href="../../registry/v1/bundles/sh.enigma.otp-vault-1.0.2.sanctum" download>Download file (76.9 KB)</a>
         </div>
-        <p class="fine">Install opens Sanctum, which shows this tool and what it asks for, then waits for your click. Nothing is installed from the page itself. Sanctum not installed? <a href="https://github.com/Enigma-Technologies-Solutions/sanctum/releases/latest" rel="noopener">Get Sanctum</a> first.</p>
+        <p class="fine">Install opens Sanctum, which shows this tool and what it asks for, then waits for your click. Nothing is installed from the page itself. Sanctum not installed? <a href="../../download/" data-download>Get Sanctum</a> first.</p>
     </article>
     <p class="notice">Verified means the publisher is who it says and the bytes have not changed. It does not mean safe. A signature never grants access: every tool still starts with nothing approved, and you approve each capability yourself.</p>
 

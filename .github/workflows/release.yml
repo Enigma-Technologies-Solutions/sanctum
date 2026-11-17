@@ -238,6 +238,49 @@ jobs:
           prerelease:    false
           args:          ${{ matrix.tauri-args }}
 
+      # ── Stable names for the website ────────────────────────────────────────
+      #
+      # The Download buttons on sanctum.enigma.sh link to
+      # releases/latest/download/<name>, which GitHub resolves to the newest
+      # published release. The Tauri file names carry the version, so each
+      # installer is attached a second time under a name without one. The names
+      # come from scripts/lib/download.mjs; scripts/test/download.test.mjs fails
+      # if one is missing here.
+      - name: Attach installers under stable names
+        if: github.event_name == 'push'
+        shell: bash
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TAG: ${{ github.ref_name }}
+          PLATFORM: ${{ matrix.artifact }}
+        run: |
+          set -euo pipefail
+          out="$RUNNER_TEMP/stable"
+          mkdir -p "$out"
+          one() {
+            local f
+            f=$(find src-tauri/target -path "*/release/bundle/$1" -type f | head -n 1)
+            if [ -z "$f" ]; then echo "::error::no installer matches $1"; exit 1; fi
+            cp "$f" "$out/$2"
+          }
+          case "$PLATFORM" in
+            macos-universal)
+              one 'dmg/*.dmg' Sanctum-macos-universal.dmg ;;
+            windows-x86_64)
+              one 'nsis/*.exe' Sanctum-windows-x64-setup.exe
+              one 'msi/*.msi' Sanctum-windows-x64.msi ;;
+            linux-x86_64)
+              one 'appimage/*.AppImage' Sanctum-linux-x86_64.AppImage
+              one 'deb/*.deb' Sanctum-linux-x86_64.deb
+              one 'rpm/*.rpm' Sanctum-linux-x86_64.rpm ;;
+            linux-arm64)
+              one 'appimage/*.AppImage' Sanctum-linux-arm64.AppImage
+              one 'deb/*.deb' Sanctum-linux-arm64.deb
+              one 'rpm/*.rpm' Sanctum-linux-arm64.rpm ;;
+            *) echo "::error::unknown platform $PLATFORM"; exit 1 ;;
+          esac
+          gh release upload "$TAG" "$out"/* --clobber --repo "$GITHUB_REPOSITORY"
+
       # ── Dry-run artifacts ───────────────────────────────────────────────────
       #
       # On a tag push the installers are attached to the GitHub Release, so this

@@ -10,6 +10,7 @@ import { join } from 'node:path';
 import { test } from 'node:test';
 import { buildRegistry, diffDir, writeRegistry } from '../lib/registry.mjs';
 import { installLink, renderSite, renderSitemap } from '../lib/site.mjs';
+import { withoutDownloadScript } from '../lib/download.mjs';
 import { verifyRegistryDir } from '../lib/verify-registry.mjs';
 import { NOW, ONE_PIXEL_PNG, REGISTRY_ID, cli, makeWorld, scratch } from './helpers.mjs';
 
@@ -446,12 +447,12 @@ test('generated pages have no script, no third-party URL and no dashes in copy',
     const allowed = /^https:\/\/(github\.com\/Enigma-Technologies-Solutions\/sanctum|example\.test)/;
     for (const [name, bytes] of site) {
       const html = bytes.toString('utf8');
-      assert.ok(!/<script/i.test(html), `${name}: script tag`);
+      assert.ok(!/<script/i.test(withoutDownloadScript(html)), `${name}: script tag`);
       assert.ok(!/\son\w+\s*=/i.test(html), `${name}: inline handler`);
       assert.ok(!/http:\/\//.test(html), `${name}: plain http URL`);
       assert.ok(!/[–—]/.test(html), `${name}: en or em dash`);
       for (const m of html.matchAll(/(?:href|src)="(https?:[^"]+)"/g)) assert.match(m[1], allowed, `${name}: ${m[1]}`);
-      assert.match(html, /script-src 'none'/);
+      assert.match(html, /script-src 'self'/);
       assert.match(html, /<meta name="viewport"/);
     }
     const page = site.get('sh.test.alpha/index.html').toString('utf8');
@@ -517,7 +518,7 @@ test('page text is escaped', () => {
     writeFileSync(join(w.source, 'apps/sh.test.alpha/app.json'), JSON.stringify({ app_id: 'sh.test.alpha', summary: '<img src=x onerror=alert(1)>', description: '"><script>alert(1)</script>' }));
     const html = renderSite(build(w)).get('sh.test.alpha/index.html').toString('utf8');
     assert.ok(!html.includes('<img src=x'));
-    assert.ok(!/<script/i.test(html));
+    assert.ok(!/<script/i.test(withoutDownloadScript(html)));
     assert.match(html, /&lt;img src=x onerror=alert\(1\)&gt;/);
   } finally {
     w.cleanup();

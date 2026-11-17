@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Sanctum blog</title>
 <meta name="description" content="News about Sanctum, the desktop sandbox for HTML tools that AI models write.">
-<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'none'; style-src 'self'; font-src 'self'; img-src 'self' data:; connect-src 'none'; form-action 'none'; base-uri 'none'">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self'; style-src 'self'; font-src 'self'; img-src 'self' data:; connect-src 'none'; form-action 'none'; base-uri 'none'">
 <meta name="referrer" content="strict-origin-when-cross-origin">
 <link rel="canonical" href="https://sanctum.enigma.sh/blog/">
 <meta property="og:type" content="website">
@@ -27,6 +27,7 @@
 <link rel="apple-touch-icon" href="../assets/apple-touch-icon.png">
 <link rel="alternate" type="application/atom+xml" title="Sanctum blog" href="feed.xml">
 <link rel="stylesheet" href="../styles.css">
+<script src="../assets/download.js" defer></script>
 </head>
 <body>
 <a class="skip" href="#main">Skip to content</a>
@@ -45,7 +46,7 @@
     </div>
     <div class="nav__cta">
       <a class="btn btn--ghost btn--sm nav__gh" href="https://github.com/Enigma-Technologies-Solutions/sanctum" rel="noopener">GitHub</a>
-      <a class="btn btn--volt btn--sm" href="https://github.com/Enigma-Technologies-Solutions/sanctum/releases/latest" rel="noopener">Download</a>
+      <a class="btn btn--volt btn--sm" href="../download/" data-download>Download</a>
     </div>
   </div>
 </nav>

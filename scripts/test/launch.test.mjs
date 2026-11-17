@@ -10,6 +10,7 @@ import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { PostError, blogSitemap, feed, parsePost, renderBlog } from '../lib/blog.mjs';
 import { installLink } from '../lib/site.mjs';
+import { withoutDownloadScript } from '../lib/download.mjs';
 
 const repo = resolve(dirname(fileURLToPath(import.meta.url)), '../..');
 const web = join(repo, 'web');
@@ -86,9 +87,9 @@ test('generated pages have no script, no inline handler and no third-party URL, 
   const { files } = renderBlog([p], { siteUrl: SITE });
   for (const [name, text] of files) {
     if (name.endsWith('.xml')) continue;
-    assert.ok(!/<script/i.test(text), `${name}: script`);
+    assert.ok(!/<script/i.test(withoutDownloadScript(text)), `${name}: script`);
     assert.ok(!/\son\w+\s*=/i.test(text), `${name}: handler`);
-    assert.match(text, /script-src 'none'/);
+    assert.match(text, /script-src 'self'/);
     for (const m of text.matchAll(/(?:href|src)="(https?:[^"]+)"/g)) assert.match(m[1], /^https:\/\/(sanctum\.enigma\.sh|github\.com\/Enigma-Technologies-Solutions)/, `${name}: ${m[1]}`);
   }
   const page = files.get('tags/index.html');
@@ -176,7 +177,8 @@ test('every signed tool has a social image and its page points at it', () => {
 const home = readFileSync(join(web, 'index.html'), 'utf8');
 
 test('the home page has no script, no dash in copy, and the icons and social tags it promises', () => {
-  assert.ok(!/<script/i.test(home));
+  assert.ok(!/<script/i.test(withoutDownloadScript(home)));
+  assert.match(home, /script-src 'self'/);
   assert.ok(!/[–—]/.test(home.replace(/<!--[\s\S]*?-->/g, '')), 'em or en dash in copy');
   assert.match(home, /rel="icon" href="\.\/favicon\.ico"/);
   assert.match(home, /rel="apple-touch-icon" href="\.\/assets\/apple-touch-icon\.png"/);

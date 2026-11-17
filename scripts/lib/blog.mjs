@@ -2,7 +2,7 @@
 // Copyright (C) 2026 Enigma Technologies Solutions
 //
 // The blog: blog-src/<date>-<slug>.md becomes /blog/, /blog/<slug>/ and /blog/feed.xml.
-// Same rules as the rest of the site: zero JavaScript, strict CSP, no em or en dashes in
+// Same rules as the rest of the site: no script of its own, strict CSP, no em or en dashes in
 // copy, and the strict Markdown subset the registry manuals use (no raw HTML, no images).
 // A post with `draft: "true"` is never written to web/; preview it with --preview DIR.
 
