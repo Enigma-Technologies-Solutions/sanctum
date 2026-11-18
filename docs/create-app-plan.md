@@ -375,24 +375,54 @@ Copy for `web/index.html`, to publish in the same change as the release that con
 **Phase 5, layer 2.** macOS first, then Linux. Local allowlist proxy, Seatbelt or bubblewrap
 profile, `externalSandbox`. Windows decision recorded.
 
-Status: macOS built behind a development switch (`SANCTUM_OUTER_SANDBOX=1`, debug builds only),
-in `agent/outer.rs`. The app-server starts under `sandbox-exec` with a profile Sanctum writes
-(deny by default; reads of system folders, the Codex program, `CODEX_HOME` and the work folders;
-writes to `CODEX_HOME` and the work folders, except `config.toml` and `AGENTS.md` in `CODEX_HOME`;
-network only to the proxy; the sign-in callback port). Its `HTTPS_PROXY` is Sanctum's proxy on a
-free local port and its `TMPDIR` is inside `CODEX_HOME`. The proxy serves only `CONNECT` to
-`chatgpt.com:443` and `auth.openai.com:443`, and only when the app-server's own pid holds the
-connecting socket (libproc, checked against real sockets in a test). Turns use `externalSandbox`,
-and every thread keeps proxy variables out of commands. A live test against Codex 0.163.0 (run by
-hand, fresh `CODEX_HOME`) passes: writes outside the work folder, writes to `config.toml`, reads of
-`~/.zshrc` and `~/.ssh`, direct network and commands using the proxy are all refused; here-documents
-and `python3` work.
+Status: on by default on macOS since 2026-11-18, in `agent/outer.rs`; building apps is not
+offered on Linux or Windows yet (`install::OFFERED_ON`), so 0.3.0 ships it on macOS only. A
+development build can turn the layer off with `SANCTUM_OUTER_SANDBOX=0`; a release build cannot.
 
-Still to do before it is on by default: a sign-in and real turns under it; narrow `mach-lookup`
-(allowed broadly); decide on `file-read-metadata` everywhere; chain to a company proxy when one is
-set (the proxy connects directly today); commands can still read `CODEX_HOME`, including the
-sign-in token, though they cannot send it anywhere but the model conversation; Linux; the Windows
-decision.
+The app-server starts under `sandbox-exec` with a profile Sanctum writes:
+- deny by default;
+- reads of system folders, the Codex program, `CODEX_HOME` and the work folders;
+- writes to `CODEX_HOME` and the work folders, except `config.toml` and `AGENTS.md` in `CODEX_HOME`;
+- network only to the proxy, plus the sign-in callback port;
+- system services (`mach-lookup`) only from a fixed list of seven (`MACH_SERVICES`): user and group
+  lookups, notifications, logging, and certificate checks. `SecurityServer` is in the list
+  because Codex fails every request without it ("workspace routing discovery failed" when reading
+  the account). The keychains stay closed: inside the profile `security dump-keychain` lists
+  nothing.
+
+The list was measured by logging every lookup. With every service open, `open` (Launch Services)
+and `osascript` (Apple events) could start programs outside the sandbox, such as a browser with a
+URL carrying data, and `pbpaste` could read the clipboard. They now fail.
+
+Its `HTTPS_PROXY` is Sanctum's proxy on a free local port, its `TMPDIR` is inside `CODEX_HOME`, and
+`GIT_CONFIG_GLOBAL` is `/dev/null`: git stops when `~/.gitconfig` exists but cannot be read. The
+proxy serves only `CONNECT` to `chatgpt.com:443` and `auth.openai.com:443`, and only when the
+app-server's own pid holds the connecting socket (libproc, checked against real sockets in a test).
+Turns use `externalSandbox`, and every thread keeps proxy variables out of commands.
+
+Verified:
+- **Live test against Codex 0.163.0** (`live_layer_2`, run by hand, fresh `CODEX_HOME`). These are
+  all refused:
+  - writes outside the work folder, and writes to `config.toml`;
+  - reads of `~/.zshrc` and `~/.ssh`;
+  - direct network, and commands using the proxy;
+  - `open` of an app or a URL, and `osascript`;
+  - the clipboard and the keychain come back empty.
+
+  These work: here-documents, `python3` and `git`. `live_account` reads the account with a copy of
+  a real sign-in under the profile.
+- **A manual run on 2026-11-17** with the broad service list: sign-in, a build with Preview, `curl`
+  unresolvable, no proxy variables in commands. It is repeated with the narrowed list before 0.3.0.
+
+Still open, none blocking macOS in 0.3.0:
+- **Company proxy.** The proxy connects directly. On a network that only allows traffic through a
+  company proxy, building apps cannot reach OpenAI; chaining to the proxy in Sanctum's own
+  environment comes later.
+- **`file-read-metadata` is allowed everywhere.** Commands can see that a file exists, and its size
+  and dates, but not its contents. Many tools look up parent folders, so it stays.
+- **Commands can read `CODEX_HOME`, including the sign-in token.** They have no network to send it
+  through; the only way out is the model conversation, which already runs on that account.
+- **Linux (bubblewrap) and the Windows decision.**
 
 **Phase 6, review.** Security review note in the style of `security-review-0.2.0.md`, a dependency
 audit, a manual checklist (sign in, sign out, kill the process mid-turn, offline, no `codex`, an

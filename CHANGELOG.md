@@ -19,7 +19,13 @@ section behind.
   While it is off, Sanctum shows no Create controls, downloads nothing and starts nothing. When it
   is on, you sign in with ChatGPT, Sanctum downloads Codex to your computer, and you describe a
   tool in plain words. Your messages and the drafts Codex writes are sent to OpenAI. Tools made
-  this way are marked "Made with Codex" and start with no approvals.
+  this way are marked "Made with Codex" and start with no approvals. Building apps is offered on
+  macOS only for now; on Linux and Windows Settings says it is not available yet.
+- Delete agent data, in Settings: signs out, stops Codex, removes everything Sanctum keeps for it
+  (the Codex program, the sign-in, conversations and drafts) and turns building apps off. Apps
+  already in your library stay.
+- Settings shows Codex's licence (Apache-2.0), where it is downloaded from, and that it is checked
+  against a hash built into Sanctum.
 - Drafts keep a history in the Create window: preview an earlier draft or go back to it.
 - Standing instructions apply to every app Codex builds.
 - Modify with Codex, under Update for a tool Codex made, opens the Create window with that tool
@@ -47,6 +53,12 @@ section behind.
 
 ### Security
 
+- On macOS, Codex runs inside a sandbox of Sanctum's own, around Codex's own sandbox. Commands it
+  runs can read only system folders and the app being built, write only to that app's folder,
+  reach no network and start no program outside the sandbox. Codex itself can reach only
+  `chatgpt.com` and `auth.openai.com`, through a proxy inside Sanctum. Details in
+  `docs/security-review-0.3.0.md`.
+- The sign-in page Sanctum opens for Codex must be on `auth.openai.com`.
 - Sanctum's own commands now run only in the windows granted them. Before, nothing in the
   permission files kept a tool window away from them; an encryption step of the isolation
   pattern did. Tool windows are granted none, and a test fails if a command is added without
@@ -57,7 +69,9 @@ section behind.
   (class `FF`), which on some readers could reach an applet the tool was not approved for.
 - One tool's long smart card exchange no longer holds up other tools' card calls.
 - Tool windows also refuse to save AppleScript, macro-enabled Office files and Windows shell
-  formats such as `.library-ms` and `.settingcontent-ms`.
+  formats such as `.library-ms` and `.settingcontent-ms`, nor macOS configuration profiles,
+  Shortcuts, Finder location files and plug-in bundles.
+- `rustls-webpki` and `webpki-root-certs` updated for RUSTSEC-2026-0382 and RUSTSEC-2026-0383.
 - The app no longer contacts Google Fonts when it starts. Its fonts are bundled.
   Review: `docs/security-review-threat-model.md`.
 

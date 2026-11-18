@@ -25,6 +25,7 @@ use sha2::Digest;
 use std::path::{Path, PathBuf};
 use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::{Arc, Mutex as StdMutex};
+use std::time::Duration;
 use tauri::{
     AppHandle, Emitter, Manager, State, WebviewUrl, WebviewWindowBuilder, Window, WindowEvent,
 };
@@ -1015,6 +1016,46 @@ pub async fn agent_sign_out(
     sign_out_with(&state).await
 }
 
+/// Removes everything building apps keeps on this computer and turns it off: the sign-in (signed
+/// out with Codex first when it is on and downloaded, so OpenAI is told when it can be), Codex's
+/// own folder with its logs and history, the downloaded program, standing instructions, work
+/// folders and previews. Apps already added to the library stay; they are ordinary tools.
+#[tauri::command]
+pub async fn agent_delete_data(
+    app: AppHandle,
+    window: Window,
+    state: State<'_, AgentState>,
+) -> Result<AgentSetup, AgentCommandError> {
+    require_host(&window)?;
+    let setup = delete_data_with(&state).await?;
+    let _ = app.emit(ENABLED_EVENT, false);
+    Ok(setup)
+}
+
+async fn delete_data_with(state: &AgentState) -> Result<AgentSetup, AgentCommandError> {
+    if state.enabled() && state.installed() {
+        // Best effort: the files go either way, and an offline computer must not block this.
+        let _ = tokio::time::timeout(Duration::from_secs(15), sign_out_with(state)).await;
+    }
+    state.shutdown().await;
+    state
+        .set_enabled(false)
+        .map_err(|e| AgentCommandError::new("io", format!("Could not save the setting: {e}")))?;
+    if let Some(dir) = state.enabled_path.parent() {
+        match std::fs::remove_dir_all(dir) {
+            Ok(()) => {}
+            Err(e) if e.kind() == std::io::ErrorKind::NotFound => {}
+            Err(e) => {
+                return Err(AgentCommandError::new(
+                    "io",
+                    format!("Could not delete {}: {e}", dir.display()),
+                ))
+            }
+        }
+    }
+    Ok(setup_of(state))
+}
+
 /// Event the Create window listens for: the person asked to change another app while the window
 /// was already open.
 pub const SOURCE_EVENT: &str = "agent-source";
@@ -1304,7 +1345,7 @@ read line
 read line
 echo '{{"id":2,"result":{first}}}'
 read line
-echo '{{"id":3,"result":{{"type":"chatgpt","loginId":"L1","authUrl":"https://auth.example.com/go"}}}}'
+echo '{{"id":3,"result":{{"type":"chatgpt","loginId":"L1","authUrl":"https://auth.openai.com/go"}}}}'
 echo '{{"method":"account/login/completed","params":{{"loginId":"L1","success":true}}}}'
 read line
 echo '{{"id":4,"result":{acct}}}'
@@ -1339,6 +1380,33 @@ read line
         st.set_enabled(true).unwrap();
         st.program_override = None;
         (st, d, mock)
+    }
+
+    #[tokio::test]
+    async fn delete_agent_data_removes_every_file_and_turns_it_off() {
+        // A program that exits at once: signing out fails fast and must not stop the deletion.
+        let (st, d) = with_program(b"#!/bin/sh\nexit 0\n");
+        let agent = d.join("agent");
+        for f in [
+            "codex-home/auth.json",
+            "bin/0.163.0/codex",
+            "sessions/s1/app.html",
+            "previews/p.html",
+            "instructions.md",
+        ] {
+            let f = agent.join(f);
+            std::fs::create_dir_all(f.parent().unwrap()).unwrap();
+            std::fs::write(&f, b"x").unwrap();
+        }
+        assert!(st.enabled());
+        let setup = delete_data_with(&st).await.unwrap();
+        assert!(!setup.enabled);
+        assert!(!st.enabled());
+        assert!(!agent.exists(), "agent folder still there");
+        assert!(!AgentState::new(&d, "0.0.0-test", None, Err("x".into())).enabled());
+        // Nothing there: still fine.
+        delete_data_with(&st).await.unwrap();
+        let _ = std::fs::remove_dir_all(&d);
     }
 
     #[tokio::test]
@@ -1396,7 +1464,7 @@ read line
         assert_eq!(acct.plan.as_deref(), Some("Pro"));
         assert_eq!(
             opened.lock().unwrap().as_slice(),
-            ["https://auth.example.com/go"]
+            ["https://auth.openai.com/go"]
         );
         assert!(!progress.lock().unwrap().is_empty());
         assert!(setup_of(&state).installed);
@@ -1509,7 +1577,7 @@ read line
 read line
 echo '{"id":2,"result":{"account":null,"requiresOpenaiAuth":true}}'
 read line
-echo '{"id":3,"result":{"type":"chatgpt","loginId":"L1","authUrl":"https://auth.example.com/go"}}'
+echo '{"id":3,"result":{"type":"chatgpt","loginId":"L1","authUrl":"https://auth.openai.com/go"}}'
 exec sleep 30
 "#;
         let (state, d) = with_program(script);

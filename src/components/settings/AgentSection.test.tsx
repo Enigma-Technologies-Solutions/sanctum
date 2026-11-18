@@ -24,6 +24,7 @@ vi.mock("@/lib/commands", () => ({
     agentCancelSignIn: vi.fn(),
     agentSignOut: vi.fn(),
     agentSetEnabled: vi.fn(),
+    agentDeleteData: vi.fn(),
   },
 }));
 
@@ -110,6 +111,48 @@ describe("Settings, Agent", () => {
     await user.click(await screen.findByRole("button", { name: "Sign out" }));
     expect(C.agentSignOut).toHaveBeenCalledTimes(1);
     expect(await screen.findByText("Not signed in.")).toBeInTheDocument();
+  });
+
+  it("deletes agent data only after a second click, then shows it off", async () => {
+    C.agentAccount.mockResolvedValue(pro);
+    C.agentDeleteData.mockResolvedValue({ supported: true, enabled: false, installed: false, downloadMb: 100 });
+    render(<SettingsView version="0.2.0" />);
+    await userEvent.click(await screen.findByRole("button", { name: "Delete agent data" }));
+    expect(C.agentDeleteData).not.toHaveBeenCalled();
+    expect(screen.getByText(/Apps in your library stay/)).toBeInTheDocument();
+    await userEvent.click(screen.getByRole("button", { name: "Cancel" }));
+    expect(C.agentDeleteData).not.toHaveBeenCalled();
+    await userEvent.click(screen.getByRole("button", { name: "Delete agent data" }));
+    await userEvent.click(screen.getByRole("button", { name: "Delete" }));
+    expect(C.agentDeleteData).toHaveBeenCalledTimes(1);
+    expect(await screen.findByText("Off.")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Turn on" })).toBeInTheDocument();
+  });
+
+  it("does not describe the sign-in steps once signed in, and starts them plainly when signed out", async () => {
+    C.agentAccount.mockResolvedValue(pro);
+    const { unmount } = render(<SettingsView version="0.2.0" />);
+    expect(await screen.findByText(/Sanctum never sees your password/)).toBeInTheDocument();
+    expect(screen.queryByText(/opens your browser/)).toBeNull();
+    unmount();
+    C.agentAccount.mockResolvedValue(out);
+    render(<SettingsView version="0.2.0" />);
+    expect(await screen.findByText(/^Signing in opens your browser to sign in to ChatGPT/)).toBeInTheDocument();
+    expect(screen.queryByText(/Then it opens/)).toBeNull();
+  });
+
+  it("shows Codex's licence with a link to copy", async () => {
+    C.agentAccount.mockResolvedValue(pro);
+    render(<SettingsView version="0.2.0" />);
+    expect(await screen.findByText(/open source under the Apache License 2\.0/)).toBeInTheDocument();
+    expect(screen.getByText("https://github.com/openai/codex/blob/main/LICENSE")).toBeInTheDocument();
+  });
+
+  it("offers Delete agent data while off, once Codex has been downloaded", async () => {
+    C.agentSetup.mockResolvedValue({ ...READY, enabled: false });
+    render(<SettingsView version="0.2.0" />);
+    expect(await screen.findByRole("button", { name: "Delete agent data" })).toBeInTheDocument();
+    expect(C.agentAccount).not.toHaveBeenCalled();
   });
 
   it("lets the person retry when the account could not be read", async () => {

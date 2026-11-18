@@ -42,7 +42,8 @@ export function downloadNote(setup: AgentSetup): string {
  */
 export function signInNote(setup: AgentSetup): string {
   const first = downloadNote(setup);
-  return `${first ? `${first} ` : ""}Then it opens your browser to sign in to ChatGPT. Sanctum never sees your password or sign-in token.`;
+  const browser = first ? `${first} Then it opens your browser` : "Signing in opens your browser";
+  return `${browser} to sign in to ChatGPT. Sanctum never sees your password or sign-in token.`;
 }
 
 /** "Downloading Codex… 42%" */
@@ -212,6 +213,24 @@ export function useAgent({ readAccount }: { readAccount: boolean }) {
     }
   }, []);
 
+  const deleteData = useCallback(async () => {
+    setWorking(true);
+    setError(null);
+    try {
+      const s = await Commands.agentDeleteData();
+      if (live.current) {
+        setSetup(s);
+        setAccount(null);
+      }
+      return true;
+    } catch (e) {
+      if (live.current) setError(asAgentError(e).message);
+      return false;
+    } finally {
+      if (live.current) setWorking(false);
+    }
+  }, []);
+
   // Downloading until the last byte has arrived; after that the browser is what is being waited for.
   const downloading = !!setup && !setup.installed && !(download && download.total > 0 && download.done >= download.total);
   const phase: "idle" | "downloading" | "browser" = !signingIn ? "idle" : downloading ? "downloading" : "browser";
@@ -219,7 +238,7 @@ export function useAgent({ readAccount }: { readAccount: boolean }) {
   // Still finding out who is signed in: Codex is on the computer and the answer has not come yet.
   const checking = !setup || (readAccount && setup.supported && setup.enabled && setup.installed && account === null && error === null);
 
-  return { setup, account, signingIn, phase, download, working, error, checking, signIn, cancel, signOut, setEnabled };
+  return { setup, account, signingIn, phase, download, working, error, checking, signIn, cancel, signOut, setEnabled, deleteData };
 }
 
 /** One line of the conversation: something said, or a step Codex took. */

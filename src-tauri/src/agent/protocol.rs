@@ -139,13 +139,18 @@ pub struct LoginCompleted {
     pub error: Option<String>,
 }
 
-/// The browser address Codex asks us to open. HTTPS only, a real host, no embedded
-/// credentials. (A host allowlist comes after the traffic has been measured; see
-/// docs/create-app-plan.md.)
+/// The only host a sign-in may open in the browser, measured on 2026-11-14 (it is also the only
+/// sign-in host Sanctum's proxy lets Codex reach; see `outer::ALLOWED`).
+pub const AUTH_HOST: &str = "auth.openai.com";
+
+/// The browser address Codex asks us to open: HTTPS to [`AUTH_HOST`] on the default port, with
+/// no embedded credentials. Codex builds the address, so a Codex steered by a setting a command
+/// planted could otherwise open a lookalike sign-in page in the person's own browser.
 pub fn validate_auth_url(raw: &str) -> Result<url::Url, AgentError> {
     let u = url::Url::parse(raw).map_err(|_| AgentError::BadAuthUrl)?;
     let ok = u.scheme() == "https"
-        && u.host_str().is_some_and(|h| h.contains('.'))
+        && u.host_str() == Some(AUTH_HOST)
+        && u.port().is_none()
         && u.username().is_empty()
         && u.password().is_none();
     if ok {
@@ -242,14 +247,14 @@ mod tests {
     #[test]
     fn login_start_accepts_only_the_chatgpt_answer() {
         let ok = parse_login_start(
-            json!({"type": "chatgpt", "loginId": "l1", "authUrl": "https://auth.example.com/x"}),
+            json!({"type": "chatgpt", "loginId": "l1", "authUrl": "https://auth.openai.com/x"}),
         )
         .unwrap();
         assert_eq!(
             ok,
             LoginStarted {
                 login_id: "l1".into(),
-                auth_url: "https://auth.example.com/x".into()
+                auth_url: "https://auth.openai.com/x".into()
             }
         );
         for bad in [
@@ -270,10 +275,17 @@ mod tests {
     }
 
     #[test]
-    fn auth_urls_must_be_plain_https() {
-        assert!(validate_auth_url("https://auth.example.com/oauth/authorize?x=1").is_ok());
+    fn auth_urls_must_be_plain_https_to_openais_sign_in_host() {
+        assert!(validate_auth_url("https://auth.openai.com/oauth/authorize?x=1").is_ok());
+        assert!(validate_auth_url("https://AUTH.openai.com/oauth/authorize").is_ok());
         for bad in [
-            "http://auth.example.com/",
+            "http://auth.openai.com/",
+            "https://auth.example.com/oauth/authorize",
+            "https://auth.openai.com.evil.test/",
+            "https://evil.test/auth.openai.com",
+            "https://auth.openai.com:8443/",
+            "https://openai.com/",
+            "https://user@auth.openai.com/",
             "file:///etc/passwd",
             "javascript:alert(1)",
             "https://user:pw@auth.example.com/",

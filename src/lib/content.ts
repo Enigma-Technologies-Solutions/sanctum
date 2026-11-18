@@ -31,4 +31,10 @@ export const LINKS: { label: string; url: string }[] = [
   { label: "README", url: "https://github.com/Enigma-Technologies-Solutions/sanctum/blob/main/README.md" },
 ];
 
+/** Codex is downloaded from OpenAI's own GitHub releases, never from Sanctum; this is its licence. */
+export const CODEX_LICENCE = {
+  text: "Codex is made by OpenAI and is open source under the Apache License 2.0. Sanctum downloads it from OpenAI's releases on GitHub and checks it against a hash built into Sanctum.",
+  url: "https://github.com/openai/codex/blob/main/LICENSE",
+};
+
 export const LINKS_NOTE = "Sanctum does not open links itself. Copy one into your browser.";
