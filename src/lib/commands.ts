@@ -76,6 +76,14 @@ export const Commands = {
   },
 
   /**
+   * Deletes everything building apps keeps on this computer (sign-in, Codex, its logs, standing
+   * instructions, work folders) and turns it off. Apps already in the library stay.
+   */
+  agentDeleteData(): Promise<AgentSetup> {
+    return invoke("agent_delete_data");
+  },
+
+  /**
    * Opens the Create window, or brings it forward. It is a window of its own so a session
    * survives while you use the rest of Sanctum. With `toolId`, the conversation is about changing
    * that app from the library. Rejects with an AgentCommandError.

@@ -264,6 +264,7 @@ pub fn run() {
             agent::commands::agent_sign_in,
             agent::commands::agent_cancel_sign_in,
             agent::commands::agent_sign_out,
+            agent::commands::agent_delete_data,
             agent::commands::agent_open_create_window,
             agent::commands::agent_chat_start,
             agent::commands::agent_chat_send,

@@ -32,6 +32,7 @@ const APP_COMMANDS: &[&str] = &[
     "agent_sign_in",
     "agent_cancel_sign_in",
     "agent_sign_out",
+    "agent_delete_data",
     "agent_open_create_window",
     "agent_chat_start",
     "agent_chat_send",

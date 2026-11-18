@@ -33,6 +33,7 @@
     "allow-agent-sign-in",
     "allow-agent-cancel-sign-in",
     "allow-agent-sign-out",
+    "allow-agent-delete-data",
     "allow-agent-open-create-window",
     "allow-agent-chat-start",
     "allow-agent-chat-send",

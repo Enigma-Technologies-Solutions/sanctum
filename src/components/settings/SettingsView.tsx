@@ -17,6 +17,7 @@ import {
   Moon,
   LogIn,
   LogOut,
+  Trash2,
   type LucideIcon,
 } from "lucide-react";
 import { Commands } from "@/lib/commands";
@@ -25,7 +26,7 @@ import type { PolicyStatus, TrustAnchorInfo, UpdateInfo } from "@/lib/types";
 import { PageHeader } from "@/components/PageHeader";
 import { readTheme, saveTheme, type ThemeChoice } from "@/lib/theme";
 import type { RegistryChecks } from "@/lib/notices";
-import { ABOUT, HOW_IT_WORKS, LINKS, LINKS_NOTE, type HowItem } from "@/lib/content";
+import { ABOUT, CODEX_LICENCE, HOW_IT_WORKS, LINKS, LINKS_NOTE, type HowItem } from "@/lib/content";
 
 const ICONS: Record<HowItem["icon"], LucideIcon> = {
   origin: Boxes,
@@ -241,6 +242,43 @@ function AppearanceSection() {
   );
 }
 
+/** Deletes everything building apps keeps on this computer, after a second click to confirm. */
+function DeleteAgentData({ agent }: { agent: ReturnType<typeof useAgent> }) {
+  const [asking, setAsking] = useState(false);
+  const busy = agent.working || agent.signingIn;
+  const off = { ...buttonStyle, opacity: busy ? 0.6 : 1, cursor: busy ? "default" : "pointer" };
+  return (
+    <Row>
+      <span style={{ flex: 1, fontSize: "12px", color: asking ? "var(--app-ink)" : "var(--app-ink-2)" }}>
+        {asking
+          ? "Delete your sign-in, the downloaded Codex, its logs, your standing instructions and any open work? Apps in your library stay."
+          : "Delete agent data signs out and removes everything building apps keeps on this computer. Apps in your library stay."}
+      </span>
+      {asking ? (
+        <span style={{ display: "inline-flex", gap: "6px" }}>
+          <button type="button" onClick={() => setAsking(false)} disabled={busy} style={off}>
+            Cancel
+          </button>
+          <button
+            type="button"
+            onClick={() => void agent.deleteData().then(() => setAsking(false))}
+            disabled={busy}
+            style={{ ...off, color: "var(--danger-ink)", borderColor: "var(--danger-ink)" }}
+          >
+            {agent.working ? <Loader2 size={13} className="animate-spin" aria-hidden="true" /> : <Trash2 size={13} aria-hidden="true" />}
+            Delete
+          </button>
+        </span>
+      ) : (
+        <button type="button" onClick={() => setAsking(true)} disabled={busy} style={off}>
+          <Trash2 size={13} aria-hidden="true" />
+          Delete agent data
+        </button>
+      )}
+    </Row>
+  );
+}
+
 function AgentSection() {
   const agent = useAgent({ readAccount: true });
   if (agent.setup && !agent.setup.supported) {
@@ -281,6 +319,7 @@ function AgentSection() {
             sign in. Your messages and the drafts Codex writes are sent to OpenAI. Sanctum never sees your password or sign-in token.
           </span>
         </Row>
+        {agent.setup.installed && <DeleteAgentData agent={agent} />}
       </Section>
     );
   }
@@ -330,7 +369,12 @@ function AgentSection() {
       </Row>
       <Row>
         <span style={{ fontSize: "12px", color: "var(--app-ink-2)" }}>
-          {agent.setup ? signInNote(agent.setup) : null} Codex runs on this computer and starts only when you use it.
+          {agent.account?.signedIn
+            ? "Sanctum never sees your password or sign-in token."
+            : agent.setup
+              ? signInNote(agent.setup)
+              : null}{" "}
+          Codex runs on this computer and starts only when you use it.
           Your messages and the drafts Codex writes are sent to OpenAI. Building counts against your ChatGPT plan's limits, and ChatGPT
           lists the usage under Codex. Apps you make can save files to your Downloads folder without asking.
         </span>
@@ -347,6 +391,14 @@ function AgentSection() {
         >
           Turn off
         </button>
+      </Row>
+      {agent.setup && <DeleteAgentData agent={agent} />}
+      <Row>
+        <span style={{ flex: 1, minWidth: 0, fontSize: "12px", color: "var(--app-ink-2)" }}>
+          {CODEX_LICENCE.text}{" "}
+          <span style={{ fontFamily: mono, fontSize: "11px", overflowWrap: "anywhere", userSelect: "text" }}>{CODEX_LICENCE.url}</span>
+        </span>
+        <CopyButton text={CODEX_LICENCE.url} label="Codex licence" />
       </Row>
     </Section>
   );
