@@ -96,8 +96,16 @@ pub fn platform_key() -> String {
     format!("{}-{}", std::env::consts::OS, std::env::consts::ARCH)
 }
 
-/// The release for this computer, or `None` where Sanctum does not support the agent.
+/// The systems where building apps is offered. macOS only: Sanctum's own sandbox around Codex
+/// (`outer`, Layer 2) exists only there so far. Linux and Windows keep their pins in
+/// `codex-pins.json` for when it does (docs/create-app-plan.md, Phase 5).
+pub const OFFERED_ON: &[&str] = &["macos"];
+
+/// The release for this computer, or `None` where Sanctum does not offer the agent.
 pub fn release_here() -> Option<Release> {
+    if !OFFERED_ON.contains(&std::env::consts::OS) {
+        return None;
+    }
     let f = pin_file();
     f.pins.get(&platform_key()).map(|p| Release {
         version: f.version.clone(),
@@ -959,6 +967,16 @@ mod tests {
             .unwrap_err();
         assert!(matches!(e, InstallError::Network(_)));
         let _ = std::fs::remove_dir_all(&d);
+    }
+
+    #[test]
+    fn building_apps_is_offered_only_where_sanctums_own_sandbox_exists() {
+        assert_eq!(OFFERED_ON, ["macos"]);
+        assert_eq!(
+            release_here().is_some(),
+            cfg!(target_os = "macos"),
+            "the agent must be offered exactly where outer::active() can be true"
+        );
     }
 
     #[test]

@@ -19,7 +19,9 @@
 //!   So the proxy accepts a connection only when the app-server process itself owns the
 //!   connecting socket ([`pid_owns_connection`]), and only `CONNECT` to [`ALLOWED`].
 //!
-//! Development builds only for now: `SANCTUM_OUTER_SANDBOX=1` turns it on.
+//! On for every macOS build. A development build can turn it off with `SANCTUM_OUTER_SANDBOX=0`
+//! to compare against Codex's own sandbox alone. Building apps is not offered on other systems
+//! yet (`install::OFFERED_ON`).
 
 use std::path::{Path, PathBuf};
 use std::sync::atomic::{AtomicU32, Ordering};
@@ -40,14 +42,25 @@ const MAX_HEAD: usize = 8 * 1024;
 const HEAD_TIMEOUT: Duration = Duration::from_secs(10);
 const CONNECT_TIMEOUT: Duration = Duration::from_secs(15);
 
-/// Whether Layer 2 is on. Development builds on macOS, with `SANCTUM_OUTER_SANDBOX=1`.
+/// Whether Layer 2 is on: always on macOS, except in a development build started with
+/// `SANCTUM_OUTER_SANDBOX=0`. A release build ignores the variable. Off in unit tests, whose
+/// fake Codex scripts live in temporary folders the profile does not open; the profile and the
+/// proxy have their own tests, and `live_layer_2` runs the real Codex under them.
 pub fn active() -> bool {
-    #[cfg(all(debug_assertions, target_os = "macos"))]
+    #[cfg(test)]
+    {
+        false
+    }
+    #[cfg(all(not(test), debug_assertions, target_os = "macos"))]
     {
         static ON: std::sync::OnceLock<bool> = std::sync::OnceLock::new();
-        *ON.get_or_init(|| std::env::var_os("SANCTUM_OUTER_SANDBOX").is_some_and(|v| v == "1"))
+        *ON.get_or_init(|| std::env::var_os("SANCTUM_OUTER_SANDBOX").is_none_or(|v| v != "0"))
     }
-    #[cfg(not(all(debug_assertions, target_os = "macos")))]
+    #[cfg(all(not(test), not(debug_assertions), target_os = "macos"))]
+    {
+        true
+    }
+    #[cfg(all(not(test), not(target_os = "macos")))]
     {
         false
     }
@@ -320,6 +333,27 @@ fn quoted(p: &Path) -> String {
     format!("\"{}\"", s.replace('\\', "\\\\").replace('"', "\\\""))
 }
 
+/// The system services the app-server and its commands may contact, measured on 2026-11-18
+/// with Codex 0.163.0 by logging every lookup: user and group lookups, notifications, logging,
+/// and certificate checks for Codex's own TLS (`trustd`, `SecurityServer`). Everything else is refused. That matters: with
+/// every service open, `open` (Launch Services) and `osascript` (Apple events) start programs
+/// outside the sandbox, such as a browser with a URL carrying data, and `pbpaste` reads the
+/// clipboard. Refused lookups seen in normal use and harmless: analytics, diagnostics,
+/// `configd`, FSEvents and the Launch Services database.
+pub const MACH_SERVICES: &[&str] = &[
+    "com.apple.system.notification_center",
+    "com.apple.system.opendirectoryd.libinfo",
+    "com.apple.system.opendirectoryd.membership",
+    "com.apple.logd",
+    "com.apple.system.logger",
+    "com.apple.trustd.agent",
+    // Codex checks the certificate of its own connections through it; without it every request
+    // fails ("workspace routing discovery failed" on reading the account). The keychains
+    // themselves stay closed: their files are outside every folder the profile opens, and
+    // `live_layer_2` checks that `security` cannot list or read them.
+    "com.apple.SecurityServer",
+];
+
 /// The profile. Deny by default; see the module comment for what each part is for.
 pub fn profile(f: &Folders, proxy_port: u16) -> String {
     let home = quoted(&f.codex_home);
@@ -327,6 +361,11 @@ pub fn profile(f: &Folders, proxy_port: u16) -> String {
     let program = quoted(&f.program);
     let config = quoted(&f.codex_home.join("config.toml"));
     let agents = quoted(&f.codex_home.join("AGENTS.md"));
+    let mach = MACH_SERVICES
+        .iter()
+        .map(|n| format!("\"{n}\""))
+        .collect::<Vec<_>>()
+        .join(" ");
     format!(
         r#"(version 1)
 (deny default)
@@ -335,7 +374,7 @@ pub fn profile(f: &Folders, proxy_port: u16) -> String {
 (allow signal (target same-sandbox))
 (allow process-info* (target same-sandbox))
 (allow sysctl-read)
-(allow mach-lookup)
+(allow mach-lookup (global-name {mach}))
 (allow ipc-posix-shm)
 (allow file-read-metadata)
 (allow file-read*
@@ -373,7 +412,9 @@ pub fn wrapped_command(binary: &Path, profile: &str) -> (PathBuf, Vec<String>) {
 }
 
 /// Environment changes for the sandboxed app-server: its proxy is Sanctum's, and its temporary
-/// folder is inside `CODEX_HOME` (the system one is closed to it).
+/// folder is inside `CODEX_HOME` (the system one is closed to it). Commands inherit these.
+/// git stops with "unable to access '~/.gitconfig'" when the file exists but cannot be read,
+/// so its global config points at an empty file; the user's own settings stay out of reach.
 pub fn env_overrides(codex_home: &Path, proxy_port: u16) -> Vec<(String, String)> {
     let proxy = format!("http://127.0.0.1:{proxy_port}");
     vec![
@@ -385,6 +426,7 @@ pub fn env_overrides(codex_home: &Path, proxy_port: u16) -> Vec<(String, String)
             "TMPDIR".into(),
             format!("{}/", codex_home.join("tmp").to_string_lossy()),
         ),
+        ("GIT_CONFIG_GLOBAL".into(), "/dev/null".into()),
     ]
 }
 
@@ -452,6 +494,21 @@ mod tests {
         assert!(p.contains(r#"(deny file-write* (literal "/data/agent/codex-home/config.toml")"#));
         assert!(!p.contains("(allow default)"));
         assert!(!p.contains("Users"));
+        // System services: a fixed list, and none that starts or talks to another program.
+        assert!(p.contains(
+            r#"(allow mach-lookup (global-name "com.apple.system.notification_center" "#
+        ));
+        assert_eq!(p.matches("mach-lookup").count(), 1);
+        for open in [
+            "launchservices",
+            "lsd",
+            "appleevents",
+            "pasteboard",
+            "coreservicesd",
+            "tccd",
+        ] {
+            assert!(!p.to_lowercase().contains(open), "{open}");
+        }
     }
 
     #[test]
@@ -470,6 +527,7 @@ mod tests {
         assert_eq!(get("HTTPS_PROXY"), Some("http://127.0.0.1:4242"));
         assert_eq!(get("http_proxy"), Some("http://127.0.0.1:4242"));
         assert_eq!(get("TMPDIR"), Some("/data/agent/codex-home/tmp/"));
+        assert_eq!(get("GIT_CONFIG_GLOBAL"), Some("/dev/null"));
     }
 
     #[cfg(target_os = "macos")]
@@ -597,6 +655,51 @@ mod live {
     use crate::agent::process::{AgentProcess, Outer};
     use serde_json::{json, Value};
 
+    /// Reads the account under the profile with a copy of a real sign-in, the way Settings does.
+    /// `SANCTUM_TEST_AUTH=<CODEX_HOME>/auth.json SANCTUM_TEST_CODEX=… cargo test --lib
+    /// live_account -- --ignored --nocapture`. The copy is deleted afterwards.
+    #[tokio::test]
+    #[ignore]
+    async fn live_account() {
+        let codex = PathBuf::from(std::env::var("SANCTUM_TEST_CODEX").expect("SANCTUM_TEST_CODEX"));
+        let auth = PathBuf::from(std::env::var("SANCTUM_TEST_AUTH").expect("SANCTUM_TEST_AUTH"));
+        let base = std::env::temp_dir().join(format!("sanctum-live-{}", uuid::Uuid::new_v4()));
+        let (home, sessions) = (base.join("home"), base.join("sessions"));
+        std::fs::create_dir_all(&home).unwrap();
+        std::fs::create_dir_all(&sessions).unwrap();
+        std::fs::copy(&auth, home.join("auth.json")).unwrap();
+        let folders = Folders {
+            program: codex.parent().unwrap().canonicalize().unwrap(),
+            codex_home: home.canonicalize().unwrap(),
+            sessions: sessions.canonicalize().unwrap(),
+        };
+        let proxy = Proxy::start(pid_owns_connection).await.unwrap();
+        let p = AgentProcess::start_in(
+            &codex,
+            &home,
+            "0.0.0-live",
+            Some(Outer {
+                proxy: &proxy,
+                folders: &folders,
+            }),
+        )
+        .await
+        .expect("start under the profile");
+        let r = p
+            .rpc
+            .request(
+                "account/read",
+                json!({"refreshToken": false}),
+                Duration::from_secs(30),
+            )
+            .await;
+        p.shutdown().await;
+        let _ = std::fs::remove_dir_all(&base);
+        let r = r.expect("account/read");
+        println!("account/read: {}", r["account"]["type"]);
+        assert!(r["account"].is_object(), "{r}");
+    }
+
     #[tokio::test]
     #[ignore]
     async fn live_layer_2() {
@@ -687,8 +790,35 @@ mod live {
         .await;
         println!("command direct: {code} {out}");
         assert_ne!(code, 0);
+        // Starting a program outside the sandbox: through Launch Services (`open`) or by sending
+        // Apple events (`osascript`). Either would undo every rule above.
+        let (code, out) = run(sh("open -g -a TextEdit")).await;
+        println!("open: {code} {out}");
+        assert_ne!(code, 0);
+        let (code, out) = run(sh("open -g https://example.com")).await;
+        println!("open url: {code} {out}");
+        assert_ne!(code, 0);
+        let (code, out) = run(sh(
+            "osascript -e 'tell application \"Finder\" to get name of startup disk'",
+        ))
+        .await;
+        println!("osascript: {code} {out}");
+        assert_ne!(code, 0);
+        let (code, out) = run(sh(
+            "security dump-keychain 2>&1 | head -c 300; echo; security find-generic-password -s 'Safari Forms AutoFill' -w 2>&1 | head -c 200",
+        ))
+        .await;
+        println!("keychain: {code} {out}");
+        assert!(!out.contains("keychain: \"/Users"), "{out}");
+        assert!(!out.contains("class:"), "{out}");
+        let (code, out) = run(sh("pbpaste | head -c 20")).await;
+        println!("pbpaste: {code} {out:?}");
+        assert!(out.trim().is_empty() || code != 0);
         let (code, out) = run(vec!["python3".into(), "-c".into(), "print(6*7)".into()]).await;
         println!("python3: {code} {out}");
+        assert_eq!(code, 0);
+        let (code, out) = run(sh("git --version && node -e 'console.log(6*7)' 2>&1; true")).await;
+        println!("git, node: {code} {out}");
         p.shutdown().await;
         assert!(!Path::new(&format!("{home_dir}/sanctum-live.txt")).exists());
         let _ = std::fs::remove_dir_all(&base);

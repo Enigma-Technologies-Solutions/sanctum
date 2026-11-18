@@ -131,6 +131,8 @@ impl AgentProcess {
                 env.extend(overrides);
                 let mut c = Command::new(program);
                 c.args(args);
+                // Not Sanctum's own working folder, which the profile does not open.
+                c.current_dir(codex_home);
                 c
             }
         };
