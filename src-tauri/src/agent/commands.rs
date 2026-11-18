@@ -1345,7 +1345,7 @@ read line
 read line
 echo '{{"id":2,"result":{first}}}'
 read line
-echo '{{"id":3,"result":{{"type":"chatgpt","loginId":"L1","authUrl":"https://auth.example.com/go"}}}}'
+echo '{{"id":3,"result":{{"type":"chatgpt","loginId":"L1","authUrl":"https://auth.openai.com/go"}}}}'
 echo '{{"method":"account/login/completed","params":{{"loginId":"L1","success":true}}}}'
 read line
 echo '{{"id":4,"result":{acct}}}'
@@ -1464,7 +1464,7 @@ read line
         assert_eq!(acct.plan.as_deref(), Some("Pro"));
         assert_eq!(
             opened.lock().unwrap().as_slice(),
-            ["https://auth.example.com/go"]
+            ["https://auth.openai.com/go"]
         );
         assert!(!progress.lock().unwrap().is_empty());
         assert!(setup_of(&state).installed);
@@ -1577,7 +1577,7 @@ read line
 read line
 echo '{"id":2,"result":{"account":null,"requiresOpenaiAuth":true}}'
 read line
-echo '{"id":3,"result":{"type":"chatgpt","loginId":"L1","authUrl":"https://auth.example.com/go"}}'
+echo '{"id":3,"result":{"type":"chatgpt","loginId":"L1","authUrl":"https://auth.openai.com/go"}}'
 exec sleep 30
 "#;
         let (state, d) = with_program(script);

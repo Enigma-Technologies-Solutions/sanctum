@@ -134,7 +134,7 @@ mod tests {
     use std::sync::{Arc, Mutex};
 
     const T: Duration = Duration::from_secs(5);
-    const URL: &str = "https://auth.example.com/authorize?state=1";
+    const URL: &str = "https://auth.openai.com/authorize?state=1";
 
     fn started(id: &str) -> serde_json::Value {
         json!({"type": "chatgpt", "loginId": id, "authUrl": URL})

@@ -361,6 +361,12 @@ pub fn profile(f: &Folders, proxy_port: u16) -> String {
     let program = quoted(&f.program);
     let config = quoted(&f.codex_home.join("config.toml"));
     let agents = quoted(&f.codex_home.join("AGENTS.md"));
+    // Files Codex reads at start that a command could use to act in later sessions: variables
+    // (`.env`) and hooks, which run commands on events. They would still run in here, but they
+    // would outlast the conversation that planted them.
+    let dotenv = quoted(&f.codex_home.join(".env"));
+    let hooks_file = quoted(&f.codex_home.join("hooks.json"));
+    let hooks_dir = quoted(&f.codex_home.join("hooks"));
     let mach = MACH_SERVICES
         .iter()
         .map(|n| format!("\"{n}\""))
@@ -389,7 +395,8 @@ pub fn profile(f: &Folders, proxy_port: u16) -> String {
 (allow file-write*
   (subpath {home}) (subpath {sessions})
   (literal "/dev/null") (literal "/dev/tty") (regex #"^/dev/ttys[0-9]+$"))
-(deny file-write* (literal {config}) (literal {agents}))
+(deny file-write* (literal {config}) (literal {agents}) (literal {dotenv})
+  (literal {hooks_file}) (literal {hooks_dir}) (subpath {hooks_dir}))
 (allow file-ioctl (literal "/dev/tty") (regex #"^/dev/ttys[0-9]+$"))
 (allow network-outbound (remote ip "localhost:{proxy_port}"))
 (allow network-bind (local ip "localhost:{SIGN_IN_PORT}"))
@@ -492,6 +499,13 @@ mod tests {
         );
         assert!(!writes.contains("/data/agent/bin"));
         assert!(p.contains(r#"(deny file-write* (literal "/data/agent/codex-home/config.toml")"#));
+        for planted in [
+            ".env\")",
+            "hooks.json\")",
+            "(subpath \"/data/agent/codex-home/hooks\")",
+        ] {
+            assert!(p.contains(planted), "{planted}");
+        }
         assert!(!p.contains("(allow default)"));
         assert!(!p.contains("Users"));
         // System services: a fixed list, and none that starts or talks to another program.
@@ -775,6 +789,13 @@ mod live {
         .await;
         println!("write config.toml: {code} {out}");
         assert_ne!(code, 0);
+        let (code, out) = run(sh(&format!(
+            "cd '{}' && {{ echo X=1 > .env || echo refused; }} && {{ echo '{{}}' > hooks.json || echo refused; }} && {{ mkdir -p hooks || echo refused; }}",
+            folders.codex_home.display()
+        )))
+        .await;
+        println!("plant .env and hooks: {code} {out}");
+        assert_eq!(out.matches("refused").count(), 3, "{out}");
         let (code, out) = run(sh("echo proxy=${HTTPS_PROXY:-none}")).await;
         println!("env: {code} {out}");
         let port = proxy.port();
@@ -811,6 +832,16 @@ mod live {
         println!("keychain: {code} {out}");
         assert!(!out.contains("keychain: \"/Users"), "{out}");
         assert!(!out.contains("class:"), "{out}");
+        // A hard link is a second name for the same file, in a folder the profile opens. Reading
+        // a private file through one would undo the read rules.
+        std::fs::write(format!("{home_dir}/.sanctum-link-probe"), b"secret-probe").unwrap();
+        let (code, out) = run(sh(&format!(
+            "ln {home_dir}/.sanctum-link-probe probe; cat probe; ln {home_dir}/.zshrc z; head -c 5 z"
+        )))
+        .await;
+        let _ = std::fs::remove_file(format!("{home_dir}/.sanctum-link-probe"));
+        println!("hard link: {code} {out}");
+        assert!(!out.contains("secret-probe"), "{out}");
         let (code, out) = run(sh("pbpaste | head -c 20")).await;
         println!("pbpaste: {code} {out:?}");
         assert!(out.trim().is_empty() || code != 0);

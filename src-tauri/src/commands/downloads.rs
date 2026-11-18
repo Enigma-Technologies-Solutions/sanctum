@@ -36,6 +36,11 @@ const REFUSED: &[&str] = &[
     "scptd", "docm", "dotm", "xlsm", "xltm", "xlam", "pptm", "potm", "ppam", "msc", "library-ms",
     "search-ms", "searchconnector-ms", "settingcontent-ms", "xll", "iqy", "sct", "wsc", "vb",
     "jnlp", "appref-ms", "application",
+    // macOS files that change the system or run actions when opened: configuration profiles,
+    // Shortcuts, Finder location files, and installer or plug-in bundles that arrive zipped
+    // as one file name.
+    "mobileconfig", "shortcut", "fileloc", "kext", "prefpane", "osax", "saver", "qlgenerator",
+    "mdimporter", "plugin", "bundle", "xpc", "systemextension",
 ];
 
 /// The name to save under, or `None` when the file is refused. Keeps the last path part only,
@@ -298,6 +303,14 @@ mod tests {
         let d = dir("cap");
         let n = AtomicUsize::new(0);
         assert!(go("data:text/plain,x", "evil.exe", &d, &n).is_none());
+        for name in [
+            "vpn.mobileconfig",
+            "Run.shortcut",
+            "here.fileloc",
+            "x.prefPane",
+        ] {
+            assert!(safe_name(name).is_none(), "{name}");
+        }
         assert_eq!(n.load(Ordering::SeqCst), 0);
         for i in 0..MAX_PER_WINDOW {
             let p = go("data:text/plain,x", &format!("f{i}.txt"), &d, &n).unwrap();
