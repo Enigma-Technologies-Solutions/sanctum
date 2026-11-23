@@ -32,11 +32,19 @@ The checks catch mistakes. They do not stop a dishonest share holder from forgin
 - **Secrets are masked** and hidden again after 60 seconds without typing or when you
   switch tabs. Clear empties the fields and the bytes the page holds, on a best effort basis.
 
+## How it looks
+
+The page uses the shared Enigma tool kit in `examples/_kit` (see `docs/tool-design.md`). It opens
+in a light theme. The button in the header switches the window to dark; the choice is not stored,
+so the tool still asks for nothing. The fonts (Inter, Poppins, Space Mono) are embedded in the file.
+
 ## Files
 
-- `src/app.template.html` is the interface. It has a placeholder where the core is inlined.
+- `src/app.template.html` is the interface. It has placeholders where the core and the kit are
+  inlined.
 - `src/shamir-core.js` is the crypto core (no DOM, no network).
 - `index.html` is the built single file that you add to Sanctum.
+- `screens.mjs` holds the scenes for the registry screenshots (`node scripts/tool-screens.mjs shamir`).
 
 ## Rebuild
 
@@ -44,8 +52,9 @@ The checks catch mistakes. They do not stop a dishonest share holder from forgin
 node build.mjs
 ```
 
-The build needs only Node. It fails if the core or the placeholder is missing, or if the
-core contains `</script`. `--mock <file>` inlines a different core, and `--out <path>`
+The build needs only Node. It inlines the core and the kit (`../_kit`, with the fonts from
+`src/assets/fonts`). It fails if the core or a placeholder is missing, if the core contains
+`</script`, or if the kit would add a capability. `--mock <file>` inlines a different core, and `--out <path>`
 writes somewhere else, for testing the interface with a stand-in core.
 
 ## Licence and credit
@@ -54,4 +63,4 @@ Part of Sanctum, AGPL-3.0. This is a clean-room port, written from a specificati
 inspired by [0xjjpa/ssss-made-easy](https://github.com/0xjjpa/ssss-made-easy) (Martin
 Carpella and 0xjjpa, GPL-3.0). It contains none of that code. The plain format matches the
 layout of the `shamir-secret-sharing` npm package (Apache-2.0, Privy). Icons are from
-Lucide (ISC).
+Lucide (ISC). Fonts are Inter, Poppins and Space Mono (SIL OFL 1.1).

@@ -1,0 +1,57 @@
+#!/usr/bin/env node
+// SPDX-License-Identifier: AGPL-3.0-only
+// Copyright (C) 2026 Enigma Technologies Solutions
+//
+// Builds index.html by inlining src/otp-core.js and the Enigma tool kit (../_kit) into
+// src/app.template.html. The app script (storage and UI) stays in the template.
+//   node build.mjs                      -> index.html
+//   node build.mjs --mock <core.js>     -> inline a different core file (testing only)
+//   node build.mjs --out <path>         -> write somewhere else (use with --mock)
+import { readFileSync, writeFileSync, existsSync } from "node:fs";
+import { dirname, join, resolve } from "node:path";
+import { fileURLToPath } from "node:url";
+import { applyKit } from "../_kit/kit.mjs";
+
+const here = dirname(fileURLToPath(import.meta.url));
+const PLACEHOLDER = "/*__OTP_CORE__*/";
+
+function fail(msg) {
+  console.error("build failed: " + msg);
+  process.exit(1);
+}
+
+const args = process.argv.slice(2);
+function opt(name) {
+  const i = args.indexOf(name);
+  if (i < 0) return null;
+  const v = args[i + 1];
+  if (!v || v.startsWith("--")) fail(name + " needs a path");
+  return resolve(v);
+}
+const unknown = args.filter((a) => a.startsWith("--") && !["--mock", "--out"].includes(a));
+if (unknown.length) fail("unknown option " + unknown[0]);
+
+const mock = opt("--mock");
+const out = opt("--out") ?? join(here, "index.html");
+const corePath = mock ?? join(here, "src", "otp-core.js");
+const templatePath = join(here, "src", "app.template.html");
+
+if (!existsSync(templatePath)) fail("missing " + templatePath);
+if (!existsSync(corePath)) fail("missing core file " + corePath);
+
+const template = readFileSync(templatePath, "utf8");
+const core = readFileSync(corePath, "utf8");
+
+const count = template.split(PLACEHOLDER).length - 1;
+if (count !== 1) fail("template must contain the placeholder " + PLACEHOLDER + " exactly once, found " + count);
+if (/<\/script/i.test(core)) fail("the core contains '</script' and would end the script tag early");
+
+// A function replacer keeps '$' sequences in the core from being treated as patterns.
+let html = template.replace(PLACEHOLDER, () => core.replace(/\s+$/, ""));
+try {
+  html = applyKit(html);
+} catch (e) {
+  fail(e.message);
+}
+writeFileSync(out, html);
+console.log("wrote " + out + " (" + html.length + " bytes)" + (mock ? " with MOCK core, do not commit" : ""));

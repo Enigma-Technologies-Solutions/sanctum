@@ -7,7 +7,7 @@
 //
 // The icon is an inline data: SVG in <link rel="icon">, so the page stays one file and
 // Sanctum's scanner reads it as the tool icon. Edit the table below to add an example.
-// Shamir's index.html is generated: run `node examples/shamir/build.mjs` after this
+// Every example's index.html is generated: run its build.mjs after this
 // (scripts/resign-examples.sh does both).
 import { readFileSync, writeFileSync } from "node:fs";
 import { dirname, join } from "node:path";
@@ -16,7 +16,7 @@ import { fileURLToPath } from "node:url";
 const root = join(dirname(fileURLToPath(import.meta.url)), "..");
 
 const EXAMPLES = {
-  "otp-vault": { text: "otp", file: "examples/otp-vault/index.html" },
+  "otp-vault": { text: "otp", file: "examples/otp-vault/src/app.template.html" },
   shamir: { text: "sss", file: "examples/shamir/src/app.template.html" },
   "pdf-watermark": { text: "pdf", file: "examples/pdf-watermark/src/app.template.html" },
   "hash-check": { text: "sha", file: "examples/hash-check/src/app.template.html" },

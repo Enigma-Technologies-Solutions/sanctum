@@ -12,10 +12,12 @@ on:
     branches: [main]
     paths:
       - 'examples/**'
+      - 'src/assets/fonts/**'
       - '.github/workflows/examples.yml'
   pull_request:
     paths:
       - 'examples/**'
+      - 'src/assets/fonts/**'
       - '.github/workflows/examples.yml'
   workflow_dispatch:
 
@@ -27,7 +29,7 @@ jobs:
     name: Checksums and provenance
     runs-on: ubuntu-latest
     # Attest only files whose tests pass and whose generated output matches its sources.
-    needs: [shamir, pdf-watermark, hash-check]
+    needs: [shamir, pdf-watermark, hash-check, otp-vault]
     permissions:
       contents: read
       id-token: write      # Sigstore signing identity for the attestation
@@ -70,6 +72,24 @@ jobs:
             examples/*/index.html
             SHA256SUMS
           if-no-files-found: error
+
+  # The shared UI kit (examples/_kit) is inlined into every tool that is built from sources, so
+  # it must never add a capability. The template (examples/_template) must keep building.
+  kit:
+    name: Tool kit and template tests
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 22
+
+      - name: Run kit and template tests
+        run: node --test examples/_kit/test/*.test.mjs examples/_template/test/*.test.mjs
 
   # The Shamir tool is built from sources, and the built file is what users
   # install and what the job above attests. These checks keep the two in step
@@ -224,3 +244,31 @@ jobs:
             fi
           done
           exit "$bad"
+
+  # OTP Vault asks for storage and one smart card applet on purpose, so the forbidden-string
+  # check above does not apply. Its declared capabilities are pinned by the Rust test
+  # otp_vault_example_asks_for_storage_and_oath_only, which runs in ci.yml.
+  otp-vault:
+    name: OTP Vault tests and build
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 22
+
+      - name: Run OTP Vault tests
+        run: node --test examples/otp-vault/test/*.test.mjs
+
+      - name: Check index.html matches its sources
+        run: |
+          set -euo pipefail
+          node examples/otp-vault/build.mjs --out "$RUNNER_TEMP/otp-vault-index.html"
+          if ! cmp examples/otp-vault/index.html "$RUNNER_TEMP/otp-vault-index.html"; then
+            echo "::error file=examples/otp-vault/index.html::index.html is out of date. Run 'node examples/otp-vault/build.mjs' and commit the result."
+            exit 1
+          fi

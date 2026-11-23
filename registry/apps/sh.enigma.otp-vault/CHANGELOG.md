@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.0.3 (2026-11-23)
+- changed: Opens in a light theme, with a switch in the header to dark for the current window. The choice is not stored.
+- changed: Layout, type and controls are shared with the other Enigma tools, with the work set out in numbered steps. The fonts are built into the file.
+- changed: The page now sets its own content security policy, which allows no network access beyond Sanctum's smart card bridge.
+
 ## 1.0.2 (2026-10-02)
 - added: Time-based codes for SHA-1, SHA-256 and SHA-512 keys, checked against the RFC 6238 test vectors.
 - added: An encrypted software vault, unlocked with a username and password and shown with an eight-emoji fingerprint so you can recognise a correct login before anything is decrypted.

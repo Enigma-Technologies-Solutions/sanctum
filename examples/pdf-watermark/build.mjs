@@ -1,12 +1,16 @@
 #!/usr/bin/env node
-// Builds index.html by inlining vendor/pdf-lib.min.js and src/watermark-core.js into
-// src/app.template.html.
+// SPDX-License-Identifier: AGPL-3.0-only
+// Copyright (C) 2026 Enigma Technologies Solutions
+//
+// Builds index.html by inlining the Enigma tool kit (../_kit), vendor/pdf-lib.min.js and
+// src/watermark-core.js into src/app.template.html.
 //   node build.mjs                 -> index.html
 //   node build.mjs --out <path>    -> write somewhere else (for tests)
 import { readFileSync, writeFileSync, existsSync } from "node:fs";
 import { createHash } from "node:crypto";
 import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
+import { applyKit } from "../_kit/kit.mjs";
 
 const here = dirname(fileURLToPath(import.meta.url));
 const PDFLIB_SHA256 = "0f9a5cad07941f0826586c94e089d89b918c46e5c17cf2d5a3c6f666e3bc694f";
@@ -30,6 +34,13 @@ const out = oi >= 0 ? resolve(args[oi + 1]) : join(here, "index.html");
 const templatePath = join(here, "src", "app.template.html");
 if (!existsSync(templatePath)) fail("missing " + templatePath);
 let html = readFileSync(templatePath, "utf8");
+
+// The kit goes in first, so its placeholders are looked for in the template only, never in pdf-lib.
+try {
+  html = applyKit(html);
+} catch (e) {
+  fail(e.message);
+}
 
 for (const [placeholder, path] of SLOTS) {
   if (!existsSync(path)) fail("missing " + path);

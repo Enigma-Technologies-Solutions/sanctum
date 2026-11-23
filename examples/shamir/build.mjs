@@ -1,11 +1,16 @@
 #!/usr/bin/env node
-// Builds index.html by inlining src/shamir-core.js into src/app.template.html.
+// SPDX-License-Identifier: AGPL-3.0-only
+// Copyright (C) 2026 Enigma Technologies Solutions
+//
+// Builds index.html by inlining src/shamir-core.js and the Enigma tool kit (../_kit) into
+// src/app.template.html.
 //   node build.mjs                      -> index.html
 //   node build.mjs --mock <core.js>     -> inline a different core file (testing only)
 //   node build.mjs --out <path>         -> write somewhere else (use with --mock)
 import { readFileSync, writeFileSync, existsSync } from "node:fs";
 import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
+import { applyKit } from "../_kit/kit.mjs";
 
 const here = dirname(fileURLToPath(import.meta.url));
 const PLACEHOLDER = "/*__SHAMIR_CORE__*/";
@@ -42,6 +47,11 @@ if (count !== 1) fail("template must contain the placeholder " + PLACEHOLDER + "
 if (/<\/script/i.test(core)) fail("the core contains '</script' and would end the script tag early");
 
 // A function replacer keeps '$' sequences in the core from being treated as patterns.
-const html = template.replace(PLACEHOLDER, () => core.replace(/\s+$/, ""));
+let html = template.replace(PLACEHOLDER, () => core.replace(/\s+$/, ""));
+try {
+  html = applyKit(html);
+} catch (e) {
+  fail(e.message);
+}
 writeFileSync(out, html);
 console.log("wrote " + out + " (" + html.length + " bytes)" + (mock ? " with MOCK core, do not commit" : ""));

@@ -1,146 +1,63 @@
 <!doctype html>
-<html lang="en">
+<html lang="en" data-theme="light">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'unsafe-inline'; style-src 'unsafe-inline'; img-src data:; base-uri 'none'; form-action 'none'">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'unsafe-inline'; style-src 'unsafe-inline'; img-src data:; font-src data:; base-uri 'none'; form-action 'none'">
 <meta name="referrer" content="no-referrer">
-<meta name="theme-color" content="#0a0a0a">
+<meta name="theme-color" content="#FFFFFF">
 <title>Enigma PDF Watermark for Sanctum</title>
 <meta name="description" content="Put a visible, traceable watermark on PDFs before you share them. Every file gets its own ID. Runs offline and asks for no access.">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32' width='32' height='32'%3E%3Crect width='32' height='32' rx='6' fill='%230A0A0A'/%3E%3Crect x='3' y='3' width='26' height='26' rx='5' fill='none' stroke='%23FBFF00' stroke-width='1.5'/%3E%3Ctext x='16' y='20.5' text-anchor='middle' font-family='Poppins,Helvetica,Arial,sans-serif' font-size='10' font-weight='700' fill='%23FFFFFF' letter-spacing='-0.3'%3Epdf%3C/text%3E%3C/svg%3E">
 <style>
-  :root{
-    --ink:#000000; --panel:#111111; --paper:#FFFFFF; --volt:#FBFF00;
-    --ash:#8A8A8A; --line:rgba(255,255,255,.12); --line-strong:rgba(255,255,255,.24); --field:rgba(255,255,255,.5);
-    --danger:#FF5A4E; --ok:#7CFF8A;
-    --display:'Poppins',system-ui,-apple-system,'Segoe UI',Roboto,sans-serif;
-    --body:'Inter',system-ui,-apple-system,'Segoe UI',Roboto,'Helvetica Neue',Arial,sans-serif;
-    --mono:'Space Mono',ui-monospace,SFMono-Regular,Menlo,Consolas,'Liberation Mono',monospace;
-    --gap:clamp(16px,4vw,48px);
-    color-scheme:dark;
-  }
-  *{box-sizing:border-box}
-  html,body{margin:0;background:#0A0A0A;color:var(--paper)}
-  body{font-family:var(--body);font-size:15px;line-height:1.6;-webkit-font-smoothing:antialiased;min-height:100vh;
-    padding:env(safe-area-inset-top,0) 0 env(safe-area-inset-bottom,0)}
-  [hidden]{display:none!important}
-  code{font-family:var(--mono);font-size:.92em}
-  .wrap{max-width:980px;margin:0 auto;padding:0 var(--gap)}
-  .i{width:16px;height:16px;flex:none;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+/*__KIT_CSS__*/
 
-  header.bar{position:sticky;top:0;z-index:40;background:rgba(0,0,0,.88);backdrop-filter:blur(8px);border-bottom:1px solid var(--line)}
-  .bar-in{display:flex;align-items:center;gap:16px;min-height:60px;padding-block:8px}
-  .mark{display:flex;align-items:center;gap:12px}
-  .ets-badge{display:inline-flex;align-items:center;justify-content:center;width:42px;height:28px;background:var(--paper)}
-  .ets{font-family:var(--body);font-weight:800;font-size:13px;color:#000;letter-spacing:.01em;line-height:1}
-  .wordmark{font-family:var(--mono);font-size:12px;letter-spacing:.16em;text-transform:uppercase}
-  .wordmark b{color:var(--ash);font-weight:400}
-
-  .hero{padding:clamp(36px,7vw,80px) 0 clamp(24px,4vw,40px)}
-  .eyebrow{font-family:var(--mono);font-size:11px;letter-spacing:.28em;text-transform:uppercase;color:var(--ash);margin:0 0 18px}
-  h1{font-family:var(--display);font-weight:800;font-size:clamp(38px,8.5vw,88px);line-height:.95;letter-spacing:-.02em;margin:0}
-  .dash{display:inline-block;width:.46em;height:.13em;background:var(--volt);vertical-align:.3em;margin:0 .04em}
-  .lede{max-width:640px;margin:24px 0 0;font-size:16px}
-  .lede span{color:var(--ash)}
-
-  .facts{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:1px;background:var(--line);border:1px solid var(--line);margin:0 0 8px}
-  @media (max-width:760px){.facts{grid-template-columns:minmax(0,1fr)}}
-  .fact{background:var(--panel);padding:16px 18px;font-size:13.5px}
-  .fact h3{font-family:var(--mono);font-size:11px;letter-spacing:.2em;text-transform:uppercase;margin:0 0 8px;display:flex;gap:8px;align-items:center}
-  .fact p{margin:0;color:var(--ash)}
-
-  section.block{padding:clamp(24px,4vw,40px) 0;border-top:1px solid var(--line)}
-  .kicker{font-family:var(--mono);font-size:11px;letter-spacing:.26em;text-transform:uppercase;color:var(--ash);margin:0 0 12px;display:flex;gap:12px;align-items:center}
-  .kicker::before{content:"";width:28px;height:2px;background:var(--volt)}
-  h2{font-family:var(--display);font-weight:700;font-size:clamp(22px,3.4vw,32px);line-height:1.1;letter-spacing:-.015em;margin:0 0 6px}
-  .muted{color:var(--ash)}
-  .small{font-size:13px}
-
-  .cols{display:grid;grid-template-columns:minmax(0,1.35fr) minmax(0,1fr);gap:24px;align-items:start}
-  @media (max-width:860px){.cols{grid-template-columns:minmax(0,1fr)}}
-  .card{border:1px solid var(--line);background:var(--panel);padding:clamp(16px,3vw,28px);min-width:0}
-  label.f{display:block;margin:0 0 14px}
-  .lab{display:flex;justify-content:space-between;gap:10px;font-family:var(--mono);font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--ash);margin-bottom:6px}
-  .lab output{color:var(--paper)}
-  input[type=text],textarea{width:100%;background:#000;color:var(--paper);border:1px solid var(--field);border-radius:0;padding:10px 12px;font:inherit;font-size:14px;outline:none}
-  textarea{font-family:var(--mono);font-size:13px;resize:vertical;line-height:1.5;min-height:76px}
-  input:focus,textarea:focus{border-color:var(--volt);box-shadow:0 0 0 1px var(--volt)}
-  input[aria-invalid="true"]{border-color:var(--danger)}
-  input[type=range]{width:100%;accent-color:var(--volt);margin:2px 0}
-  input[type=checkbox]{accent-color:var(--volt);width:16px;height:16px;margin:4px 0 0}
-  .row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
-  .pair{display:grid;grid-template-columns:1fr 1fr;gap:14px 18px}
-  @media (max-width:520px){.pair{grid-template-columns:1fr}}
-  button{font-family:var(--body)}
-  button.btn{background:var(--volt);color:#000;border:1px solid var(--volt);border-radius:0;padding:10px 16px;font-weight:700;
-    font-size:12px;letter-spacing:.1em;text-transform:uppercase;cursor:pointer;display:inline-flex;gap:8px;align-items:center;justify-content:center;line-height:1.2}
-  button.btn:hover:not(:disabled){background:#fff;border-color:#fff}
-  button.ghost{background:transparent;color:var(--paper);border:1px solid var(--field)}
-  button.btn:disabled,button.ghost:disabled{background:transparent;color:var(--ash);border-color:var(--line-strong);cursor:not-allowed}
-  button.ghost:hover:not(:disabled){border-color:var(--volt);background:rgba(251,255,0,.08)}
-  button.sm{padding:6px 10px;font-size:11px}
-  button:focus-visible,summary:focus-visible,input:focus-visible{outline:2px solid var(--volt);outline-offset:2px}
-  .seg{display:inline-flex;border:1px solid var(--field);flex-wrap:wrap}
-  .seg button{background:transparent;color:var(--ash);border:0;padding:0 14px;min-height:34px;font-family:var(--mono);font-size:11px;letter-spacing:.12em;text-transform:uppercase;cursor:pointer;display:inline-flex;align-items:center;gap:8px}
-  .seg button + button{border-left:1px solid var(--field)}
-  .seg button[aria-pressed="true"]{background:var(--paper);color:#000}
-  .seg{margin-bottom:8px}
-  .swatch{width:10px;height:10px;border:1px solid currentColor;display:inline-block}
-  details{border:1px solid var(--line);padding:10px 12px;margin:0 0 14px}
-  details summary{padding:6px 0;cursor:pointer;font-family:var(--mono);font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--ash)}
-  details[open] > summary{margin-bottom:12px;color:var(--paper)}
-  .hint{font-size:12.5px;color:var(--ash);margin:6px 0 14px}
-  .check{display:flex;gap:10px;align-items:flex-start;margin:0 0 12px;font-size:14px}
-  .check small{display:block;color:var(--ash);font-size:12.5px}
-
-  .banner{border:1px solid var(--line-strong);color:var(--ash);padding:12px 16px;margin:0 0 16px;font-size:13px;display:flex;gap:10px;align-items:flex-start}
-  .banner .i{margin-top:3px}
-  .banner.bad{border-color:var(--danger);color:var(--danger)}
-  .banner.warn{border-color:rgba(251,255,0,.5);color:var(--paper)}
-  .msg{min-height:1.5em;margin:12px 0 0;font-size:13px}
-  .msg.ok{color:var(--ok)}
-  .msg.err{color:var(--danger)}
-
-  .preview{display:block;width:100%;max-width:300px;height:auto;border:1px solid var(--line-strong);background:#fff;margin:0 auto}
-  .preview-note{text-align:center}
-
-  .picker{display:flex;gap:16px;flex-wrap:wrap;align-items:center;border:1px dashed var(--field);padding:22px;margin:0 0 20px}
-  .picker input[type=file]{position:absolute;width:1px;height:1px;opacity:0;pointer-events:none}
-  .picker:focus-within{border-color:var(--volt)}
-
-  ul.files{list-style:none;margin:0 0 16px;padding:0;display:grid;gap:10px}
-  .file{border:1px solid var(--line-strong);background:#000;padding:12px 14px;display:grid;gap:8px}
-  .file-head{display:flex;justify-content:space-between;gap:12px;align-items:flex-start;flex-wrap:wrap}
-  .file-name{font-weight:600;overflow-wrap:anywhere;min-width:0}
-  .file-meta{font-family:var(--mono);font-size:12px;color:var(--ash)}
-  .status{font-family:var(--mono);font-size:11px;letter-spacing:.14em;text-transform:uppercase;white-space:nowrap}
-  .status.done{color:var(--ok)}
-  .status.failed{color:var(--danger)}
-  progress{width:100%;height:6px;appearance:none;-webkit-appearance:none;border:0;background:var(--line-strong)}
-  progress::-webkit-progress-bar{background:var(--line-strong)}
-  progress::-webkit-progress-value{background:var(--volt)}
-  progress::-moz-progress-bar{background:var(--volt)}
-  .ids{display:flex;gap:6px 18px;flex-wrap:wrap;font-family:var(--mono);font-size:12px;color:var(--ash)}
-  .ids b{color:var(--paper);font-weight:700;user-select:all;-webkit-user-select:all}
-  .why{font-size:13px;color:var(--danger);margin:0}
-  .empty{border:1px solid var(--line);padding:22px;color:var(--ash);font-size:14px;margin:0 0 16px}
-  .actions{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
-  footer{border-top:1px solid var(--line);padding:24px 0 40px;color:var(--ash);font-size:12.5px}
-  .sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+/* PDF Watermark */
+.picker{margin:0}
+.cols{display:grid;grid-template-columns:minmax(0,1.35fr) minmax(0,1fr);gap:var(--s5);align-items:start}
+@media (max-width:860px){.cols{grid-template-columns:minmax(0,1fr)}}
+.card{border:1px solid var(--line);background:var(--surface);border-radius:var(--r-lg);padding:clamp(16px,3vw,24px);min-width:0}
+.lab output{font-family:var(--mono);font-weight:400;color:var(--ink-2)}
+input[type=range]{width:100%;margin:2px 0}
+.pair{display:grid;grid-template-columns:1fr 1fr;gap:var(--s4) var(--s5);margin:0 0 var(--s5)}
+.pair .field{margin:0}
+@media (max-width:520px){.pair{grid-template-columns:1fr}}
+.swatch{width:10px;height:10px;border-radius:2px;border:1px solid currentColor;display:inline-block}
+.check{display:flex;gap:10px;align-items:flex-start;margin:0 0 var(--s3);font-size:14px;color:var(--ink)}
+.check input{width:16px;height:16px;margin:4px 0 0;flex:none}
+.check small{display:block;color:var(--mute);font-size:13px}
+details{border:1px solid var(--line-2);border-radius:var(--r);background:var(--bg);padding:var(--s2) var(--s3);margin:var(--s4) 0 0}
+details summary{padding:6px 0;cursor:pointer;font-size:13px;font-weight:600;color:var(--ink)}
+details[open] > summary{margin-bottom:var(--s3)}
+details .btn{margin-top:var(--s3)}
+.preview{display:block;width:100%;max-width:300px;height:auto;border:1px solid var(--line-2);border-radius:2px;background:#FFFFFF;margin:0 auto;box-shadow:var(--shadow)}
+.preview-note{text-align:center}
+#notes:empty{display:none}
+.empty{border:1px dashed var(--line-2);border-radius:var(--r-lg);padding:20px;color:var(--mute);font-size:14px;margin:0 0 var(--s4)}
+ul.files{list-style:none;margin:0 0 var(--s4);padding:0;display:grid;gap:10px}
+ul.files:empty{display:none}
+.file{border:1px solid var(--line-2);background:var(--surface);border-radius:var(--r);padding:12px 14px;display:grid;gap:var(--s2)}
+.file progress{margin:0}
+.file-head{display:flex;justify-content:space-between;gap:var(--s3);align-items:flex-start;flex-wrap:wrap}
+.file-name{font-weight:600;overflow-wrap:anywhere;min-width:0}
+.file-meta{font-family:var(--mono);font-size:12px;color:var(--mute);margin:0}
+.status{font-family:var(--mono);font-size:11px;letter-spacing:.14em;text-transform:uppercase;white-space:nowrap;color:var(--mute)}
+.status.done{color:var(--ok-fg)}
+.status.failed{color:var(--bad-fg)}
+.ids{display:flex;gap:6px 18px;flex-wrap:wrap;font-family:var(--mono);font-size:12px;color:var(--mute)}
+.ids b{color:var(--ink);font-weight:700;user-select:all;-webkit-user-select:all}
+.why{font-size:13px;color:var(--bad-fg);margin:0}
+.receipt{margin:var(--s4) 0 0}
+.msg.ok{color:var(--ok-fg)}
+.msg.err{color:var(--bad-fg)}
 </style>
 </head>
 <body>
+<!--__KIT_ICONS__-->
 <svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false">
-  <symbol id="i-shield" viewBox="0 0 24 24"><path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"/><path d="m9 12 2 2 4-4"/></symbol>
-  <symbol id="i-lock" viewBox="0 0 24 24"><rect width="18" height="11" x="3" y="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></symbol>
-  <symbol id="i-info" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/></symbol>
-  <symbol id="i-upload" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" x2="12" y1="3" y2="15"/></symbol>
-  <symbol id="i-download" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" x2="12" y1="15" y2="3"/></symbol>
   <symbol id="i-archive" viewBox="0 0 24 24"><rect width="20" height="5" x="2" y="3" rx="1"/><path d="M4 8v11a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8"/><path d="M10 12h4"/></symbol>
   <symbol id="i-trash" viewBox="0 0 24 24"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/><line x1="10" x2="10" y1="11" y2="17"/><line x1="14" x2="14" y1="11" y2="17"/></symbol>
   <symbol id="i-stamp" viewBox="0 0 24 24"><path d="M5 22h14"/><path d="M19.27 13.73A2.5 2.5 0 0 0 17.5 13h-11A2.5 2.5 0 0 0 4 15.5V17a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-1.5c0-.66-.26-1.3-.73-1.77Z"/><path d="M14 13V8.5C14 7 15 7 15 5a3 3 0 0 0-3-3c-1.66 0-3 1-3 3s1 2 1 3.5V13"/></symbol>
-  <symbol id="i-x" viewBox="0 0 24 24"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></symbol>
 </svg>
 
 <header class="bar">
@@ -148,6 +65,9 @@
     <div class="mark">
       <span class="ets-badge" aria-hidden="true"><span class="ets">ETS</span></span>
       <span class="wordmark">Enigma <b>/</b> PDF Watermark</span>
+    </div>
+    <div class="bar-end">
+      <button class="theme-toggle" type="button" data-theme-toggle aria-pressed="false" aria-label="Dark theme" title="Dark theme"><svg class="i i-moon" aria-hidden="true"><use href="#i-moon"/></svg><svg class="i i-sun" aria-hidden="true"><use href="#i-sun"/></svg></button>
     </div>
   </div>
 </header>
@@ -166,9 +86,8 @@
   </div>
 
   <section class="block" aria-labelledby="h-files">
-    <p class="kicker">Step 1</p>
-    <h2 id="h-files">Choose your PDFs</h2>
-    <p class="muted small" style="margin:0 0 18px">Pick as many as you like. Each file is marked on its own.</p>
+    <div class="step-head"><span class="step-n" aria-hidden="true">1</span><h2 id="h-files"><span class="sr">Step 1: </span>Choose your PDFs</h2></div>
+    <p class="sub">Pick as many as you like. Each file is marked on its own.</p>
     <div class="picker">
       <button class="btn" type="button" id="choose"><svg class="i" aria-hidden="true"><use href="#i-upload"/></svg>Choose PDF files</button>
       <input type="file" id="picker" accept=".pdf,application/pdf" multiple aria-label="PDF files" tabindex="-1">
@@ -177,20 +96,19 @@
   </section>
 
   <section class="block" aria-labelledby="h-mark">
-    <p class="kicker">Step 2</p>
-    <h2 id="h-mark">Set the watermark</h2>
-    <p class="muted small" style="margin:0 0 22px">The preview shows how the tiling lies on a page. The ID shown is an example.</p>
+    <div class="step-head"><span class="step-n" aria-hidden="true">2</span><h2 id="h-mark"><span class="sr">Step 2: </span>Set the watermark</h2></div>
+    <p class="sub">The preview shows how the tiling lies on a page. The ID shown is an example.</p>
     <div class="cols">
       <div class="card">
-        <label class="f" for="recipient">
-          <span class="lab">Who is this copy for?</span>
+        <div class="field">
+          <label class="lab" for="recipient"><span>Who is this copy for?</span></label>
           <input type="text" id="recipient" maxlength="80" autocomplete="off" spellcheck="false" aria-describedby="recipient-hint" aria-required="true" placeholder="A name or a case number">
-        </label>
-        <p class="hint" id="recipient-hint" style="margin-top:-6px">Required. It is printed on every page, so a leaked copy leads back to the person it was made for.</p>
+          <p class="hint" id="recipient-hint">Required. It is printed on every page, so a leaked copy leads back to the person it was made for.</p>
+        </div>
 
-        <div class="f" role="group" aria-labelledby="lab-color">
-          <span class="lab" id="lab-color">Colour</span>
-          <div class="seg" id="colors">
+        <div class="field">
+          <span class="lab" id="lab-color"><span>Colour</span></span>
+          <div class="seg" id="colors" role="group" aria-labelledby="lab-color">
             <button type="button" data-color="red" aria-pressed="true"><span class="swatch" style="background:#c71a1a"></span>Red</button>
             <button type="button" data-color="black" aria-pressed="false"><span class="swatch" style="background:#000"></span>Black</button>
             <button type="button" data-color="grey" aria-pressed="false"><span class="swatch" style="background:#595959"></span>Grey</button>
@@ -199,10 +117,10 @@
         </div>
 
         <div class="pair">
-          <label class="f"><span class="lab">Strength <output id="o-opacity"></output></span><input type="range" id="opacity" aria-label="Strength"></label>
-          <label class="f"><span class="lab">Angle <output id="o-rotation"></output></span><input type="range" id="rotation" aria-label="Angle"></label>
-          <label class="f"><span class="lab">Text size <output id="o-fontSize"></output></span><input type="range" id="fontSize" aria-label="Text size"></label>
-          <label class="f"><span class="lab">Spacing <output id="o-spacing"></output></span><input type="range" id="spacing" aria-label="Spacing"></label>
+          <div class="field"><label class="lab" for="opacity"><span>Strength</span><output id="o-opacity"></output></label><input type="range" id="opacity" aria-label="Strength"></div>
+          <div class="field"><label class="lab" for="rotation"><span>Angle</span><output id="o-rotation"></output></label><input type="range" id="rotation" aria-label="Angle"></div>
+          <div class="field"><label class="lab" for="fontSize"><span>Text size</span><output id="o-fontSize"></output></label><input type="range" id="fontSize" aria-label="Text size"></div>
+          <div class="field"><label class="lab" for="spacing"><span>Spacing</span><output id="o-spacing"></output></label><input type="range" id="spacing" aria-label="Spacing"></div>
         </div>
 
         <label class="check"><input type="checkbox" id="corners" checked><span>Corner stamps<small>The ID and page number at the top left and bottom right of every page.</small></span></label>
@@ -211,7 +129,7 @@
 
         <details>
           <summary>Wording</summary>
-          <label class="f" for="template"><span class="lab">Text on the tiles</span></label>
+          <label class="lab" for="template"><span>Text on the tiles</span></label>
           <textarea id="template" maxlength="300" rows="3" spellcheck="false" aria-describedby="template-hint"></textarea>
           <p class="hint" id="template-hint">Use {UID}, {DATE}, {RECIPIENT}, {PAGE} and {PAGES}. Letters outside the standard Latin set are replaced with a question mark, because the built in PDF font cannot draw them.</p>
           <button class="btn ghost sm" type="button" id="reset-template">Use the standard wording</button>
@@ -226,9 +144,8 @@
   </section>
 
   <section class="block" aria-labelledby="h-queue">
-    <p class="kicker">Step 3</p>
-    <h2 id="h-queue">Mark and save</h2>
-    <p class="muted small" style="margin:0 0 18px">Marked files are saved to your Downloads folder. The original files are never changed.</p>
+    <div class="step-head"><span class="step-n" aria-hidden="true">3</span><h2 id="h-queue"><span class="sr">Step 3: </span>Mark and save</h2></div>
+    <p class="sub">Marked files are saved to your Downloads folder. The original files are never changed.</p>
     <div id="notes"></div>
     <p class="empty" id="empty">No files yet. Choose PDFs in step 1.</p>
     <ul class="files" id="files" aria-label="Files"></ul>
@@ -237,15 +154,18 @@
       <button class="btn ghost" type="button" id="zip" disabled><svg class="i" aria-hidden="true"><use href="#i-archive"/></svg>Save all as ZIP</button>
       <button class="btn ghost" type="button" id="clear" disabled><svg class="i" aria-hidden="true"><use href="#i-trash"/></svg>Clear all</button>
     </div>
-    <label class="check" style="margin:16px 0 0"><input type="checkbox" id="receipt" checked><span>Put a receipt in the ZIP<small>A small <code>receipt.json</code> with each ID, recipient and file fingerprint. It holds no document content.</small></span></label>
+    <label class="check receipt"><input type="checkbox" id="receipt" checked><span>Put a receipt in the ZIP<small>A small <code>receipt.json</code> with each ID, recipient and file fingerprint. It holds no document content.</small></span></label>
     <p class="msg" id="msg" role="status" aria-live="polite"></p>
   </section>
 </main>
 
-<footer>
-  <div class="wrap">Enigma PDF Watermark <span id="ver"></span>. Part of Sanctum, AGPL-3.0. Uses pdf-lib (MIT) to write the PDFs. Icons from Lucide (ISC).</div>
+<footer class="foot">
+  <div class="wrap">Enigma PDF Watermark <span id="ver"></span>. Part of Sanctum, AGPL-3.0. Uses pdf-lib (MIT) to write the PDFs. Icons from Lucide (ISC). Fonts Inter, Poppins and Space Mono (SIL OFL 1.1).</div>
 </footer>
 
+<script>
+/*__KIT_JS__*/
+</script>
 <script>
 /*__PDFLIB__*/
 </script>
@@ -523,7 +443,7 @@
     var box = $("notes");
     box.textContent = "";
     if (staleNote) {
-      box.appendChild(h("div", { class: "banner warn", role: "status" }, icon("info"),
+      box.appendChild(h("div", { class: "notice warn", role: "status" }, icon("info"),
         h("span", { text: "The settings changed after some files were marked. Remove those files and add them again to mark them with the new settings." })));
     }
   }
