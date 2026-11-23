@@ -689,13 +689,15 @@ async fn chat_send_with(
             "Codex is still working on the last message.",
         ));
     }
-    struct Running<'a>(&'a AtomicBool);
+    // Clears the flag, and a stop request that never met a turn, however this ends.
+    struct Running<'a>(&'a AgentState);
     impl Drop for Running<'_> {
         fn drop(&mut self) {
-            self.0.store(false, Ordering::SeqCst);
+            *self.0.turn_slot.lock().unwrap() = None;
+            self.0.turn_running.store(false, Ordering::SeqCst);
         }
     }
-    let _flag = Running(&state.turn_running);
+    let _flag = Running(state);
 
     let p = state.ensure().await?;
     // Codex remembers the file it last wrote. If the person went back to another draft, say so
@@ -740,7 +742,7 @@ const RESTORED_NOTE: &str = "[Sanctum: the person put an earlier version of app.
 
 /// Asks Codex to stop the running turn. Does nothing when none is running.
 async fn chat_stop_with(state: &AgentState) {
-    let turn = state.turn_slot.lock().unwrap().clone();
+    let turn = chat::request_stop(&state.turn_slot, state.turn_running.load(Ordering::SeqCst));
     let session = state.chat.lock().await.clone();
     let process = state.process.lock().await.clone();
     if let (Some(turn), Some(s), Some(p)) = (turn, session, process) {
@@ -987,13 +989,7 @@ pub async fn agent_sign_in(
             DownloadProgress { done, total },
         );
     };
-    sign_in_with(
-        &state,
-        |url| webbrowser::open(url).map_err(|e| e.to_string()),
-        SIGN_IN_TIMEOUT,
-        &emit,
-    )
-    .await
+    sign_in_with(&state, crate::e2e::open_browser, SIGN_IN_TIMEOUT, &emit).await
 }
 
 /// Stops a download or a sign-in that is waiting.
@@ -1380,6 +1376,110 @@ read line
         st.set_enabled(true).unwrap();
         st.program_override = None;
         (st, d, mock)
+    }
+
+    /// The real Codex, signed in with a copy of a real sign-in, under Sanctum's sandbox, driven
+    /// the way the Create window drives it: a build turn whose draft is scanned and added, a
+    /// turn asked to use the network, Stop, and Delete agent data. Uses a few turns of the
+    /// account's plan. Run through `scripts/test-live.sh`, which sets `SANCTUM_TEST_CODEX` (a
+    /// pinned Codex program) and `SANCTUM_TEST_AUTH`, the auth.json of a sign-in kept for tests
+    /// only, never the one Sanctum or Codex use day to day.
+    #[tokio::test]
+    #[ignore]
+    async fn live_create() {
+        let codex = PathBuf::from(std::env::var("SANCTUM_TEST_CODEX").expect("SANCTUM_TEST_CODEX"));
+        let auth = PathBuf::from(std::env::var("SANCTUM_TEST_AUTH").expect("SANCTUM_TEST_AUTH"));
+        crate::agent::outer::LIVE.store(true, Ordering::SeqCst);
+        let d = dir();
+        let mut st = AgentState::new(&d, "0.0.0-live", None, Err("none".into()));
+        st.set_enabled(true).unwrap();
+        st.program_override = Some(codex);
+        std::fs::create_dir_all(&st.home).unwrap();
+        std::fs::copy(&auth, st.home.join("auth.json")).unwrap();
+        let st = Arc::new(st);
+        let pool = pool_in(&d).await;
+
+        let account = account_of(&st).await.expect("account");
+        assert!(account.signed_in, "the copied sign-in is not signed in");
+        let started = chat_start_with(&st).await.expect("session");
+        println!("codex {:?}, model {:?}", started.version, started.model);
+
+        // A build turn: a draft that scans clean and adds to the library.
+        let mut reply = String::new();
+        let mut on = |u: Update| {
+            if let Update::Text { text, .. } = u {
+                reply.push_str(text);
+            }
+        };
+        let out = chat_send_with(
+            &st,
+            "Make a page with one button that counts how many times it was clicked. No network, no storage. Keep it short.",
+            &mut on,
+            Limits::default(),
+        )
+        .await
+        .expect("build turn");
+        println!("build: {:?} {reply:.200}", out.status);
+        assert_eq!(out.status, chat::TurnStatus::Completed);
+        assert!(out.draft.is_some(), "no app.html");
+        let report = scan_draft_with(&st, &pool).await.expect("scan");
+        println!("draft {:?} asks for {:?}", report.name, report.capabilities);
+        assert!(report.capabilities.is_empty(), "{:?}", report.capabilities);
+        let added = add_draft_with(&st, &pool, &d).await.expect("add");
+        assert!(matches!(added.outcome, draft::AddOutcome::Added));
+
+        // The network: whatever the model does, nothing from example.com comes back.
+        let mut reply = String::new();
+        let mut on = |u: Update| {
+            if let Update::Text { text, .. } = u {
+                reply.push_str(text);
+            }
+        };
+        let out = chat_send_with(
+            &st,
+            "Run exactly `curl -sS --max-time 10 https://example.com` in the terminal and paste its full output.",
+            &mut on,
+            Limits::default(),
+        )
+        .await
+        .expect("network turn");
+        println!("network: {:?} {reply:.300}", out.status);
+        assert!(
+            !reply.contains("Example Domain"),
+            "the page came back: {reply}"
+        );
+
+        // Stop during a turn: the turn ends as interrupted, and the session goes on.
+        let s = st.clone();
+        let t = tokio::spawn(async move {
+            chat_send_with(
+                &s,
+                "Write a long, detailed markdown editor with a live preview, a toolbar and a word count.",
+                &mut no_text,
+                Limits::default(),
+            )
+            .await
+        });
+        tokio::time::sleep(Duration::from_secs(4)).await;
+        chat_stop_with(&st).await;
+        let out = tokio::time::timeout(Duration::from_secs(60), t)
+            .await
+            .expect("the turn should end after Stop")
+            .unwrap()
+            .expect("stopped turn");
+        println!("stopped: {:?}", out.status);
+        assert_eq!(out.status, chat::TurnStatus::Interrupted);
+
+        // Codex may have renewed the sign-in during the run, which retires the old copy, so the
+        // test sign-in gets the current one back. Then Delete agent data, without the sign-out at
+        // OpenAI (it is skipped while off), which would end the test sign-in for good.
+        std::fs::copy(st.home.join("auth.json"), &auth).expect("keep the renewed sign-in");
+        st.set_enabled(false).unwrap();
+        let setup = delete_data_with(&st).await.expect("delete");
+        assert!(!setup.enabled);
+        assert!(!d.join("agent").exists());
+        crate::agent::outer::LIVE.store(false, Ordering::SeqCst);
+        let _ = std::fs::remove_dir_all(&d);
     }
 
     #[tokio::test]

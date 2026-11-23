@@ -82,6 +82,42 @@ jobs:
           cargo clippy --manifest-path "$m" --all-targets -- -D warnings
           cargo test --manifest-path "$m"
 
+  # ── End to end (macOS) ─────────────────────────────────────────────────────
+  # The real app (a development build) driven through its windows, with a fake Codex under
+  # Sanctum's real sandbox: building apps, sign-in, Stop, a Codex that dies, Delete agent data.
+  # See docs/testing.md. The live tests with the real Codex need an account and run by hand.
+  e2e:
+    name: End to end (macOS)
+    needs: check
+    runs-on: macos-15
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: pnpm/action-setup@v6
+        with:
+          version: "10"
+
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - uses: dtolnay/rust-toolchain@stable
+
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: src-tauri
+          key: e2e
+
+      - name: Install JS dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Build the development app
+        run: pnpm test:e2e:build
+
+      - name: End-to-end tests
+        run: pnpm test:e2e
+
   # ── Full Tauri build matrix ────────────────────────────────────────────────
   # Verifies the app compiles and bundles correctly on all target platforms.
   # Runs in parallel across platforms after `check` passes.
@@ -186,6 +222,20 @@ jobs:
         env:
           # Suppress macOS notarization in CI (no signing certs present)
           CI: true
+
+      # The end-to-end remote control (src-tauri/src/e2e.rs) exists only in development
+      # builds. Fail if a release program carries its variable name.
+      - name: Release build has no end-to-end control
+        shell: bash
+        run: |
+          set -euo pipefail
+          bin=$(find src-tauri/target -type f \( -path '*/release/sanctum' -o -path '*/release/sanctum.exe' \) | head -1)
+          test -n "$bin"
+          if grep -a -q SANCTUM_E2E_SOCKET "$bin"; then
+            echo "::error::$bin contains the end-to-end control"
+            exit 1
+          fi
+          echo "checked $bin"
 
       # Keep the Linux bundles. The arm64 .deb is the one that matters: it is
       # the only practical way to get Sanctum onto a Raspberry Pi without a

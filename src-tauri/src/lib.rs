@@ -11,6 +11,7 @@ pub mod commands;
 pub mod db;
 pub mod deeplink;
 pub mod device_broker;
+pub mod e2e;
 pub mod models;
 pub mod policy;
 pub mod registry;
@@ -325,6 +326,8 @@ pub fn run() {
                 transport,
             ));
             app.manage(AppDataDir(data_dir));
+            // The end-to-end suite's remote control. Development builds only (src/e2e.rs).
+            e2e::start(app.handle());
 
             // sanctum:// links: validated and shown in a confirmation, never acted on here.
             {

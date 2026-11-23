@@ -671,9 +671,13 @@ fn trace(n: &super::rpc::Notification) {
     }
 }
 
+/// What a stop request leaves in the turn slot when it arrives before Codex has named the turn.
+/// The turn is interrupted as soon as its id is known. Never a real turn id, which is not empty.
+pub const STOP_REQUESTED: &str = "";
+
 /// Sends one prompt and follows the turn to its end. `on_update` receives the agent's reply as
 /// it arrives and each step it takes. `turn_slot` holds the turn's id while it runs, so a stop
-/// request elsewhere can interrupt it.
+/// request elsewhere can interrupt it; see [`request_stop`].
 pub async fn run_turn(
     rpc: &Rpc,
     thread_id: &str,
@@ -686,6 +690,22 @@ pub async fn run_turn(
     let result = drive(rpc, thread_id, scratch, text, turn_slot, on_update, limits).await;
     *turn_slot.lock().unwrap() = None;
     result
+}
+
+/// Asks the running turn to stop. Returns the turn's id when it is known, for the caller to
+/// interrupt. Before that, it marks the slot so [`run_turn`] interrupts the turn as soon as
+/// Codex answers, rather than letting it run to its time limit.
+pub fn request_stop(turn_slot: &Mutex<Option<String>>, running: bool) -> Option<String> {
+    let mut slot = turn_slot.lock().unwrap();
+    match slot.as_deref() {
+        Some(id) if id != STOP_REQUESTED => Some(id.to_owned()),
+        _ => {
+            if running {
+                *slot = Some(STOP_REQUESTED.to_owned());
+            }
+            None
+        }
+    }
 }
 
 fn clip(s: &str) -> String {
@@ -717,7 +737,15 @@ async fn drive(
         .filter(|s| !s.is_empty())
         .ok_or_else(|| AgentError::Protocol("unexpected answer to starting a turn".into()))?
         .to_owned();
-    *turn_slot.lock().unwrap() = Some(turn_id.clone());
+    let stop_early = turn_slot
+        .lock()
+        .unwrap()
+        .replace(turn_id.clone())
+        .is_some_and(|s| s == STOP_REQUESTED);
+    if stop_early {
+        // Stop was pressed while the turn was starting. Codex answers with turn/completed.
+        interrupt(rpc, thread_id, &turn_id).await;
+    }
 
     let deadline = Instant::now() + limits.timeout;
     let mut steps = 0usize;
@@ -1507,6 +1535,46 @@ mod tests {
         fake.send(completed("interrupted", None)).await;
         assert_eq!(t.await.unwrap().unwrap().status, TurnStatus::Interrupted);
         std::fs::remove_dir_all(dir).unwrap();
+    }
+
+    #[tokio::test]
+    async fn a_stop_before_codex_names_the_turn_interrupts_it_once_named() {
+        let dir = tmp("early-stop");
+        let (rpc, mut fake) = pair();
+        let slot = Arc::new(Mutex::new(None));
+        // Pressed while the turn is starting: nothing to interrupt yet, so it is remembered.
+        assert_eq!(request_stop(&slot, true), None);
+        let t = tokio::spawn(run(
+            Arc::new(rpc),
+            dir.clone(),
+            slot.clone(),
+            Default::default(),
+            Limits::default(),
+        ));
+        fake.answer(turn_answer()).await;
+        let req = fake.answer(json!({})).await;
+        assert_eq!(req["method"], "turn/interrupt");
+        assert_eq!(req["params"], json!({"threadId": "TH", "turnId": "T1"}));
+        fake.send(completed("interrupted", None)).await;
+        assert_eq!(t.await.unwrap().unwrap().status, TurnStatus::Interrupted);
+        assert_eq!(*slot.lock().unwrap(), None);
+        std::fs::remove_dir_all(dir).unwrap();
+    }
+
+    #[test]
+    fn a_stop_names_the_running_turn_and_leaves_an_idle_slot_alone() {
+        let slot = Mutex::new(Some("T9".to_owned()));
+        assert_eq!(request_stop(&slot, true).as_deref(), Some("T9"));
+        assert_eq!(slot.lock().unwrap().as_deref(), Some("T9"));
+        // Nothing running: nothing to remember for a later turn.
+        let idle = Mutex::new(None);
+        assert_eq!(request_stop(&idle, false), None);
+        assert_eq!(*idle.lock().unwrap(), None);
+        // A second press before the id is known changes nothing.
+        let early = Mutex::new(None);
+        assert_eq!(request_stop(&early, true), None);
+        assert_eq!(request_stop(&early, true), None);
+        assert_eq!(early.lock().unwrap().as_deref(), Some(STOP_REQUESTED));
     }
 
     #[tokio::test]
