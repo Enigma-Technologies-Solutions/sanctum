@@ -13,6 +13,8 @@ section behind.
 
 ## [Unreleased]
 
+## [0.3.0] - 2026-11-23
+
 ### Added
 
 - Build apps with Codex, an experiment that is **off by default**. Settings has a Turn on button.
@@ -301,6 +303,7 @@ Pi 400 (Alcor Link AK9567, contact slot):
 Contactless readers brown the card out during key generation and leave it mute
 until re-presented; a contact reader does not.
 
-[Unreleased]: https://github.com/Enigma-Technologies-Solutions/sanctum/compare/v0.2.0...HEAD
+[Unreleased]: https://github.com/Enigma-Technologies-Solutions/sanctum/compare/v0.3.0...HEAD
+[0.3.0]: https://github.com/Enigma-Technologies-Solutions/sanctum/compare/v0.2.0...v0.3.0
 [0.2.0]: https://github.com/Enigma-Technologies-Solutions/sanctum/compare/v0.1.0...v0.2.0
 [0.1.0]: https://github.com/Enigma-Technologies-Solutions/sanctum/releases/tag/v0.1.0

@@ -199,7 +199,30 @@ test('the Signed tools section offers exactly the tools in the registry, with va
   const links = [...home.matchAll(/href="(sanctum:\/\/[^"]+)"/g)].map((m) => m[1]);
   assert.deepEqual(links.sort(), index.apps.map((a) => installLink(a.app_id)).sort());
   for (const l of links) assert.match(l, /^sanctum:\/\/install\?app=[a-z0-9]+(\.[a-z0-9-]+)+$/);
-  for (const a of index.apps) assert.ok(existsSync(join(web, 'registry/v1/apps', a.app_id, 'overview.png')), `${a.app_id} overview screenshot`);
+  // Each tool is shown by a drawing of its overview (scripts/lib/tool-mocks), filled in by
+  // scripts/build-registry.mjs between markers; the window is decorative and the figure named.
+  for (const a of index.apps) {
+    const block = home.match(new RegExp(`<!-- tool-mock:${a.app_id.replace(/\./g, '\\.')} -->([\\s\\S]*?)<!-- /tool-mock -->`));
+    assert.ok(block, `${a.app_id}: no picture block on the home page`);
+    assert.match(block[1], /<div class="mock-window[^"]*" aria-hidden="true">/, `${a.app_id}: window is decorative`);
+    assert.match(block[1], /<figcaption class="sr">[^<]+<\/figcaption>/, `${a.app_id}: figure has a name`);
+    assert.ok(!/<(a|button|input|textarea|select)\b|tabindex/.test(block[1]), `${a.app_id}: nothing inside can take focus`);
+  }
+});
+
+test('every screenshot a tool page lists is drawn, so no tool page falls back to an image', () => {
+  const index = JSON.parse(readFileSync(join(web, 'registry/v1/index.json'), 'utf8'));
+  for (const a of index.apps) {
+    const page = readFileSync(join(web, 'apps', a.app_id, 'index.html'), 'utf8');
+    const detail = JSON.parse(readFileSync(join(web, 'registry/v1', a.detail.path), 'utf8'));
+    assert.ok(!/<figure class="screenshot">/.test(page), `${a.app_id}: a screenshot is shown as an image`);
+    for (const s of detail.screenshots ?? []) assert.ok(page.includes(`<figcaption class="tool-shot__cap">${s.alt.replace(/'/g, '&#39;')}</figcaption>`), `${a.app_id}: ${s.path} not drawn`);
+    for (const f of page.matchAll(/<figure class="mock tool-shot">([\s\S]*?)<\/figure>/g)) {
+      assert.match(f[1], /<div class="mock-window[^"]*" aria-hidden="true">/, `${a.app_id}: window is decorative`);
+      assert.ok(!/<(a|button|input|textarea|select)\b|tabindex/.test(f[1]), `${a.app_id}: nothing inside can take focus`);
+    }
+    assert.ok(!/[\u{1F300}-\u{1FAFF}\u{2600}-\u{27BF}]/u.test(page), `${a.app_id}: emoji on the page`);
+  }
 });
 
 test('the privacy answer still says registries are contacted only on request', () => {
