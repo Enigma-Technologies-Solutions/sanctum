@@ -278,6 +278,439 @@
   </div>
 </section>
 
+<!-- ══ The app ═══════════════════════════════════════════════════════════
+     Mock-ups of the desktop app, drawn in HTML and CSS from the React source in src/
+     (.mock-window and .ui-* in styles.css). Update them when the app changes. -->
+<section class="section" id="app">
+  <div class="wrap">
+    <div class="shead">
+      <div>
+        <p class="eyebrow">The app</p>
+        <h2 class="h2">What you see in Sanctum</h2>
+      </div>
+      <p class="lede">
+        The main window holds your tools, the Catalogue and Settings. On macOS, a second window
+        builds new tools with Codex. These views are drawn from the app's own interface in its
+        light theme, with the same labels and states.
+      </p>
+    </div>
+
+    <div class="tour">
+    <article class="card tour__row">
+      <div class="tour__text">
+        <p class="eyebrow eyebrow--flush">Tool Vault</p>
+        <h3>Every tool you added, in one place</h3>
+        <p>Tools you pasted or opened yourself are listed under Your tools. Signed tools are grouped under their publisher. Each card shows what the tool asks for, whether its network access is on, and the start of the SHA-256 hash of the stored file.</p>
+      </div>
+      <figure class="mock mock-stage">
+      <div class="mock-window mock-window--xl" aria-hidden="true">
+        <div class="mock-window__frame">
+          <div class="mock-window__bar"><span class="mock-window__lights"><i></i><i></i><i></i></span><span class="mock-window__title">Sanctum</span></div>
+          <div class="mock-window__screen ui">
+          <div class="ui-head">
+            <div class="ui-head__cell"><span class="ui-ets">ETS</span><span class="ui-ets-word">Enigma</span></div>
+            <div class="ui-head__cell ui-head__cell--brand"><svg class="ui-st" viewBox="0 0 64 64"><rect x="0" y="0" width="64" height="64" fill="#0A0A0A"/><rect x="6.50" y="6.50" width="51.00" height="51.00" fill="none" stroke="#FBFF00" stroke-width="3"/><g fill="#FFFFFF" transform="translate(14.51 40.39) scale(0.03008 -0.03008)"><path d="M32 183H201Q204 154 228.0 136.0Q252 118 287 118Q319 118 336.5 130.5Q354 143 354 163Q354 187 329.0 198.5Q304 210 248 224Q188 238 148.0 253.5Q108 269 79.0 302.5Q50 336 50 393Q50 441 76.5 480.5Q103 520 154.5 543.0Q206 566 277 566Q382 566 442.5 514.0Q503 462 512 376H354Q350 405 328.5 422.0Q307 439 272 439Q242 439 226.0 427.5Q210 416 210 396Q210 372 235.5 360.0Q261 348 315 336Q377 320 416.0 304.5Q455 289 484.5 254.5Q514 220 515 162Q515 113 487.5 74.5Q460 36 408.5 14.0Q357 -8 289 -8Q216 -8 159.0 17.0Q102 42 69.0 85.5Q36 129 32 183Z"/><path transform="translate(538 0)" d="M373 145V0H286Q193 0 141.0 45.5Q89 91 89 194V416H21V558H89V694H260V558H372V416H260V192Q260 167 272.0 156.0Q284 145 312 145Z"/></g><rect x="44.02" y="35.88" width="4.51" height="4.51" fill="#FBFF00"/></svg><span class="ui-brand">Sanctum</span></div>
+            <div class="ui-nav"><span class="ui-tab ui-tab--on"><svg class="i" viewBox="0 0 24 24"><path d="m16 6 4 14"/><path d="M12 6v14"/><path d="M8 8v12"/><path d="M4 4v16"/></svg>Tool Vault</span><span class="ui-tab"><svg class="i" viewBox="0 0 24 24"><path d="m2 7 4.41-4.41A2 2 0 0 1 7.83 2h8.34a2 2 0 0 1 1.42.59L22 7"/><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><path d="M15 22v-4a2 2 0 0 0-2-2h-2a2 2 0 0 0-2 2v4"/><path d="M2 7h20"/><path d="M22 7v3a2 2 0 0 1-2 2a2.7 2.7 0 0 1-1.59-.63.7.7 0 0 0-.82 0A2.7 2.7 0 0 1 16 12a2.7 2.7 0 0 1-1.59-.63.7.7 0 0 0-.82 0A2.7 2.7 0 0 1 12 12a2.7 2.7 0 0 1-1.59-.63.7.7 0 0 0-.82 0A2.7 2.7 0 0 1 8 12a2.7 2.7 0 0 1-1.59-.63.7.7 0 0 0-.82 0A2.7 2.7 0 0 1 4 12a2 2 0 0 1-2-2V7"/></svg>Catalogue</span><span class="ui-tab"><svg class="i" viewBox="0 0 24 24"><path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/><circle cx="12" cy="12" r="3"/></svg>Settings</span></div>
+            <div class="ui-head__meta"><span>v0.3.0</span><i></i><span>Tools run sandboxed</span></div>
+          </div>
+          <div class="ui-page">
+            <h1>Installed tools</h1>
+            <div class="ui-volt"></div>
+            <p>Tools you have added to Sanctum. Each one runs in its own sandbox and gets only the access you approve.</p>
+          </div>
+          <div class="ui-scroll">
+            <div class="ui-shead">
+              <div>
+                <h2>Your tools</h2>
+                <div class="ui-meta"><svg class="i" viewBox="0 0 24 24"><path d="M10 12.5 8 15l2 2.5"/><path d="m14 12.5 2 2.5-2 2.5"/><path d="M14 2v4a2 2 0 0 0 2 2h4"/><path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7z"/></svg><span>Pasted or opened by you, not signed</span><span>·</span><span>2 tools</span></div>
+              </div>
+              <div class="ui-actions">
+                <span class="ui-btn ui-btn--volt ui-btn--sm"><svg class="i" viewBox="0 0 24 24"><rect width="8" height="4" x="8" y="2" rx="1" ry="1"/><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/></svg>Paste from Clipboard</span>
+                <span class="ui-btn ui-btn--outline ui-btn--sm"><svg class="i" viewBox="0 0 24 24"><path d="m6 14 1.5-2.9A2 2 0 0 1 9.24 10H20a2 2 0 0 1 1.94 2.5l-1.54 6a2 2 0 0 1-1.95 1.5H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h3.9a2 2 0 0 1 1.69.9l.81 1.2a2 2 0 0 0 1.67.9H18a2 2 0 0 1 2 2v2"/></svg>Open File…</span>
+              </div>
+            </div>
+            <div class="ui-grid">
+                <div class="ui-card">
+                  <div class="ui-card__main">
+                    <div class="ui-card__id">
+                      <span class="ui-ico ui-ico--tile">IN</span>
+                      <div class="ui-card__who">
+                        <div class="ui-card__name"><h3>Invoice Parser</h3></div>
+                        <div class="ui-ver">v2</div>
+                      </div>
+                    </div>
+                    <p class="ui-desc">Reads invoice PDFs, converts the totals at the current exchange rate and adds them up.</p>
+                    <div class="ui-caps"><span class="ui-chip"><span class="ui-dot"></span>Camera</span><span class="ui-chip"><span class="ui-dot"></span>Storage</span><span class="ui-chip"><span class="ui-dot"></span>Net: api.example.com</span><span class="ui-chip ui-chip--ok"><svg class="i" viewBox="0 0 24 24"><path d="M12 20h.01"/><path d="M2 8.82a15 15 0 0 1 20 0"/><path d="M5 12.859a10 10 0 0 1 14 0"/><path d="M8.5 16.429a5 5 0 0 1 7 0"/></svg>Network on</span></div>
+                    <div class="ui-hash"><span>3a4b5c90e91f</span><b>·</b><span>48.2 KB</span></div>
+                  </div>
+                  <div class="ui-card__foot">
+                    <span class="ui-cbtn ui-cbtn--run"><svg class="i" viewBox="0 0 24 24"><polygon points="6 3 20 12 6 21 6 3"/></svg>Run</span><span class="ui-cbtn ui-cbtn--inspect"><svg class="i" viewBox="0 0 24 24"><path d="M2.062 12.348a1 1 0 0 1 0-.696 10.75 10.75 0 0 1 19.876 0 1 1 0 0 1 0 .696 10.75 10.75 0 0 1-19.876 0"/><circle cx="12" cy="12" r="3"/></svg>Inspect</span>
+                    <span class="ui-more"><svg class="i" viewBox="0 0 24 24"><circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/><circle cx="5" cy="12" r="1"/></svg></span>
+                  </div>
+                </div>
+                <div class="ui-card">
+                  <div class="ui-card__main">
+                    <div class="ui-card__id">
+                      <span class="ui-ico ui-ico--tile">PA</span>
+                      <div class="ui-card__who">
+                        <div class="ui-card__name"><h3>Packing List</h3><span class="ui-mark"><svg class="i" viewBox="0 0 24 24"><path d="M13 7 8.7 2.7a2.41 2.41 0 0 0-3.4 0L2.7 5.3a2.41 2.41 0 0 0 0 3.4L7 13"/><path d="m8 6 2-2"/><path d="m18 16 2-2"/><path d="m17 11 4.3 4.3c.94.94.94 2.46 0 3.4l-2.6 2.6c-.94.94-2.46.94-3.4 0L11 17"/><path d="M21.174 6.812a1 1 0 0 0-3.986-3.987L3.842 16.174a2 2 0 0 0-.5.83l-1.321 4.352a.5.5 0 0 0 .623.622l4.353-1.32a2 2 0 0 0 .83-.497z"/><path d="m15 5 4 4"/></svg></span></div>
+                        <div class="ui-ver">v1</div>
+                      </div>
+                    </div>
+                    <p class="ui-desc">A packing list for trips, grouped by category, with ticks that are kept between runs.</p>
+                    <div class="ui-caps"><span class="ui-chip"><span class="ui-dot"></span>Storage</span></div>
+                    <div class="ui-hash"><span>9c41e7a2d05b</span><b>·</b><span>14.2 KB</span></div>
+                  </div>
+                  <div class="ui-card__foot">
+                    <span class="ui-cbtn ui-cbtn--run"><svg class="i" viewBox="0 0 24 24"><polygon points="6 3 20 12 6 21 6 3"/></svg>Run</span><span class="ui-cbtn ui-cbtn--inspect"><svg class="i" viewBox="0 0 24 24"><path d="M2.062 12.348a1 1 0 0 1 0-.696 10.75 10.75 0 0 1 19.876 0 1 1 0 0 1 0 .696 10.75 10.75 0 0 1-19.876 0"/><circle cx="12" cy="12" r="3"/></svg>Inspect</span>
+                    <span class="ui-more"><svg class="i" viewBox="0 0 24 24"><circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/><circle cx="5" cy="12" r="1"/></svg></span>
+                  </div>
+                </div>
+                <div class="ui-card">
+                  <div class="ui-card__main">
+                    <div class="ui-card__id">
+                      <span class="ui-ico ui-ico--tile"><svg class="i" viewBox="0 0 24 24"><path d="M13 7 8.7 2.7a2.41 2.41 0 0 0-3.4 0L2.7 5.3a2.41 2.41 0 0 0 0 3.4L7 13"/><path d="m8 6 2-2"/><path d="m18 16 2-2"/><path d="m17 11 4.3 4.3c.94.94.94 2.46 0 3.4l-2.6 2.6c-.94.94-2.46.94-3.4 0L11 17"/><path d="M21.174 6.812a1 1 0 0 0-3.986-3.987L3.842 16.174a2 2 0 0 0-.5.83l-1.321 4.352a.5.5 0 0 0 .623.622l4.353-1.32a2 2 0 0 0 .83-.497z"/><path d="m15 5 4 4"/></svg></span>
+                      <div class="ui-card__name"><h3>Create your own app</h3></div>
+                    </div>
+                    <p class="ui-desc">Describe a tool in plain words and Codex writes it for you, using your ChatGPT account.</p>
+                    <div><span class="ui-btn ui-btn--outline">Start building<svg class="i" viewBox="0 0 24 24"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg></span></div>
+                  </div>
+                </div>
+            </div>
+            <div class="ui-groups">
+              <div>
+                <div class="ui-shead">
+                  <div>
+                    <h2>Enigma Technologies Solutions</h2>
+                    <div class="ui-meta"><svg class="i" viewBox="0 0 24 24"><path d="M3.85 8.62a4 4 0 0 1 4.78-4.77 4 4 0 0 1 6.74 0 4 4 0 0 1 4.78 4.78 4 4 0 0 1 0 6.74 4 4 0 0 1-4.77 4.78 4 4 0 0 1-6.75 0 4 4 0 0 1-4.78-4.77 4 4 0 0 1 0-6.76Z"/><path d="m9 12 2 2 4-4"/></svg><span>Verified publisher</span><span>·</span><span>2 tools</span></div>
+                  </div>
+                </div>
+                <div class="ui-grid">
+                <div class="ui-card">
+                  <div class="ui-card__main">
+                    <div class="ui-card__id">
+                      <img class="ui-ico" src="./registry/v1/apps/sh.enigma.otp-vault/icon.svg" width="40" height="40" alt="">
+                      <div class="ui-card__who">
+                        <div class="ui-card__name"><h3>OTP Vault</h3><span class="ui-mark ui-mark--ok"><svg class="i" viewBox="0 0 24 24"><path d="M3.85 8.62a4 4 0 0 1 4.78-4.77 4 4 0 0 1 6.74 0 4 4 0 0 1 4.78 4.78 4 4 0 0 1 0 6.74 4 4 0 0 1-4.77 4.78 4 4 0 0 1-6.75 0 4 4 0 0 1-4.78-4.77 4 4 0 0 1 0-6.76Z"/><path d="m9 12 2 2 4-4"/></svg></span></div>
+                        <div class="ui-ver">v1.0.2</div>
+                      </div>
+                    </div>
+                    <p class="ui-desc">Time-based one-time codes (TOTP) kept in Sanctum storage and optionally on a smart card.</p>
+                    <div class="ui-caps"><span class="ui-chip"><span class="ui-dot"></span>Storage</span><span class="ui-chip"><span class="ui-dot"></span>Smart card</span></div>
+                    <div class="ui-hash"><span>bd325dd981ec</span><b>·</b><span>72.6 KB</span></div>
+                  </div>
+                  <div class="ui-card__foot">
+                    <span class="ui-cbtn ui-cbtn--run"><svg class="i" viewBox="0 0 24 24"><polygon points="6 3 20 12 6 21 6 3"/></svg>Run</span><span class="ui-cbtn ui-cbtn--inspect"><svg class="i" viewBox="0 0 24 24"><path d="M2.062 12.348a1 1 0 0 1 0-.696 10.75 10.75 0 0 1 19.876 0 1 1 0 0 1 0 .696 10.75 10.75 0 0 1-19.876 0"/><circle cx="12" cy="12" r="3"/></svg>Inspect</span>
+                    <span class="ui-more"><svg class="i" viewBox="0 0 24 24"><circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/><circle cx="5" cy="12" r="1"/></svg></span>
+                  </div>
+                </div>
+                <div class="ui-card">
+                  <div class="ui-card__main">
+                    <div class="ui-card__id">
+                      <img class="ui-ico" src="./registry/v1/apps/sh.enigma.shamir/icon.svg" width="40" height="40" alt="">
+                      <div class="ui-card__who">
+                        <div class="ui-card__name"><h3>Shamir Secret Sharing</h3><span class="ui-mark ui-mark--ok"><svg class="i" viewBox="0 0 24 24"><path d="M3.85 8.62a4 4 0 0 1 4.78-4.77 4 4 0 0 1 6.74 0 4 4 0 0 1 4.78 4.78 4 4 0 0 1 0 6.74 4 4 0 0 1-4.77 4.78 4 4 0 0 1-6.75 0 4 4 0 0 1-4.78-4.77 4 4 0 0 1 0-6.76Z"/><path d="m9 12 2 2 4-4"/></svg></span></div>
+                        <div class="ui-ver">v1.0.2</div>
+                      </div>
+                    </div>
+                    <p class="ui-desc">Split a secret into shares and combine them back. Runs offline and asks for no access.</p>
+                    <div class="ui-caps"><span class="ui-chip ui-chip--quiet">No special access</span></div>
+                    <div class="ui-hash"><span>1601e706b168</span><b>·</b><span>90.3 KB</span></div>
+                  </div>
+                  <div class="ui-card__foot">
+                    <span class="ui-cbtn ui-cbtn--run"><svg class="i" viewBox="0 0 24 24"><polygon points="6 3 20 12 6 21 6 3"/></svg>Run</span><span class="ui-cbtn ui-cbtn--inspect"><svg class="i" viewBox="0 0 24 24"><path d="M2.062 12.348a1 1 0 0 1 0-.696 10.75 10.75 0 0 1 19.876 0 1 1 0 0 1 0 .696 10.75 10.75 0 0 1-19.876 0"/><circle cx="12" cy="12" r="3"/></svg>Inspect</span>
+                    <span class="ui-more"><svg class="i" viewBox="0 0 24 24"><circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/><circle cx="5" cy="12" r="1"/></svg></span>
+                  </div>
+                </div>
+                </div>
+              </div>
+            </div>
+          </div>
+          </div>
+        </div>
+      </div>
+        <figcaption class="sr">The Tool Vault in Sanctum: two tools of your own, a card for creating an app, and two tools from Enigma Technologies Solutions marked as a verified publisher.</figcaption>
+      </figure>
+    </article>
+    <article class="card tour__row">
+      <div class="tour__text">
+        <p class="eyebrow eyebrow--flush">Permissions</p>
+        <h3>Each permission has its own switch</h3>
+        <p>Inspect a tool to see what the scan found in its source. Every permission starts switched off. Network access names the hosts, and the summary under the switches says what the tool can do the next time it runs.</p>
+      </div>
+      <figure class="mock mock-stage">
+      <div class="mock-window mock-window--tall" aria-hidden="true">
+        <div class="mock-window__frame">
+          <div class="mock-window__bar"><span class="mock-window__lights"><i></i><i></i><i></i></span><span class="mock-window__title">Sanctum</span></div>
+          <div class="mock-window__screen ui">
+          <div class="ui-head">
+            <div class="ui-head__cell"><span class="ui-ets">ETS</span><span class="ui-ets-word">Enigma</span></div>
+            <div class="ui-head__cell ui-head__cell--brand"><svg class="ui-st" viewBox="0 0 64 64"><rect x="0" y="0" width="64" height="64" fill="#0A0A0A"/><rect x="6.50" y="6.50" width="51.00" height="51.00" fill="none" stroke="#FBFF00" stroke-width="3"/><g fill="#FFFFFF" transform="translate(14.51 40.39) scale(0.03008 -0.03008)"><path d="M32 183H201Q204 154 228.0 136.0Q252 118 287 118Q319 118 336.5 130.5Q354 143 354 163Q354 187 329.0 198.5Q304 210 248 224Q188 238 148.0 253.5Q108 269 79.0 302.5Q50 336 50 393Q50 441 76.5 480.5Q103 520 154.5 543.0Q206 566 277 566Q382 566 442.5 514.0Q503 462 512 376H354Q350 405 328.5 422.0Q307 439 272 439Q242 439 226.0 427.5Q210 416 210 396Q210 372 235.5 360.0Q261 348 315 336Q377 320 416.0 304.5Q455 289 484.5 254.5Q514 220 515 162Q515 113 487.5 74.5Q460 36 408.5 14.0Q357 -8 289 -8Q216 -8 159.0 17.0Q102 42 69.0 85.5Q36 129 32 183Z"/><path transform="translate(538 0)" d="M373 145V0H286Q193 0 141.0 45.5Q89 91 89 194V416H21V558H89V694H260V558H372V416H260V192Q260 167 272.0 156.0Q284 145 312 145Z"/></g><rect x="44.02" y="35.88" width="4.51" height="4.51" fill="#FBFF00"/></svg><span class="ui-brand">Sanctum</span></div>
+            <div class="ui-nav"><span class="ui-tab ui-tab--on"><svg class="i" viewBox="0 0 24 24"><path d="m16 6 4 14"/><path d="M12 6v14"/><path d="M8 8v12"/><path d="M4 4v16"/></svg>Tool Vault</span><span class="ui-tab"><svg class="i" viewBox="0 0 24 24"><path d="m2 7 4.41-4.41A2 2 0 0 1 7.83 2h8.34a2 2 0 0 1 1.42.59L22 7"/><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><path d="M15 22v-4a2 2 0 0 0-2-2h-2a2 2 0 0 0-2 2v4"/><path d="M2 7h20"/><path d="M22 7v3a2 2 0 0 1-2 2a2.7 2.7 0 0 1-1.59-.63.7.7 0 0 0-.82 0A2.7 2.7 0 0 1 16 12a2.7 2.7 0 0 1-1.59-.63.7.7 0 0 0-.82 0A2.7 2.7 0 0 1 12 12a2.7 2.7 0 0 1-1.59-.63.7.7 0 0 0-.82 0A2.7 2.7 0 0 1 8 12a2.7 2.7 0 0 1-1.59-.63.7.7 0 0 0-.82 0A2.7 2.7 0 0 1 4 12a2 2 0 0 1-2-2V7"/></svg>Catalogue</span><span class="ui-tab"><svg class="i" viewBox="0 0 24 24"><path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/><circle cx="12" cy="12" r="3"/></svg>Settings</span></div>
+            <div class="ui-head__meta"><span>v0.3.0</span><i></i><span>Tools run sandboxed</span></div>
+          </div>
+          <div class="ui-insp">
+            <span class="ui-insp__back"><svg class="i" viewBox="0 0 24 24"><path d="m12 19-7-7 7-7"/><path d="M19 12H5"/></svg></span>
+            <h2>Invoice Parser</h2>
+            <span class="ui-btn ui-btn--outline ui-btn--sm"><svg class="i" viewBox="0 0 24 24"><path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"/><path d="M21 3v5h-5"/><path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"/><path d="M8 16H3v5"/></svg>Update</span>
+            <span class="ui-btn ui-btn--ghost ui-btn--icon"><svg class="i" viewBox="0 0 24 24"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/><line x1="10" x2="10" y1="11" y2="17"/><line x1="14" x2="14" y1="11" y2="17"/></svg></span>
+            <span class="ui-btn ui-btn--sm"><svg class="i" viewBox="0 0 24 24"><polygon points="6 3 20 12 6 21 6 3"/></svg>Run</span>
+          </div>
+          <div class="ui-tabs"><span class="ui-tabs__on">Permissions</span><span>Details</span><span>Versions (2)</span></div>
+          <div class="ui-panel">
+            <div>
+              <div class="ui-sl ui-sl--gap">Access controls</div>
+              <div class="ui-caplist">
+                <div class="ui-cap">
+                  <div class="ui-cap__row"><svg class="i" viewBox="0 0 24 24"><path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3z"/><circle cx="12" cy="13" r="3"/></svg><div class="ui-cap__what">use your camera</div><span class="ui-switch"></span></div>
+                </div>
+                <div class="ui-cap ui-cap--on">
+                  <div class="ui-cap__row"><svg class="i" viewBox="0 0 24 24"><line x1="22" x2="2" y1="12" y2="12"/><path d="M5.45 5.11 2 12v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-6l-3.45-6.89A2 2 0 0 0 16.76 4H7.24a2 2 0 0 0-1.79 1.11z"/><line x1="6" x2="6.01" y1="16" y2="16"/><line x1="10" x2="10.01" y1="16" y2="16"/></svg><div class="ui-cap__what">read/write local browser storage</div><span class="ui-switch ui-switch--on"></span></div>
+                  <div class="ui-cap__note"><svg class="i" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/></svg>Tool can persist data locally. Cleared when you remove the tool.</div>
+                </div>
+                <div class="ui-cap ui-cap--on">
+                  <div class="ui-cap__row"><svg class="i" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 2a14.5 14.5 0 0 0 0 20 14.5 14.5 0 0 0 0-20"/><path d="M2 12h20"/></svg><div class="ui-cap__what">contact: api.example.com<div class="ui-cap__hosts">api.example.com</div></div><span class="ui-switch ui-switch--on"></span></div>
+                  <div class="ui-cap__note"><svg class="i" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/></svg>Allows the tool to make network requests to the listed domains.</div>
+                </div>
+              </div>
+            </div>
+            <div class="ui-sum">
+              <div class="ui-sl">When run, this tool can</div>
+              <ul><li>read/write local browser storage</li><li>contact: api.example.com</li></ul>
+              <p>Changes apply the next time you run the tool. Close and reopen its window.</p>
+            </div>
+            <div class="ui-box"><svg class="i" viewBox="0 0 24 24"><path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"/></svg><p><strong>Scan note:</strong> The scan uses regular expressions, so eval or obfuscated code can hide capabilities from it. That doesn't grant them: the sandbox only allows what you approve, and the <span class="ui-mono">connect-src</span> CSP blocks network calls you haven't approved.</p></div>
+          </div>
+          </div>
+        </div>
+      </div>
+        <figcaption class="sr">The permissions of a tool named Invoice Parser. Camera is off, storage is on, and network access is on for api.example.com only.</figcaption>
+      </figure>
+    </article>
+    <article class="card tour__row">
+      <div class="tour__text">
+        <p class="eyebrow eyebrow--flush">Catalogue</p>
+        <h3>Read what a signed tool asks for before you install it</h3>
+        <p>The Catalogue lists the tools in each registry you added, with the publisher, the version and the permissions each tool declares. Installing a tool adds it with no access. You still approve each permission yourself.</p>
+      </div>
+      <figure class="mock mock-stage">
+      <div class="mock-window" aria-hidden="true">
+        <div class="mock-window__frame">
+          <div class="mock-window__bar"><span class="mock-window__lights"><i></i><i></i><i></i></span><span class="mock-window__title">Sanctum</span></div>
+          <div class="mock-window__screen ui">
+          <div class="ui-head">
+            <div class="ui-head__cell"><span class="ui-ets">ETS</span><span class="ui-ets-word">Enigma</span></div>
+            <div class="ui-head__cell ui-head__cell--brand"><svg class="ui-st" viewBox="0 0 64 64"><rect x="0" y="0" width="64" height="64" fill="#0A0A0A"/><rect x="6.50" y="6.50" width="51.00" height="51.00" fill="none" stroke="#FBFF00" stroke-width="3"/><g fill="#FFFFFF" transform="translate(14.51 40.39) scale(0.03008 -0.03008)"><path d="M32 183H201Q204 154 228.0 136.0Q252 118 287 118Q319 118 336.5 130.5Q354 143 354 163Q354 187 329.0 198.5Q304 210 248 224Q188 238 148.0 253.5Q108 269 79.0 302.5Q50 336 50 393Q50 441 76.5 480.5Q103 520 154.5 543.0Q206 566 277 566Q382 566 442.5 514.0Q503 462 512 376H354Q350 405 328.5 422.0Q307 439 272 439Q242 439 226.0 427.5Q210 416 210 396Q210 372 235.5 360.0Q261 348 315 336Q377 320 416.0 304.5Q455 289 484.5 254.5Q514 220 515 162Q515 113 487.5 74.5Q460 36 408.5 14.0Q357 -8 289 -8Q216 -8 159.0 17.0Q102 42 69.0 85.5Q36 129 32 183Z"/><path transform="translate(538 0)" d="M373 145V0H286Q193 0 141.0 45.5Q89 91 89 194V416H21V558H89V694H260V558H372V416H260V192Q260 167 272.0 156.0Q284 145 312 145Z"/></g><rect x="44.02" y="35.88" width="4.51" height="4.51" fill="#FBFF00"/></svg><span class="ui-brand">Sanctum</span></div>
+            <div class="ui-nav"><span class="ui-tab"><svg class="i" viewBox="0 0 24 24"><path d="m16 6 4 14"/><path d="M12 6v14"/><path d="M8 8v12"/><path d="M4 4v16"/></svg>Tool Vault</span><span class="ui-tab ui-tab--on"><svg class="i" viewBox="0 0 24 24"><path d="m2 7 4.41-4.41A2 2 0 0 1 7.83 2h8.34a2 2 0 0 1 1.42.59L22 7"/><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><path d="M15 22v-4a2 2 0 0 0-2-2h-2a2 2 0 0 0-2 2v4"/><path d="M2 7h20"/><path d="M22 7v3a2 2 0 0 1-2 2a2.7 2.7 0 0 1-1.59-.63.7.7 0 0 0-.82 0A2.7 2.7 0 0 1 16 12a2.7 2.7 0 0 1-1.59-.63.7.7 0 0 0-.82 0A2.7 2.7 0 0 1 12 12a2.7 2.7 0 0 1-1.59-.63.7.7 0 0 0-.82 0A2.7 2.7 0 0 1 8 12a2.7 2.7 0 0 1-1.59-.63.7.7 0 0 0-.82 0A2.7 2.7 0 0 1 4 12a2 2 0 0 1-2-2V7"/></svg>Catalogue</span><span class="ui-tab"><svg class="i" viewBox="0 0 24 24"><path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/><circle cx="12" cy="12" r="3"/></svg>Settings</span></div>
+            <div class="ui-head__meta"><span>v0.3.0</span><i></i><span>Tools run sandboxed</span></div>
+          </div>
+          <div class="ui-page">
+            <h1>Find tools</h1>
+            <div class="ui-volt"></div>
+            <p>A registry lists tools. Installing one adds it with no access at all; you approve each permission yourself afterwards. A signature says who published a tool and that it is unchanged. It does not mean the tool is safe.</p>
+          </div>
+          <div class="ui-cat">
+            <div class="ui-shead">
+              <div>
+                <h2>Enigma Technologies Solutions</h2>
+                <div class="ui-meta"><svg class="i" viewBox="0 0 24 24"><path d="M3.85 8.62a4 4 0 0 1 4.78-4.77 4 4 0 0 1 6.74 0 4 4 0 0 1 4.78 4.78 4 4 0 0 1 0 6.74 4 4 0 0 1-4.77 4.78 4 4 0 0 1-6.75 0 4 4 0 0 1-4.78-4.77 4 4 0 0 1 0-6.76Z"/><path d="m9 12 2 2 4-4"/></svg><span>Verified: Enigma Technologies Solutions</span><span>·</span><span>4 tools</span><span>·</span><span>Catalogue 9</span><span>·</span><span>Checked Nov 20, 2026</span></div>
+              </div>
+              <div class="ui-actions">
+                <span class="ui-btn ui-btn--outline ui-btn--sm"><svg class="i" viewBox="0 0 24 24"><path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"/><path d="M21 3v5h-5"/><path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"/><path d="M8 16H3v5"/></svg>Refresh</span>
+                <span class="ui-btn ui-btn--outline ui-btn--sm"><svg class="i" viewBox="0 0 24 24"><path d="M5 12h14"/><path d="M12 5v14"/></svg>Add registry</span>
+                <span class="ui-btn ui-btn--ghost ui-btn--sm"><svg class="i" viewBox="0 0 24 24"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/><line x1="10" x2="10" y1="11" y2="17"/><line x1="14" x2="14" y1="11" y2="17"/></svg>Remove</span>
+              </div>
+            </div>
+            <div class="ui-hint"><span class="ui-btn ui-btn--secondary ui-btn--sm"><svg class="i" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" x2="12" y1="15" y2="3"/></svg>Install all (2)</span><span>Installing adds tools with no access. You approve each permission afterwards.</span></div>
+            <div class="ui-apps">
+              <div class="ui-app">
+                <div class="ui-app__id">
+                  <span class="ui-app__ico"><svg class="i" viewBox="0 0 24 24"><path d="M11 21.73a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73z"/><path d="M12 22V12"/><path d="m3.3 7 7.703 4.734a2 2 0 0 0 1.994 0L20.7 7"/><path d="m7.5 4.27 9 5.15"/></svg></span>
+                  <div>
+                    <h3>Hash Check</h3>
+                    <div class="ui-meta"><svg class="i" viewBox="0 0 24 24"><path d="M3.85 8.62a4 4 0 0 1 4.78-4.77 4 4 0 0 1 6.74 0 4 4 0 0 1 4.78 4.78 4 4 0 0 1 0 6.74 4 4 0 0 1-4.77 4.78 4 4 0 0 1-6.75 0 4 4 0 0 1-4.78-4.77 4 4 0 0 1 0-6.76Z"/><path d="m9 12 2 2 4-4"/></svg><span>Enigma Technologies Solutions</span><span>·</span><span>v1.0.0</span></div>
+                  </div>
+                </div>
+                <p class="ui-app__sum">Check a file against the checksum its publisher gave you. Runs offline and asks for no access.</p>
+                <div><div class="ui-label">Asks for</div><div class="ui-caps"><span class="ui-chip ui-chip--quiet">No special access</span></div></div>
+                <div class="ui-app__do"><span class="ui-btn ui-btn--sm">Install</span></div>
+              </div>
+              <div class="ui-app">
+                <div class="ui-app__id">
+                  <span class="ui-app__ico"><svg class="i" viewBox="0 0 24 24"><path d="M11 21.73a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73z"/><path d="M12 22V12"/><path d="m3.3 7 7.703 4.734a2 2 0 0 0 1.994 0L20.7 7"/><path d="m7.5 4.27 9 5.15"/></svg></span>
+                  <div>
+                    <h3>OTP Vault</h3>
+                    <div class="ui-meta"><svg class="i" viewBox="0 0 24 24"><path d="M3.85 8.62a4 4 0 0 1 4.78-4.77 4 4 0 0 1 6.74 0 4 4 0 0 1 4.78 4.78 4 4 0 0 1 0 6.74 4 4 0 0 1-4.77 4.78 4 4 0 0 1-6.75 0 4 4 0 0 1-4.78-4.77 4 4 0 0 1 0-6.76Z"/><path d="m9 12 2 2 4-4"/></svg><span>Enigma Technologies Solutions</span><span>·</span><span>v1.0.2</span></div>
+                  </div>
+                </div>
+                <p class="ui-app__sum">Time-based one-time codes (TOTP) kept in Sanctum storage and optionally on a smart card.</p>
+                <div><div class="ui-label">Asks for</div><div class="ui-caps"><span class="ui-chip"><span class="ui-dot"></span>Storage</span><span class="ui-chip"><span class="ui-dot"></span>Smart card</span></div></div>
+                <div class="ui-app__do"><span class="ui-btn ui-btn--outline ui-btn--sm ui-btn--off">Installed</span><span class="ui-app__why">Version 1.0.2 is installed.</span></div>
+              </div>
+              <div class="ui-app">
+                <div class="ui-app__id">
+                  <span class="ui-app__ico"><svg class="i" viewBox="0 0 24 24"><path d="M11 21.73a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73z"/><path d="M12 22V12"/><path d="m3.3 7 7.703 4.734a2 2 0 0 0 1.994 0L20.7 7"/><path d="m7.5 4.27 9 5.15"/></svg></span>
+                  <div>
+                    <h3>PDF Watermark</h3>
+                    <div class="ui-meta"><svg class="i" viewBox="0 0 24 24"><path d="M3.85 8.62a4 4 0 0 1 4.78-4.77 4 4 0 0 1 6.74 0 4 4 0 0 1 4.78 4.78 4 4 0 0 1 0 6.74 4 4 0 0 1-4.77 4.78 4 4 0 0 1-6.75 0 4 4 0 0 1-4.78-4.77 4 4 0 0 1 0-6.76Z"/><path d="m9 12 2 2 4-4"/></svg><span>Enigma Technologies Solutions</span><span>·</span><span>v1.0.0</span></div>
+                  </div>
+                </div>
+                <p class="ui-app__sum">Put a visible, traceable watermark on PDFs before you share them. Runs offline and asks for no access.</p>
+                <div><div class="ui-label">Asks for</div><div class="ui-caps"><span class="ui-chip ui-chip--quiet">No special access</span></div></div>
+                <div class="ui-app__do"><span class="ui-btn ui-btn--sm">Install</span></div>
+              </div>
+              <div class="ui-app">
+                <div class="ui-app__id">
+                  <span class="ui-app__ico"><svg class="i" viewBox="0 0 24 24"><path d="M11 21.73a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73z"/><path d="M12 22V12"/><path d="m3.3 7 7.703 4.734a2 2 0 0 0 1.994 0L20.7 7"/><path d="m7.5 4.27 9 5.15"/></svg></span>
+                  <div>
+                    <h3>Shamir Secret Sharing</h3>
+                    <div class="ui-meta"><svg class="i" viewBox="0 0 24 24"><path d="M3.85 8.62a4 4 0 0 1 4.78-4.77 4 4 0 0 1 6.74 0 4 4 0 0 1 4.78 4.78 4 4 0 0 1 0 6.74 4 4 0 0 1-4.77 4.78 4 4 0 0 1-6.75 0 4 4 0 0 1-4.78-4.77 4 4 0 0 1 0-6.76Z"/><path d="m9 12 2 2 4-4"/></svg><span>Enigma Technologies Solutions</span><span>·</span><span>v1.0.2</span></div>
+                  </div>
+                </div>
+                <p class="ui-app__sum">Split a secret into shares and combine them back. Runs offline and asks for no access.</p>
+                <div><div class="ui-label">Asks for</div><div class="ui-caps"><span class="ui-chip ui-chip--quiet">No special access</span></div></div>
+                <div class="ui-app__do"><span class="ui-btn ui-btn--outline ui-btn--sm ui-btn--off">Installed</span><span class="ui-app__why">Version 1.0.2 is installed.</span></div>
+              </div>
+            </div>
+          </div>
+          </div>
+        </div>
+      </div>
+        <figcaption class="sr">The Catalogue showing the four tools signed by Enigma Technologies Solutions, two installed and two ready to install.</figcaption>
+      </figure>
+    </article>
+    <article class="card tour__row">
+      <div class="tour__text">
+        <p class="eyebrow eyebrow--flush">Create, on macOS</p>
+        <h3>Describe a tool and Codex writes it</h3>
+        <p>Sanctum 0.3.0 adds a Create window on macOS. You sign in with your ChatGPT account and describe the tool you want. Codex works in a private folder, and its commands have no network access.</p>
+        <p>A draft joins your vault only when you choose Add to library. It starts with no access, like any other tool.</p>
+      </div>
+      <figure class="mock mock-stage">
+      <div class="mock-window mock-window--xl" aria-hidden="true">
+        <div class="mock-window__frame">
+          <div class="mock-window__bar"><span class="mock-window__lights"><i></i><i></i><i></i></span><span class="mock-window__title">Create your own app</span></div>
+          <div class="mock-window__screen ui">
+          <div class="ui-page">
+            <h1>Create your own app</h1>
+            <div class="ui-volt"></div>
+            <p>Describe a tool in plain words. Codex writes it in a private work folder, and nothing is added to your library unless you choose.</p>
+          </div>
+          <div class="ui-create">
+            <div class="ui-chat">
+              <div class="ui-log">
+                <div class="ui-you">A packing list for trips, grouped by category. I want to tick items off and still see the ticks next time I open it.</div>
+                <div class="ui-step"><svg class="i" viewBox="0 0 24 24"><path d="M12.5 22H18a2 2 0 0 0 2-2V7l-5-5H6a2 2 0 0 0-2 2v9.5"/><path d="M14 2v4a2 2 0 0 0 2 2h4"/><path d="M13.378 15.626a1 1 0 1 0-3.004-3.004l-5.01 5.012a2 2 0 0 0-.506.854l-.837 2.87a.5.5 0 0 0 .62.62l2.87-.837a2 2 0 0 0 .854-.506z"/></svg><p>Created app.html<span> · 3.8s</span></p></div>
+                <div class="ui-step"><svg class="i" viewBox="0 0 24 24"><path d="M12.5 22H18a2 2 0 0 0 2-2V7l-5-5H6a2 2 0 0 0-2 2v9.5"/><path d="M14 2v4a2 2 0 0 0 2 2h4"/><path d="M13.378 15.626a1 1 0 1 0-3.004-3.004l-5.01 5.012a2 2 0 0 0-.506.854l-.837 2.87a.5.5 0 0 0 .62.62l2.87-.837a2 2 0 0 0 .854-.506z"/></svg><p>Edited app.html<span> · 1.2s</span></p></div>
+                <div class="ui-reply">The packing list is in app.html. Items are grouped by category, and the ticks are kept in the tool's own storage, so they are still there the next time you open it.</div>
+                <div class="ui-draft">
+                  <div class="ui-draft__name"><strong>Packing List</strong><span class="ui-note ui-note--sm">Draft 1, app.html, 14.2 KB</span></div>
+                  <p class="ui-note">A packing list for trips, grouped by category, with ticks that are kept between runs.</p>
+                  <div>
+                    <span>It would ask to:</span>
+                    <ul><li>read/write local browser storage</li></ul>
+                    <p class="ui-note ui-note--xs">This list comes from scanning the file, so it can miss things. Adding it grants nothing: it starts with no access, and you approve each one yourself.</p>
+                  </div>
+                  <div class="ui-draft__do">
+                    <span class="ui-btn ui-btn--outline ui-btn--sm"><svg class="i" viewBox="0 0 24 24"><path d="M15 3h6v6"/><path d="M10 14 21 3"/><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/></svg>Preview</span>
+                    <span class="ui-btn ui-btn--volt ui-btn--sm">Add to library</span>
+                    <span class="ui-note ui-note--sm">Preview opens it with no access to the network, your files or Sanctum.</span>
+                  </div>
+                </div>
+              </div>
+              <div class="ui-compose">
+                <div class="ui-compose__row">
+                  <div class="ui-input">Describe the app you want</div>
+                  <span class="ui-btn ui-btn--volt"><svg class="i" viewBox="0 0 24 24"><path d="m5 12 7-7 7 7"/><path d="M12 19V5"/></svg>Send</span>
+                </div>
+                <p class="ui-note ui-note--xs">Your messages and Codex's replies go to OpenAI through your ChatGPT account. Sanctum never sees your sign-in token. Codex can write only in a private work folder that is deleted when you close this window, and its commands have no network access.</p>
+              </div>
+            </div>
+            <div class="ui-src">
+              <div>
+                <h2>Sources</h2>
+                <p class="ui-note ui-note--sm">What Codex has read for this conversation.</p>
+              </div>
+              <ul>
+                <li><svg class="i" viewBox="0 0 24 24"><path d="M12 7v14"/><path d="M3 18a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1h5a4 4 0 0 1 4 4 4 4 0 0 1 4-4h5a1 1 0 0 1 1 1v13a1 1 0 0 1-1 1h-6a3 3 0 0 0-3 3 3 3 0 0 0-3-3z"/></svg><div><strong>Sanctum guide</strong><span class="ui-note ui-note--sm">The rules and what a tool can and cannot do here, including how to save files.</span></div></li>
+                <li><svg class="i" viewBox="0 0 24 24"><path d="M15 12h-5"/><path d="M15 8h-5"/><path d="M19 17V5a2 2 0 0 0-2-2H4"/><path d="M8 21h12a2 2 0 0 0 2-2v-1a1 1 0 0 0-1-1H11a1 1 0 0 0-1 1v1a2 2 0 1 1-4 0V5a2 2 0 1 0-4 0v2a1 1 0 0 0 1 1h3"/></svg><div><strong>Your instructions</strong><span class="ui-note ui-note--sm">None set.</span><span class="ui-btn ui-btn--ghost ui-btn--sm">Add your instructions</span></div></li>
+              </ul>
+            </div>
+          </div>
+          </div>
+        </div>
+      </div>
+        <figcaption class="sr">The Create window: a request for a packing list, the steps Codex took, and the draft with Preview and Add to library buttons.</figcaption>
+      </figure>
+    </article>
+    <article class="card tour__row">
+      <div class="tour__text">
+        <p class="eyebrow eyebrow--flush">Settings</p>
+        <h3>Each setting says what it contacts</h3>
+        <p>Settings is where you pick the theme, check your registries for updates and withdrawn tools, and turn building apps on or off. Each option says what it contacts. The daily registry check stays off until you turn it on.</p>
+      </div>
+      <figure class="mock mock-stage">
+      <div class="mock-window" aria-hidden="true">
+        <div class="mock-window__frame">
+          <div class="mock-window__bar"><span class="mock-window__lights"><i></i><i></i><i></i></span><span class="mock-window__title">Sanctum</span></div>
+          <div class="mock-window__screen ui">
+          <div class="ui-head">
+            <div class="ui-head__cell"><span class="ui-ets">ETS</span><span class="ui-ets-word">Enigma</span></div>
+            <div class="ui-head__cell ui-head__cell--brand"><svg class="ui-st" viewBox="0 0 64 64"><rect x="0" y="0" width="64" height="64" fill="#0A0A0A"/><rect x="6.50" y="6.50" width="51.00" height="51.00" fill="none" stroke="#FBFF00" stroke-width="3"/><g fill="#FFFFFF" transform="translate(14.51 40.39) scale(0.03008 -0.03008)"><path d="M32 183H201Q204 154 228.0 136.0Q252 118 287 118Q319 118 336.5 130.5Q354 143 354 163Q354 187 329.0 198.5Q304 210 248 224Q188 238 148.0 253.5Q108 269 79.0 302.5Q50 336 50 393Q50 441 76.5 480.5Q103 520 154.5 543.0Q206 566 277 566Q382 566 442.5 514.0Q503 462 512 376H354Q350 405 328.5 422.0Q307 439 272 439Q242 439 226.0 427.5Q210 416 210 396Q210 372 235.5 360.0Q261 348 315 336Q377 320 416.0 304.5Q455 289 484.5 254.5Q514 220 515 162Q515 113 487.5 74.5Q460 36 408.5 14.0Q357 -8 289 -8Q216 -8 159.0 17.0Q102 42 69.0 85.5Q36 129 32 183Z"/><path transform="translate(538 0)" d="M373 145V0H286Q193 0 141.0 45.5Q89 91 89 194V416H21V558H89V694H260V558H372V416H260V192Q260 167 272.0 156.0Q284 145 312 145Z"/></g><rect x="44.02" y="35.88" width="4.51" height="4.51" fill="#FBFF00"/></svg><span class="ui-brand">Sanctum</span></div>
+            <div class="ui-nav"><span class="ui-tab"><svg class="i" viewBox="0 0 24 24"><path d="m16 6 4 14"/><path d="M12 6v14"/><path d="M8 8v12"/><path d="M4 4v16"/></svg>Tool Vault</span><span class="ui-tab"><svg class="i" viewBox="0 0 24 24"><path d="m2 7 4.41-4.41A2 2 0 0 1 7.83 2h8.34a2 2 0 0 1 1.42.59L22 7"/><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><path d="M15 22v-4a2 2 0 0 0-2-2h-2a2 2 0 0 0-2 2v4"/><path d="M2 7h20"/><path d="M22 7v3a2 2 0 0 1-2 2a2.7 2.7 0 0 1-1.59-.63.7.7 0 0 0-.82 0A2.7 2.7 0 0 1 16 12a2.7 2.7 0 0 1-1.59-.63.7.7 0 0 0-.82 0A2.7 2.7 0 0 1 12 12a2.7 2.7 0 0 1-1.59-.63.7.7 0 0 0-.82 0A2.7 2.7 0 0 1 8 12a2.7 2.7 0 0 1-1.59-.63.7.7 0 0 0-.82 0A2.7 2.7 0 0 1 4 12a2 2 0 0 1-2-2V7"/></svg>Catalogue</span><span class="ui-tab ui-tab--on"><svg class="i" viewBox="0 0 24 24"><path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/><circle cx="12" cy="12" r="3"/></svg>Settings</span></div>
+            <div class="ui-head__meta"><span>v0.3.0</span><i></i><span>Tools run sandboxed</span></div>
+          </div>
+          <div class="ui-page">
+            <h1>Settings</h1>
+            <div class="ui-volt"></div>
+            <p>Appearance, registries, updates, publisher keys and how Sanctum works.</p>
+          </div>
+          <div class="ui-setwrap">
+            <div class="ui-set">
+              <section>
+                <h2>Appearance</h2>
+                <div class="ui-rows">
+                  <div class="ui-row">
+                    <div class="ui-row__main">Theme<small>System follows your operating system. Tools you open keep their own look.</small></div>
+                    <div class="ui-seg"><span class="ui-sbtn"><svg class="i" viewBox="0 0 24 24"><rect width="20" height="14" x="2" y="3" rx="2"/><line x1="8" x2="16" y1="21" y2="21"/><line x1="12" x2="12" y1="17" y2="21"/></svg>System</span><span class="ui-sbtn ui-sbtn--on"><svg class="i" viewBox="0 0 24 24"><circle cx="12" cy="12" r="4"/><path d="M12 2v2"/><path d="M12 20v2"/><path d="m4.93 4.93 1.41 1.41"/><path d="m17.66 17.66 1.41 1.41"/><path d="M2 12h2"/><path d="M20 12h2"/><path d="m6.34 17.66-1.41 1.41"/><path d="m19.07 4.93-1.41 1.41"/></svg>Light</span><span class="ui-sbtn"><svg class="i" viewBox="0 0 24 24"><path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/></svg>Dark</span></div>
+                  </div>
+                </div>
+              </section>
+              <section>
+                <h2>Registries</h2>
+                <div class="ui-rows">
+                  <div class="ui-row">
+                    <div class="ui-row__main">Check for updates and withdrawn tools<small>Last checked 11/20/2026, 9:41:00 AM.</small></div>
+                    <span class="ui-sbtn"><svg class="i" viewBox="0 0 24 24"><path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"/><path d="M21 3v5h-5"/><path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"/><path d="M8 16H3v5"/></svg>Check now</span>
+                  </div>
+                  <div class="ui-row">
+                    <span class="ui-check"></span>
+                    <div class="ui-row__main">Check once a day while Sanctum is open<small>Off by default. Turning it on lets Sanctum contact the registries you added about once a day. It sends no identifier and installs nothing.</small></div>
+                  </div>
+                  <div class="ui-row ui-row--note">A registry built into Sanctum can stop a withdrawn version from opening. A registry you pinned can only warn you. Neither one changes what a tool is approved to do.</div>
+                </div>
+              </section>
+              <section>
+                <h2>About</h2>
+                <div class="ui-rows">
+                  <div class="ui-row"><div class="ui-row__main"><span class="ui-brand">Sanctum</span><small>A desktop app for running single-file HTML tools, including ones an AI model wrote.</small></div></div>
+                  <div class="ui-row"><span class="ui-row__key">Version</span><span class="ui-mono">0.3.0</span></div>
+                  <div class="ui-row"><span class="ui-row__key">Licence</span><span class="ui-mono">AGPL-3.0-only</span></div>
+                  <div class="ui-row"><span class="ui-row__key">Publisher</span><span>Enigma Technologies Solutions</span></div>
+                </div>
+              </section>
+            </div>
+          </div>
+          </div>
+        </div>
+      </div>
+        <figcaption class="sr">Sanctum Settings, with the theme set to Light and the daily registry check turned off.</figcaption>
+      </figure>
+    </article>
+    </div>
+  </div>
+</section>
+
 <!-- ══ Signed tools ══════════════════════════════════════════════════════ -->
 <section class="section" id="tools">
   <div class="wrap">
@@ -296,9 +729,9 @@
 
     <div class="tools__grid">
       <article class="card tools__card">
-        <figure class="screenshot">
-          <img src="./registry/v1/apps/sh.enigma.shamir/overview.png" width="1600" height="1131" alt="Shamir, a tool that splits a secret into shares and combines them back." loading="lazy">
-        </figure>
+        <!-- tool-mock:sh.enigma.shamir -->
+        <figure class="mock mock-stage tools__mock"><div class="mock-window mock-window--short" aria-hidden="true"><div class="mock-window__frame"><div class="mock-window__bar"><span class="mock-window__lights"><i></i><i></i><i></i></span><span class="mock-window__title">Shamir</span></div><div class="mock-window__screen tk"><div class="tk-bar"><div class="tk-wrap tk-bar-in"><span class="tk-mark"><span class="tk-ets">ETS</span><span class="tk-word">Enigma <b>/</b> Shamir</span></span><span class="tk-bar-end"><span class="tk-theme"><svg class="i" viewBox="0 0 24 24"><path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/></svg></span></span></div></div><div class="tk-main"><div class="tk-wrap"><div class="tk-hero"><p class="tk-eyebrow">Tool for Sanctum</p><div class="tk-h1">Split<span class="tk-dash"></span>combine</div><p class="tk-lede">Split a secret into shares. Any <em>k</em> of them rebuild it. <span>Fewer than the needed number reveal nothing about the secret's content; the size bucket and the needed number are visible in every share.</span></p></div><div class="tk-facts"><div class="tk-fact"><div class="tk-fact-h"><svg class="i" viewBox="0 0 24 24"><rect width="18" height="11" x="3" y="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>Stays here</div><p>Everything runs in this window. Nothing is stored or sent. Closing the window discards the secret, the shares and any result.</p></div><div class="tk-fact"><div class="tk-fact-h"><svg class="i" viewBox="0 0 24 24"><path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"/><path d="m9 12 2 2 4-4"/></svg>Asks for nothing</div><p>No network, no devices, no storage. The approval screen in Sanctum is empty. Shares leave only through the clipboard.</p></div><div class="tk-fact"><div class="tk-fact-h"><svg class="i" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/></svg>Checks have limits</div><p>Sanctum shares catch mistyped, missing and mixed shares. They do not stop a dishonest share holder.</p></div></div><div class="tk-tabs-row"><span class="tk-seg tk-seg--tabs"><span class="on"><svg class="i" viewBox="0 0 24 24"><circle cx="6" cy="6" r="3"/><path d="M8.12 8.12 12 12"/><path d="M20 4 8.12 15.88"/><circle cx="6" cy="18" r="3"/><path d="M14.8 14.8 20 20"/></svg>Split</span><span><svg class="i" viewBox="0 0 24 24"><path d="M10 18H5a3 3 0 0 1-3-3v-1"/><path d="M14 2a2 2 0 0 1 2 2v4a2 2 0 0 1-2 2"/><path d="M20 2a2 2 0 0 1 2 2v4a2 2 0 0 1-2 2"/><path d="m7 21 3-3-3-3"/><rect x="14" y="14" width="8" height="8" rx="2"/><rect x="2" y="2" width="8" height="8" rx="2"/></svg>Combine</span></span></div><div class="tk-block"><div class="tk-step"><span class="tk-n">1</span><span class="tk-h2">Enter the secret</span></div><p class="tk-sub">Type or paste it, or generate a random one. It stays hidden while you type.</p><div class="tk-row tk-row--end"><span class="tk-seg"><span class="on">Text</span><span>Hex</span></span><span class="tk-row"><span class="tk-count">0 of 1024 bytes</span><span class="tk-btn tk-btn--ghost tk-btn--sm"><svg class="i" viewBox="0 0 24 24"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/><line x1="10" x2="10" y1="11" y2="17"/><line x1="14" x2="14" y1="11" y2="17"/></svg>Clear</span></span></div><div class="tk-field"><div class="tk-lab"><span>Secret (text, UTF-8)</span></div><div class="tk-area tk-area--secret"><span class="tk-ph"></span></div><p class="tk-hint">Hidden while you type. Line breaks are kept.</p><div class="tk-row tk-gen"><span class="tk-btn tk-btn--ghost tk-btn--sm"><svg class="i" viewBox="0 0 24 24"><path d="M2.062 12.348a1 1 0 0 1 0-.696 10.75 10.75 0 0 1 19.876 0 1 1 0 0 1 0 .696 10.75 10.75 0 0 1-19.876 0"/><circle cx="12" cy="12" r="3"/></svg>Show</span><span class="tk-btn tk-btn--ghost tk-btn--sm"><svg class="i" viewBox="0 0 24 24"><rect width="12" height="12" x="2" y="10" rx="2" ry="2"/><path d="m17.92 14 3.5-3.5a2.24 2.24 0 0 0 0-3l-5-4.92a2.24 2.24 0 0 0-3 0L10 6"/><path d="M6 18h.01"/><path d="M10 14h.01"/><path d="M15 6h.01"/><path d="M18 9h.01"/></svg>Generate</span><span class="tk-gen-len">Length <div class="tk-input tk-input--len">32</div></span></div><p class="tk-hint">Generate makes a random secret from 28 easy to read letters and digits. At 32 characters that is 153.8 bits.</p><div class="tk-details"><span class="tk-sum">Check value (SHA-256)</span></div></div></div></div></div></div></div></div><figcaption class="sr">Overview of Shamir: split a secret into shares and combine them back.</figcaption></figure>
+        <!-- /tool-mock -->
         <div class="tools__body">
         <h3 class="tools__name">Shamir <span class="tag">signed</span></h3>
         <p class="tools__desc">Split a secret into shares and combine them back. Runs offline and asks for no access.</p>
@@ -309,9 +742,9 @@
         </div>
       </article>
       <article class="card tools__card">
-        <figure class="screenshot">
-          <img src="./registry/v1/apps/sh.enigma.otp-vault/overview.png" width="1600" height="1131" alt="OTP Vault, a tool that keeps one-time codes in Sanctum storage." loading="lazy">
-        </figure>
+        <!-- tool-mock:sh.enigma.otp-vault -->
+        <figure class="mock mock-stage tools__mock"><div class="mock-window mock-window--short" aria-hidden="true"><div class="mock-window__frame"><div class="mock-window__bar"><span class="mock-window__lights"><i></i><i></i><i></i></span><span class="mock-window__title">OTP Vault</span></div><div class="mock-window__screen tk"><div class="tk-bar"><div class="tk-wrap tk-bar-in"><span class="tk-mark"><span class="tk-ets">ETS</span><span class="tk-word">Enigma <b>/</b> OTP Vault</span></span><span class="tk-bar-end"><span class="tk-theme"><svg class="i" viewBox="0 0 24 24"><path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/></svg></span></span></div></div><div class="tk-main"><div class="tk-wrap"><div class="tk-hero"><p class="tk-eyebrow">Tool for Sanctum</p><div class="tk-h1">Codes that <span class="tk-hl">stay here</span></div><p class="tk-lede">Two-factor codes, generated inside Sanctum. <span>Your username and password derive an AES-256 key that encrypts every secret before it is written to this tool's own storage. With a YubiKey and smart card access approved, secrets can live on the key instead, and the key computes each code.</span></p></div><div class="tk-notice"><svg class="i" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/></svg><div>Sanctum gives this tool its own storage, tied to the tool's identity in your library. A new version of the tool keeps the vault. Deleting the tool from Sanctum and adding it again starts with empty storage, so copy a backup first.</div></div><div class="tk-facts"><div class="tk-fact"><div class="tk-fact-h"><svg class="i" viewBox="0 0 24 24"><rect width="18" height="11" x="3" y="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>Stays here</div><p>Your username and password never leave this window. Secrets are encrypted before they are stored, and codes are computed on this computer.</p></div><div class="tk-fact"><div class="tk-fact-h"><svg class="i" viewBox="0 0 24 24"><path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"/><path d="m9 12 2 2 4-4"/></svg>Asks for two things</div><p>Its own storage for the encrypted vault and, only if you use it, the OATH applet of a YubiKey. No network.</p></div><div class="tk-fact"><div class="tk-fact-h"><svg class="i" viewBox="0 0 24 24"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3"/><path d="M12 9v4"/><path d="M12 17h.01"/></svg>No recovery</div><p>If the password is forgotten, the stored secrets cannot be decrypted. Keep a backup and a long password.</p></div></div><div class="tk-block"><div class="tk-step"><span class="tk-n">1</span><span class="tk-h2">Create a vault</span></div><p class="tk-sub">Choose a username and password. They never leave this page. Press Show fingerprint and note the eight emoji: you will see the same ones every time you enter this combination.</p><div class="tk-tabs-row"><span class="tk-seg tk-seg--tabs"><span>Unlock</span><span class="on">Create vault</span></span></div><div class="tk-grid2"><div class="tk-card"><div class="tk-field"><div class="tk-lab"><span>Username</span></div><div class="tk-input tk-input--ph"></div><p class="tk-hint">Not case-sensitive. Used only on this computer, with the password, to derive the key.</p></div><div class="tk-field"><div class="tk-lab"><span>Password</span></div><div class="tk-input tk-input--ph"></div><div class="tk-meter"><i class="tk-meter--none"></i></div></div><div class="tk-field"><div class="tk-lab"><span>Confirm password</span></div><div class="tk-input tk-input--ph"></div></div><div class="tk-field"><ul class="tk-plain"><li>There is no recovery. If the password is forgotten, the stored secrets cannot be decrypted.</li><li>Use at least 12 characters. A passphrase of four or more random words works well.</li><li>The same username and password always produce the same fingerprint and key, on any device.</li></ul><div class="tk-check"><span class="tk-box"></span><span>I have noted the fingerprint shown for this username and password.</span></div></div><div class="tk-actions"><span class="tk-btn tk-btn--ghost"><svg class="i" viewBox="0 0 24 24"><path d="M2.062 12.348a1 1 0 0 1 0-.696 10.75 10.75 0 0 1 19.876 0 1 1 0 0 1 0 .696 10.75 10.75 0 0 1-19.876 0"/><circle cx="12" cy="12" r="3"/></svg>Show fingerprint</span><span class="tk-btn">Create vault</span></div></div><div class="tk-fp"><div class="tk-fp-label">Vault fingerprint</div><div class="tk-fp-grid tk-fp-grid--empty"><div>?</div><div>?</div><div>?</div><div>?</div><div>?</div><div>?</div><div>?</div><div>?</div></div><div class="tk-fp-hex">Not computed yet.</div><p>A one-way value derived from the same master key as the encryption key. It reveals nothing about the password or the key. It only gives you a picture to recognise: different input, different picture.</p></div></div></div></div></div></div></div></div><figcaption class="sr">Overview of OTP Vault: one-time codes generated inside Sanctum.</figcaption></figure>
+        <!-- /tool-mock -->
         <div class="tools__body">
         <h3 class="tools__name">OTP Vault <span class="tag">signed</span></h3>
         <p class="tools__desc">Time-based one-time codes kept in Sanctum storage, and optionally on a smart card. Asks for storage, and for smart card access only if you use it.</p>
@@ -322,9 +755,9 @@
         </div>
       </article>
       <article class="card tools__card">
-        <figure class="screenshot">
-          <img src="./registry/v1/apps/sh.enigma.pdf-watermark/overview.png" width="1600" height="1131" alt="Enigma PDF Watermark, a tool that puts a watermark with the recipient's name and a unique ID on PDFs." loading="lazy">
-        </figure>
+        <!-- tool-mock:sh.enigma.pdf-watermark -->
+        <figure class="mock mock-stage tools__mock"><div class="mock-window mock-window--short" aria-hidden="true"><div class="mock-window__frame"><div class="mock-window__bar"><span class="mock-window__lights"><i></i><i></i><i></i></span><span class="mock-window__title">PDF Watermark</span></div><div class="mock-window__screen tk"><div class="tk-bar"><div class="tk-wrap tk-bar-in"><span class="tk-mark"><span class="tk-ets">ETS</span><span class="tk-word">Enigma <b>/</b> PDF Watermark</span></span><span class="tk-bar-end"><span class="tk-theme"><svg class="i" viewBox="0 0 24 24"><path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/></svg></span></span></div></div><div class="tk-main"><div class="tk-wrap"><div class="tk-hero"><p class="tk-eyebrow">Tool for Sanctum</p><div class="tk-h1">Mark every<span class="tk-dash"></span>copy.</div><p class="tk-lede">Put a visible watermark on PDFs before you share them, with an ID that is different for each file and a name on every page. <span>Passports, visas, contracts. It all happens in this window.</span></p></div><div class="tk-facts"><div class="tk-fact"><div class="tk-fact-h"><svg class="i" viewBox="0 0 24 24"><rect width="18" height="11" x="3" y="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>Stays here</div><p>Your PDFs are read and rewritten in this window. Nothing is uploaded, stored or sent anywhere.</p></div><div class="tk-fact"><div class="tk-fact-h"><svg class="i" viewBox="0 0 24 24"><path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"/><path d="m9 12 2 2 4-4"/></svg>Asks for nothing</div><p>No network, no devices, no storage. The approval screen in Sanctum is empty.</p></div><div class="tk-fact"><div class="tk-fact-h"><svg class="i" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/></svg>Deterrence only</div><p>Someone with a PDF editor can remove these marks, and a printout or screenshot drops the hidden ones.</p></div></div><div class="tk-block"><div class="tk-step"><span class="tk-n">1</span><span class="tk-h2">Choose your PDFs</span></div><p class="tk-sub">Pick as many as you like. Each file is marked on its own.</p><div class="tk-picker"><span class="tk-btn"><svg class="i" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" x2="12" y1="3" y2="15"/></svg>Choose PDF files</span><span class="tk-small tk-mute">Up to 200 MB each. Password protected files must be unlocked first.</span></div></div><div class="tk-block"><div class="tk-step"><span class="tk-n">2</span><span class="tk-h2">Set the watermark</span></div><p class="tk-sub">The preview shows how the tiling lies on a page. The ID shown is an example.</p><div class="tk-cols"><div class="tk-card"><div class="tk-field"><div class="tk-lab"><span>Who is this copy for?</span></div><div class="tk-input tk-input--ph">A name or a case number</div><p class="tk-hint">Required. It is printed on every page, so a leaked copy leads back to the person it was made for.</p></div><div class="tk-field"><div class="tk-lab"><span>Colour</span></div><span class="tk-seg"><span class="on"><i class="tk-swatch tk-swatch--red"></i>Red</span><span><i class="tk-swatch tk-swatch--black"></i>Black</span><span><i class="tk-swatch tk-swatch--grey"></i>Grey</span><span><i class="tk-swatch tk-swatch--blue"></i>Blue</span></span></div><div class="tk-pair tk-pair--ranges"><div class="tk-field"><div class="tk-lab"><span>Strength</span><span class="tk-val">22%</span></div><span class="tk-range tk-range--a"><i></i></span></div><div class="tk-field"><div class="tk-lab"><span>Angle</span><span class="tk-val">35°</span></div><span class="tk-range tk-range--b"><i></i></span></div><div class="tk-field"><div class="tk-lab"><span>Text size</span><span class="tk-val">18 pt</span></div><span class="tk-range tk-range--c"><i></i></span></div><div class="tk-field"><div class="tk-lab"><span>Spacing</span><span class="tk-val">60 pt</span></div><span class="tk-range tk-range--d"><i></i></span></div></div><div class="tk-check"><span class="tk-box on"><svg class="i" viewBox="0 0 24 24"><path d="M20 6 9 17l-5-5"/></svg></span><span>Corner stamps<small>The ID and page number at the top left and bottom right of every page.</small></span></div><div class="tk-check"><span class="tk-box"></span><span>Bottom band<small>A light strip along the bottom edge that says who the copy was shared with.</small></span></div><div class="tk-check"><span class="tk-box"></span><span>Sensitive zones<small>Closer marks over the bottom quarter of each page, where the machine readable lines of a passport usually are. The text stays readable.</small></span></div><div class="tk-details"><span class="tk-sum">Wording</span></div></div><div class="tk-card"><div class="tk-page"><div class="tk-page-stamp">K7M2Q9XA4D-3F9A · Page 1 of 1</div><div class="tk-page-text"></div><div class="tk-page-photo"></div><div class="tk-page-tiles"><span>CONFIDENTIAL · DO NOT SHARE · K7M2Q9XA4D-3F9A · 2026-11-23 · CONFIDENTIAL · DO NOT SHARE · K7M2Q9XA4D-3F9A · 2026-11-23 · CONFIDENTIAL · DO NOT SHARE · K7M2Q9XA4D-3F9A · 2026-11-23 · </span><span> NOT SHARE · K7M2Q9XA4D-3F9A · 2026-11-23 · CONFIDENTIAL · DO NOT SHARE · K7M2Q9XA4D-3F9A · 2026-11-23 · CONFIDENTIAL · DO NOT SHARE · K7M2Q9XA4D-3F9A · 2026-11-23 · </span><span>Q9XA4D-3F9A · 2026-11-23 · CONFIDENTIAL · DO NOT SHARE · K7M2Q9XA4D-3F9A · 2026-11-23 · CONFIDENTIAL · DO NOT SHARE · K7M2Q9XA4D-3F9A · 2026-11-23 · </span><span>L · DO NOT SHARE · K7M2Q9XA4D-3F9A · 2026-11-23 · CONFIDENTIAL · DO NOT SHARE · K7M2Q9XA4D-3F9A · 2026-11-23 · CONFIDENTIAL · DO NOT SHARE · K7M2Q9XA4D-3F9A · 2026-11-23 · </span><span>· K7M2Q9XA4D-3F9A · 2026-11-23 · CONFIDENTIAL · DO NOT SHARE · K7M2Q9XA4D-3F9A · 2026-11-23 · CONFIDENTIAL · DO NOT SHARE · K7M2Q9XA4D-3F9A · 2026-11-23 · </span><span>DENTIAL · DO NOT SHARE · K7M2Q9XA4D-3F9A · 2026-11-23 · CONFIDENTIAL · DO NOT SHARE · K7M2Q9XA4D-3F9A · 2026-11-23 · CONFIDENTIAL · DO NOT SHARE · K7M2Q9XA4D-3F9A · 2026-11-23 · </span><span>SHARE · K7M2Q9XA4D-3F9A · 2026-11-23 · CONFIDENTIAL · DO NOT SHARE · K7M2Q9XA4D-3F9A · 2026-11-23 · CONFIDENTIAL · DO NOT SHARE · K7M2Q9XA4D-3F9A · 2026-11-23 · </span><span>D-3F9A · 2026-11-23 · CONFIDENTIAL · DO NOT SHARE · K7M2Q9XA4D-3F9A · 2026-11-23 · CONFIDENTIAL · DO NOT SHARE · K7M2Q9XA4D-3F9A · 2026-11-23 · </span><span>O NOT SHARE · K7M2Q9XA4D-3F9A · 2026-11-23 · CONFIDENTIAL · DO NOT SHARE · K7M2Q9XA4D-3F9A · 2026-11-23 · CONFIDENTIAL · DO NOT SHARE · K7M2Q9XA4D-3F9A · 2026-11-23 · </span><span>2Q9XA4D-3F9A · 2026-11-23 · CONFIDENTIAL · DO NOT SHARE · K7M2Q9XA4D-3F9A · 2026-11-23 · CONFIDENTIAL · DO NOT SHARE · K7M2Q9XA4D-3F9A · 2026-11-23 · </span><span>AL · DO NOT SHARE · K7M2Q9XA4D-3F9A · 2026-11-23 · CONFIDENTIAL · DO NOT SHARE · K7M2Q9XA4D-3F9A · 2026-11-23 · CONFIDENTIAL · DO NOT SHARE · K7M2Q9XA4D-3F9A · 2026-11-23 · </span><span> · K7M2Q9XA4D-3F9A · 2026-11-23 · CONFIDENTIAL · DO NOT SHARE · K7M2Q9XA4D-3F9A · 2026-11-23 · CONFIDENTIAL · DO NOT SHARE · K7M2Q9XA4D-3F9A · 2026-11-23 · </span><span>IDENTIAL · DO NOT SHARE · K7M2Q9XA4D-3F9A · 2026-11-23 · CONFIDENTIAL · DO NOT SHARE · K7M2Q9XA4D-3F9A · 2026-11-23 · CONFIDENTIAL · DO NOT SHARE · K7M2Q9XA4D-3F9A · 2026-11-23 · </span><span> SHARE · K7M2Q9XA4D-3F9A · 2026-11-23 · CONFIDENTIAL · DO NOT SHARE · K7M2Q9XA4D-3F9A · 2026-11-23 · CONFIDENTIAL · DO NOT SHARE · K7M2Q9XA4D-3F9A · 2026-11-23 · </span><span>4D-3F9A · 2026-11-23 · CONFIDENTIAL · DO NOT SHARE · K7M2Q9XA4D-3F9A · 2026-11-23 · CONFIDENTIAL · DO NOT SHARE · K7M2Q9XA4D-3F9A · 2026-11-23 · </span></div></div><p class="tk-hint tk-center">A4 page, as a viewer shows it.</p></div></div></div></div></div></div></div></div><figcaption class="sr">Overview of Enigma PDF Watermark: a summary of what stays on your computer and a button to choose PDF files.</figcaption></figure>
+        <!-- /tool-mock -->
         <div class="tools__body">
         <h3 class="tools__name">PDF Watermark <span class="tag">signed</span></h3>
         <p class="tools__desc">Put a visible, traceable watermark on PDFs before you share them. Runs offline and asks for no access.</p>
@@ -335,9 +768,9 @@
         </div>
       </article>
       <article class="card tools__card">
-        <figure class="screenshot">
-          <img src="./registry/v1/apps/sh.enigma.hash-check/overview.png" width="1600" height="1131" alt="Hash Check, a tool that checks a file against the checksum its publisher gave you." loading="lazy">
-        </figure>
+        <!-- tool-mock:sh.enigma.hash-check -->
+        <figure class="mock mock-stage tools__mock"><div class="mock-window mock-window--short" aria-hidden="true"><div class="mock-window__frame"><div class="mock-window__bar"><span class="mock-window__lights"><i></i><i></i><i></i></span><span class="mock-window__title">Hash Check</span></div><div class="mock-window__screen tk"><div class="tk-bar"><div class="tk-wrap tk-bar-in"><span class="tk-mark"><span class="tk-ets">ETS</span><span class="tk-word">Enigma <b>/</b> Hash Check</span></span><span class="tk-bar-end"><span class="tk-theme"><svg class="i" viewBox="0 0 24 24"><path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/></svg></span></span></div></div><div class="tk-main"><div class="tk-wrap"><div class="tk-hero"><p class="tk-eyebrow">Tool for Sanctum</p><div class="tk-h1">Is it the<span class="tk-dash"></span>file?</div><p class="tk-lede">Compare a downloaded file with the checksum its publisher gave you. <span>Installers, disk images, firmware, documents. The file is read in this window and never leaves it.</span></p></div><div class="tk-facts"><div class="tk-fact"><div class="tk-fact-h"><svg class="i" viewBox="0 0 24 24"><rect width="18" height="11" x="3" y="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>Stays here</div><p>The file is read in small pieces and hashed on this computer. Nothing is uploaded, stored or sent.</p></div><div class="tk-fact"><div class="tk-fact-h"><svg class="i" viewBox="0 0 24 24"><path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"/><path d="m9 12 2 2 4-4"/></svg>Asks for nothing</div><p>No network, no devices, no storage. The approval screen in Sanctum is empty.</p></div><div class="tk-fact"><div class="tk-fact-h"><svg class="i" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/></svg>A match has limits</div><p>It shows the file is the one the checksum was made from. It does not show the checksum came from the publisher.</p></div></div><div class="tk-block"><div class="tk-step"><span class="tk-n">1</span><span class="tk-h2">Choose the file</span></div><p class="tk-sub">Any size. Large files take a while, and you can stop at any time.</p><div class="tk-picker"><span class="tk-btn"><svg class="i" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" x2="12" y1="3" y2="15"/></svg>Choose a file</span><span class="tk-picked tk-mute">No file chosen.</span></div></div><div class="tk-block"><div class="tk-step"><span class="tk-n">2</span><span class="tk-h2">Paste the checksum</span></div><p class="tk-sub">Optional. Paste one checksum, or the whole contents of a file such as SHA256SUMS. Without one, the tool only shows the file's hash.</p><div class="tk-field"><div class="tk-lab"><span>Checksum from the publisher</span></div><div class="tk-area"><span class="tk-ph">e3b0c442...  installer.dmg</span></div><p class="tk-hint">Reads a plain hash, sha256: hash, GNU lines (hash  name) and BSD lines (SHA256 (name) = hash).</p></div><div class="tk-field"><div class="tk-lab"><span>Algorithm</span></div><span class="tk-seg"><span class="on">SHA-256</span><span>SHA-384</span><span>SHA-512</span></span><p class="tk-hint">SHA-256 is what most publishers use. A pasted checksum sets this by its length.</p></div></div></div></div></div></div></div><figcaption class="sr">Overview of Hash Check: choose a file, paste a checksum and check it.</figcaption></figure>
+        <!-- /tool-mock -->
         <div class="tools__body">
         <h3 class="tools__name">Hash Check <span class="tag">signed</span></h3>
         <p class="tools__desc">Check a file against the checksum its publisher gave you. Runs offline and asks for no access.</p>

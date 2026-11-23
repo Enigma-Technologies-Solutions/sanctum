@@ -6,6 +6,8 @@
 // 'self' by every page (scripts/lib/download.mjs). Everything shown comes from the registry
 // files, so a page cannot say something the signed index does not.
 
+import { toolFigure, toolScene } from './tool-mocks/index.mjs';
+
 const esc = (s) => String(s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]);
 
 const CSP =
@@ -168,8 +170,15 @@ function appPage({ config, entry, detail, manualHtml }) {
       </section>`,
     )
     .join('\n');
+  // A screenshot with a drawn scene (scripts/lib/tool-mocks) is shown as that scene, sharp at
+  // any size; any other is shown as the image the registry publishes.
   const shots = (detail.screenshots ?? [])
-    .map((s) => `      <figure class="screenshot"><img src="${reg}${esc(s.path)}" width="${s.width}" height="${s.height}" alt="${esc(s.alt)}" loading="lazy"></figure>`)
+    .map((s) => {
+      const file = s.path.split('/').pop();
+      return toolScene(id, file)
+        ? `      ${toolFigure(id, file, { caption: s.alt })}`
+        : `      <figure class="screenshot"><img src="${reg}${esc(s.path)}" width="${s.width}" height="${s.height}" alt="${esc(s.alt)}" loading="lazy"></figure>`;
+    })
     .join('\n');
   const links = [
     detail.homepage && `<a href="${esc(detail.homepage)}" rel="noopener">Website</a>`,
@@ -194,7 +203,7 @@ ${hashes}
         <p class="fine">Install opens Sanctum, which shows this tool and what it asks for, then waits for your click. Nothing is installed from the page itself. Sanctum not installed? <a href="../../download/" data-download>Get Sanctum</a> first.</p>
     </article>
     <p class="notice">Verified means the publisher is who it says and the bytes have not changed. It does not mean safe. A signature never grants access: every tool still starts with nothing approved, and you approve each capability yourself.</p>
-${shots ? `\n    <h2 class="apps__sub">Screenshots</h2>\n${shots}\n` : ''}
+${shots ? `\n    <h2 class="apps__sub">What it looks like</h2>\n${shots}\n` : ''}
     <h2 class="apps__sub">What is new</h2>
     <div class="changes">
 ${changelog}
@@ -221,6 +230,29 @@ export function renderSite(build) {
   for (const p of build.sitePages) {
     out.set(`${p.entry.app_id}/index.html`, Buffer.from(appPage({ config: build.config, ...p })));
   }
+  return out;
+}
+
+const MOCK = /(<!-- tool-mock:([a-z0-9.-]+) -->)[\s\S]*?(<!-- \/tool-mock -->)/g;
+
+/**
+ * Fill each marked block of the home page (web/index.html) with the overview scene of that
+ * tool, captioned with the overview screenshot's text from the registry. Every tool in the
+ * registry must have a block, and every block must name a tool in the registry.
+ */
+export function renderHomeTools(html, build) {
+  const pages = new Map(build.sitePages.map((p) => [p.entry.app_id, p]));
+  const seen = new Set();
+  const out = html.replace(MOCK, (_, open, id, close) => {
+    const p = pages.get(id);
+    if (!p) throw new Error(`web/index.html has a tool-mock block for ${id}, which is not in the registry`);
+    seen.add(id);
+    const shot = (p.detail.screenshots ?? []).find((s) => s.path.endsWith('/overview.png'));
+    const caption = shot?.alt ?? `${p.entry.name}: ${p.entry.summary}`;
+    return `${open}\n        ${toolFigure(id, 'overview.png', { caption, size: 'short', visibleCaption: false, cls: 'tools__mock' })}\n        ${close}`;
+  });
+  const missing = [...pages.keys()].filter((id) => !seen.has(id));
+  if (missing.length) throw new Error(`web/index.html has no tool-mock block for ${missing.join(', ')}`);
   return out;
 }
 

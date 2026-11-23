@@ -4,12 +4,14 @@
 //
 // Builds the Enigma registry (docs/registry-format.md) from registry/ and the signed bundles.
 //
-//   node scripts/build-registry.mjs            build into web/registry/v1 and web/apps
+//   node scripts/build-registry.mjs            build into web/registry/v1 and web/apps, and fill
+//                                              the tool pictures on the home page
 //   node scripts/build-registry.mjs --check    fail if the committed files are out of date (CI)
 //   node scripts/build-registry.mjs --renew    re-issue even if nothing changed (new serial)
 //
 // Options: --bundles DIR (default examples), --source DIR (registry), --out DIR
-// (web/registry/v1), --site DIR (web/apps), --sitemap FILE (web/sitemap.xml),
+// (web/registry/v1), --site DIR (web/apps), --sitemap FILE (web/sitemap.xml), --home FILE
+// (web/index.html; filled only with the default --source or when --home is given),
 // --anchor KEYID=NAME (repeatable; replaces the compiled-in anchors, for tests),
 // --now UNIX.
 //
@@ -20,7 +22,7 @@ import { existsSync, readFileSync, writeFileSync } from 'node:fs';
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { buildRegistry, diffDir, readProductionAnchors, writeRegistry } from './lib/registry.mjs';
-import { renderSite, renderSitemap } from './lib/site.mjs';
+import { renderHomeTools, renderSite, renderSitemap } from './lib/site.mjs';
 
 /** Social images are drawn by scripts/gen-brand.mjs, not by this builder: leave them alone. */
 const isBrandImage = (rel) => /^[^/]+\/og\.png$/.test(rel);
@@ -42,6 +44,7 @@ function parseArgs(argv) {
     else if (a === '--out') o.out = val();
     else if (a === '--site') o.site = val();
     else if (a === '--sitemap') o.sitemap = val();
+    else if (a === '--home') o.home = val();
     else if (a === '--now') o.now = Number(val());
     else if (a === '--anchor') {
       const [keyid, ...name] = val().split('=');
@@ -55,12 +58,15 @@ function parseArgs(argv) {
 function main() {
   const o = parseArgs(process.argv.slice(2));
   if (o.help) {
-    console.log(readFileSync(fileURLToPath(import.meta.url), 'utf8').split('\n').slice(3, 19).map((l) => l.replace(/^\/\/ ?/, '')).join('\n'));
+    console.log(readFileSync(fileURLToPath(import.meta.url), 'utf8').split('\n').slice(3, 20).map((l) => l.replace(/^\/\/ ?/, '')).join('\n'));
     return 0;
   }
   const outDir = resolve(o.out ?? join(repo, 'web/registry/v1'));
   const siteDir = resolve(o.site ?? join(repo, 'web/apps'));
   const sitemapPath = resolve(o.sitemap ?? join(repo, 'web/sitemap.xml'));
+  // The home page's tool pictures belong to Enigma's registry. Someone building their own
+  // registry with --source leaves the home page alone unless they name one with --home.
+  const homePath = o.home ? resolve(o.home) : o.source ? null : join(repo, 'web/index.html');
   const anchors = o.anchors.length ? o.anchors : readProductionAnchors(repo);
   const build = buildRegistry({
     sourceDir: resolve(o.source ?? join(repo, 'registry')),
@@ -74,12 +80,15 @@ function main() {
   });
   const site = renderSite(build);
   const sitemap = renderSitemap(readFileSync(sitemapPath, 'utf8'), build);
+  const homeNow = homePath ? readFileSync(homePath, 'utf8') : '';
+  const home = homePath ? renderHomeTools(homeNow, build) : '';
 
   if (o.check) {
     const problems = [
       ...diffDir(outDir, build.files).map((p) => `registry: ${p}`),
       ...diffDir(siteDir, site, { preserve: isBrandImage }).map((p) => `site: ${p}`),
       ...(readFileSync(sitemapPath, 'utf8') === sitemap ? [] : ['sitemap: changed']),
+      ...(homeNow === home ? [] : ['home page: tool pictures changed']),
     ];
     if (problems.length) {
       console.error(`The committed registry is out of date:\n  ${problems.join('\n  ')}\nRun: node scripts/build-registry.mjs`);
@@ -92,6 +101,7 @@ function main() {
   writeRegistry(outDir, build.files);
   writeRegistry(siteDir, site, { preserve: isBrandImage });
   if (!existsSync(sitemapPath) || readFileSync(sitemapPath, 'utf8') !== sitemap) writeFileSync(sitemapPath, sitemap);
+  if (homeNow !== home) writeFileSync(homePath, home);
 
   const state = (k) => (build.changed[k] ? 'CHANGED, needs signing' : 'unchanged');
   console.log(`index.json        serial ${build.serial.index}: ${state('index')}`);
