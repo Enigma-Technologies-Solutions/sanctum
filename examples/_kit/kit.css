@@ -1,0 +1,242 @@
+/* SPDX-License-Identifier: AGPL-3.0-only
+   Copyright (C) 2026 Enigma Technologies Solutions
+
+   Enigma tool kit: the shared look of the tools Enigma publishes for Sanctum.
+   Inlined at build time by examples/_kit/kit.mjs. Rules and examples: docs/tool-design.md.
+
+   Light by default. <html data-theme="dark"> switches to dark for this window only.
+   Ink leads, neutrals carry, volt highlights. Volt is a fill with ink on top, never a
+   text colour on white. Poppins for display, Inter for text, Space Mono for data,
+   code and small labels. */
+
+/*__KIT_FONTS__*/
+
+:root{
+  color-scheme:light;
+  /* surfaces */
+  --bg:#FFFFFF;
+  --surface:#F7F8FA;
+  --raised:#EEF1F4;
+  --line:#E3E7EC;
+  --line-2:#D3D8DF;
+  --field-line:#7B818A;
+  --field-bg:#FFFFFF;
+  /* text */
+  --ink:#0A0A0A;
+  --ink-2:#3A4048;
+  --mute:#565B62;
+  --faint:#6B717A;
+  /* brand */
+  --volt:#FBFF00;
+  --on-volt:#0A0A0A;
+  --volt-hover:#E9ED00;
+  --volt-edge:#C9CC00;
+  --volt-tint:#FCFFB8;
+  --accent-line:var(--ink);
+  --focus:#0A0A0A;
+  --sel-bg:#0A0A0A;
+  --sel-fg:#FFFFFF;
+  --bar-bg:#FFFFFF;
+  --shadow:0 1px 2px rgba(16,24,40,.06),0 1px 3px rgba(16,24,40,.04);
+  /* status: -fg is text and icons, -line is borders, -tint is the fill behind them */
+  --ok-fg:#137A4B;  --ok-line:#1E9E62;  --ok-tint:#EEF8F2;
+  --bad-fg:#B0301F; --bad-line:#D2402E; --bad-tint:#FCEEEC;
+  --warn-fg:#8A5A0B; --warn-line:#C77D11; --warn-tint:#FBF3E4;
+  --info-fg:#3A4048; --info-line:#D3D8DF; --info-tint:#F7F8FA;
+  /* type */
+  --display:'Poppins',system-ui,-apple-system,'Segoe UI',Roboto,sans-serif;
+  --body:'Inter',system-ui,-apple-system,'Segoe UI',Roboto,'Helvetica Neue',Arial,sans-serif;
+  --mono:'Space Mono',ui-monospace,SFMono-Regular,Menlo,Consolas,'Liberation Mono',monospace;
+  /* shape and rhythm */
+  --r:8px;
+  --r-lg:12px;
+  --maxw:920px;
+  --gap:clamp(16px,4vw,40px);
+  --s1:4px; --s2:8px; --s3:12px; --s4:16px; --s5:24px; --s6:32px; --s7:48px;
+}
+
+:root[data-theme="dark"]{
+  color-scheme:dark;
+  --bg:#0B0C0E;
+  --surface:#131518;
+  --raised:#1B1E22;
+  --line:#2A2E34;
+  --line-2:#3A3F47;
+  --field-line:#6B717A;
+  --field-bg:#08090A;
+  --ink:#F2F3F5;
+  --ink-2:#C9CDD3;
+  --mute:#A3A9B1;
+  --faint:#8B919A;
+  --volt-hover:#FFFFFF;
+  --volt-edge:#FBFF00;
+  --volt-tint:rgba(251,255,0,.12);
+  --accent-line:var(--volt);
+  --focus:#FBFF00;
+  --sel-bg:#F2F3F5;
+  --sel-fg:#0A0A0A;
+  --bar-bg:#0B0C0E;
+  --shadow:0 1px 2px rgba(0,0,0,.5);
+  --ok-fg:#4CC38A;  --ok-line:#2E9E6A;  --ok-tint:rgba(76,195,138,.10);
+  --bad-fg:#F0786A; --bad-line:#E0574A; --bad-tint:rgba(240,120,106,.10);
+  --warn-fg:#E0A646; --warn-line:#C98A2A; --warn-tint:rgba(224,166,70,.10);
+  --info-fg:#C9CDD3; --info-line:#3A3F47; --info-tint:#131518;
+}
+
+/* ── Base ─────────────────────────────────────────────────────────────── */
+*,*::before,*::after{box-sizing:border-box}
+html,body{margin:0;background:var(--bg);color:var(--ink)}
+body{font-family:var(--body);font-size:15px;line-height:1.6;-webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale;
+  min-height:100vh;padding:env(safe-area-inset-top,0) 0 env(safe-area-inset-bottom,0)}
+[hidden]{display:none!important}
+code,kbd,samp{font-family:var(--mono);font-size:.92em}
+a{color:inherit;text-underline-offset:3px}
+::selection{background:var(--volt);color:var(--on-volt)}
+:focus-visible{outline:2px solid var(--focus);outline-offset:2px}
+.wrap{max-width:var(--maxw);margin:0 auto;padding:0 var(--gap)}
+.i{width:16px;height:16px;flex:none;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);clip-path:inset(50%);white-space:nowrap}
+.muted{color:var(--mute)}
+.small{font-size:13px}
+.mono{font-family:var(--mono)}
+.actions{display:flex;gap:var(--s3);flex-wrap:wrap;align-items:center}
+
+/* ── Header bar: ETS mark, ENIGMA / TOOL NAME, theme switch ───────────── */
+header.bar{position:sticky;top:0;z-index:40;background:var(--bar-bg); border-bottom:1px solid var(--line)}
+.bar-in{display:flex;align-items:center;gap:var(--s4);min-height:56px;padding-block:var(--s2)}
+.mark{display:flex;align-items:center;gap:var(--s3);min-width:0}
+.ets-badge{display:inline-flex;align-items:center;justify-content:center;width:40px;height:26px;background:var(--ink);border-radius:4px;flex:none}
+.ets{font-family:var(--body);font-weight:800;font-size:12.5px;color:var(--bg);letter-spacing:.01em;line-height:1}
+.wordmark{font-family:var(--mono);font-size:12px;letter-spacing:.16em;text-transform:uppercase;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.wordmark b{color:var(--faint);font-weight:400}
+.bar-end{margin-left:auto;display:flex;align-items:center;gap:var(--s2)}
+.theme-toggle{display:inline-flex;align-items:center;justify-content:center;width:36px;height:36px;padding:0;border-radius:var(--r);
+  background:transparent;color:var(--ink);border:1px solid var(--line-2);cursor:pointer}
+.theme-toggle:hover{background:var(--raised)}
+.theme-toggle .i{width:18px;height:18px}
+.theme-toggle .i-sun{display:none}
+:root[data-theme="dark"] .theme-toggle .i-sun{display:block}
+:root[data-theme="dark"] .theme-toggle .i-moon{display:none}
+
+/* ── Hero: eyebrow, title with the volt accent, lead ─────────────────── */
+.hero{padding:clamp(32px,6vw,64px) 0 clamp(20px,3vw,32px)}
+.eyebrow{font-family:var(--mono);font-size:11px;letter-spacing:.24em;text-transform:uppercase;color:var(--mute);margin:0 0 var(--s4)}
+h1{font-family:var(--display);font-weight:800;font-size:clamp(34px,6.2vw,60px);line-height:1;letter-spacing:-.025em;margin:0}
+/* The accent. .dash is a volt bar between two words; .hl lays a volt band under a word. */
+.dash{display:inline-block;width:.46em;height:.14em;background:var(--volt);box-shadow:0 0 0 1px var(--volt-edge);vertical-align:.3em;margin:0 .06em}
+.hl{background:linear-gradient(transparent 58%,var(--volt) 58%,var(--volt) 90%,transparent 90%);padding:0 .04em}
+:root[data-theme="dark"] .hl{background:none;color:var(--volt)}
+.lede{max-width:640px;margin:var(--s5) 0 0;font-size:16.5px;line-height:1.55}
+.lede span{color:var(--mute)}
+
+/* ── Notice: a short message above the work area ─────────────────────── */
+.notice{display:flex;gap:var(--s3);align-items:flex-start;border:1px solid var(--info-line);background:var(--info-tint);color:var(--info-fg);
+  border-radius:var(--r);padding:var(--s3) var(--s4);margin:0 0 var(--s4);font-size:14px}
+.notice .i{margin-top:3px}
+.notice strong{color:var(--ink)}
+.notice.ok{border-color:var(--ok-line);background:var(--ok-tint)}
+.notice.ok .i{color:var(--ok-fg)}
+.notice.warn{border-color:var(--warn-line);background:var(--warn-tint)}
+.notice.warn .i{color:var(--warn-fg)}
+.notice.bad{border-color:var(--bad-line);background:var(--bad-tint)}
+.notice.bad .i,.notice.bad strong{color:var(--bad-fg)}
+
+/* ── Info boxes: what the tool does with your data ───────────────────── */
+.facts{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:var(--s3);margin:0 0 var(--s4)}
+@media (max-width:760px){.facts{grid-template-columns:minmax(0,1fr)}}
+.fact{background:var(--surface);border:1px solid var(--line);border-radius:var(--r-lg);padding:var(--s4) 18px;font-size:13.5px}
+.fact h3{font-family:var(--mono);font-size:11px;font-weight:700;letter-spacing:.16em;text-transform:uppercase;margin:0 0 var(--s2);display:flex;gap:var(--s2);align-items:center;color:var(--ink)}
+.fact p{margin:0;color:var(--mute)}
+
+/* ── Sections and numbered steps ─────────────────────────────────────── */
+section.block{padding:clamp(24px,4vw,36px) 0;border-top:1px solid var(--line)}
+.kicker{font-family:var(--mono);font-size:11px;letter-spacing:.22em;text-transform:uppercase;color:var(--mute);margin:0 0 var(--s2);display:flex;gap:var(--s3);align-items:center}
+.kicker::before{content:"";width:24px;height:2px;background:var(--accent-line)}
+h2{font-family:var(--display);font-weight:700;font-size:clamp(21px,2.8vw,26px);line-height:1.2;letter-spacing:-.015em;margin:0 0 var(--s1)}
+h2:focus{outline:none}
+h2:focus-visible{outline:2px solid var(--focus);outline-offset:4px}
+.step-head{display:flex;gap:var(--s3);align-items:center;margin:0 0 var(--s1)}
+.step-head h2{margin:0}
+.step-head + :not(.sub){margin-top:var(--s5)}
+.step-n{display:inline-flex;align-items:center;justify-content:center;flex:none;width:30px;height:30px;border-radius:var(--r);
+  background:var(--volt);color:var(--on-volt);box-shadow:inset 0 0 0 1px var(--volt-edge);font-family:var(--mono);font-weight:700;font-size:14px;line-height:1}
+.sub{color:var(--mute);font-size:14px;margin:0 0 var(--s5)}
+
+/* ── Fields ──────────────────────────────────────────────────────────── */
+.field{margin:0 0 var(--s5)}
+.field:last-child{margin-bottom:0}
+.lab{display:flex;justify-content:space-between;gap:10px;font-size:13px;font-weight:600;color:var(--ink);margin-bottom:6px}
+.lab .opt{font-weight:400;color:var(--mute)}
+input[type=text],input[type=password],input[type=search],input[type=number],select,textarea{
+  width:100%;background:var(--field-bg);color:var(--ink);border:1px solid var(--field-line);border-radius:var(--r);
+  padding:9px 12px;font:inherit;font-size:14px;line-height:1.5;outline:none}
+textarea{font-family:var(--mono);font-size:13px;resize:vertical;min-height:96px}
+input::placeholder,textarea::placeholder{color:var(--faint);opacity:1}
+input:focus,select:focus,textarea:focus{border-color:var(--focus);box-shadow:0 0 0 1px var(--focus)}
+input[aria-invalid="true"],textarea[aria-invalid="true"],select[aria-invalid="true"]{border-color:var(--bad-line);box-shadow:0 0 0 1px var(--bad-line)}
+input:disabled,select:disabled,textarea:disabled{background:var(--surface);color:var(--mute);cursor:not-allowed}
+input[type=checkbox],input[type=radio],input[type=range]{accent-color:var(--ink)}
+.hint{font-size:13px;color:var(--mute);margin:var(--s2) 0 0}
+.hint.bad{color:var(--bad-fg)}
+
+/* ── Buttons ─────────────────────────────────────────────────────────── */
+button{font-family:var(--body)}
+.btn{display:inline-flex;gap:var(--s2);align-items:center;justify-content:center;min-height:40px;padding:8px 16px;border-radius:var(--r);
+  background:var(--volt);color:var(--on-volt);border:1px solid var(--volt-edge);font-weight:600;font-size:14px;line-height:1.2;cursor:pointer;
+  transition:background .12s,border-color .12s,color .12s}
+.btn:hover:not(:disabled){background:var(--volt-hover);border-color:var(--volt-edge)}
+.btn.ghost{background:transparent;color:var(--ink);border-color:var(--line-2)}
+.btn.ghost:hover:not(:disabled){background:var(--raised);border-color:var(--field-line)}
+.btn.danger{background:transparent;color:var(--bad-fg);border-color:var(--bad-line)}
+.btn.danger:hover:not(:disabled){background:var(--bad-tint)}
+.btn:disabled{background:var(--surface);color:var(--faint);border-color:var(--line);cursor:not-allowed}
+.btn.sm{min-height:32px;padding:5px 11px;font-size:13px}
+.btn.copied{color:var(--ok-fg);border-color:var(--ok-line)}
+
+/* ── Segmented control and tabs ──────────────────────────────────────── */
+.seg,.tabs{display:inline-flex;flex-wrap:wrap;gap:2px;padding:3px;border:1px solid var(--line-2);border-radius:var(--r);background:var(--surface);max-width:100%}
+.seg button,.tabs button{background:transparent;color:var(--ink-2);border:0;border-radius:6px;padding:0 14px;min-height:32px;
+  font-size:13px;font-weight:600;cursor:pointer;display:inline-flex;gap:var(--s2);align-items:center}
+.tabs{margin:0 0 var(--s5)}
+.tabs button{min-height:36px;padding:0 18px;font-size:14px}
+.seg button:hover:not(:disabled),.tabs button:hover:not(:disabled){background:var(--raised);color:var(--ink)}
+.seg button[aria-pressed="true"],.tabs button[aria-selected="true"]{background:var(--sel-bg);color:var(--sel-fg)}
+.seg button[aria-pressed="true"]:hover,.tabs button[aria-selected="true"]:hover{background:var(--sel-bg);color:var(--sel-fg)}
+.seg button:disabled{cursor:not-allowed}
+.seg button:disabled:not([aria-pressed="true"]){color:var(--faint)}
+
+/* ── File picker ─────────────────────────────────────────────────────── */
+.picker{display:flex;gap:var(--s4);flex-wrap:wrap;align-items:center;border:1px dashed var(--field-line);border-radius:var(--r-lg);padding:20px;background:var(--surface)}
+.picker input[type=file]{position:absolute;width:1px;height:1px;opacity:0;pointer-events:none}
+.picker:focus-within{border-color:var(--focus)}
+.picked{font-family:var(--mono);font-size:13px;overflow-wrap:anywhere;min-width:0}
+.picked b{font-weight:700}
+
+/* ── Progress ────────────────────────────────────────────────────────── */
+progress{width:100%;height:6px;appearance:none;-webkit-appearance:none;border:0;border-radius:3px;background:var(--raised);margin:var(--s4) 0 6px;overflow:hidden}
+progress::-webkit-progress-bar{background:var(--raised)}
+progress::-webkit-progress-value{background:var(--ink)}
+progress::-moz-progress-bar{background:var(--ink)}
+
+/* ── Result panel: .ok (success), .bad (mismatch or error), .warn, plain (information) ── */
+.verdict{display:flex;gap:var(--s3);align-items:flex-start;border:1px solid var(--info-line);border-left-width:4px;background:var(--info-tint);
+  border-radius:var(--r);padding:14px 16px;margin:var(--s5) 0 0}
+.verdict .i{margin-top:3px;width:18px;height:18px;color:var(--info-fg)}
+.verdict strong{display:block;font-size:16px;font-weight:700;color:var(--ink)}
+.verdict p{margin:var(--s1) 0 0;font-size:14px;color:var(--ink-2)}
+.verdict.ok{border-color:var(--ok-line);background:var(--ok-tint)}
+.verdict.ok strong,.verdict.ok .i{color:var(--ok-fg)}
+.verdict.bad{border-color:var(--bad-line);background:var(--bad-tint)}
+.verdict.bad strong,.verdict.bad .i{color:var(--bad-fg)}
+.verdict.warn{border-color:var(--warn-line);background:var(--warn-tint)}
+.verdict.warn strong,.verdict.warn .i{color:var(--warn-fg)}
+
+/* A value the user may copy: a hash, a share, a code. */
+.readout{display:block;font-family:var(--mono);font-size:13px;overflow-wrap:anywhere;word-break:break-all;background:var(--surface);color:var(--ink);
+  border:1px solid var(--line-2);border-radius:var(--r);padding:10px 12px;user-select:all;-webkit-user-select:all}
+.msg{min-height:1.5em;margin:10px 0 0;font-size:13.5px;color:var(--mute)}
+.msg.bad{color:var(--bad-fg)}
+
+/* ── Footer ──────────────────────────────────────────────────────────── */
+footer.foot{border-top:1px solid var(--line);padding:var(--s5) 0 40px;color:var(--mute);font-size:12.5px}
+footer.foot p{margin:0 0 var(--s2)}

@@ -1,0 +1,1110 @@
+<!doctype html>
+<html lang="en" data-theme="light">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'unsafe-inline'; style-src 'unsafe-inline'; img-src data:; font-src data:; connect-src 'self'; base-uri 'none'; form-action 'none'">
+<meta name="referrer" content="no-referrer">
+<meta name="theme-color" content="#FFFFFF">
+<title>Enigma OTP Vault for Sanctum</title>
+<meta name="description" content="Time-based one-time codes (TOTP) kept in Sanctum storage and optionally on a smart card.">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32' width='32' height='32'%3E%3Crect width='32' height='32' rx='6' fill='%230A0A0A'/%3E%3Crect x='3' y='3' width='26' height='26' rx='5' fill='none' stroke='%23FBFF00' stroke-width='1.5'/%3E%3Ctext x='16' y='20.5' text-anchor='middle' font-family='Poppins,Helvetica,Arial,sans-serif' font-size='10' font-weight='700' fill='%23FFFFFF' letter-spacing='-0.3'%3Eotp%3C/text%3E%3C/svg%3E">
+<style>
+/*__KIT_CSS__*/
+
+/* OTP Vault. connect-src 'self' in the CSP above is for Sanctum's smart card bridge, which
+   answers on the tool's own origin. */
+
+/* Header: who is signed in, the vault fingerprint, the auto-lock countdown */
+.bar-in{flex-wrap:wrap}
+.bar-session{display:flex;align-items:center;gap:var(--s3);flex-wrap:wrap}
+.who{font-size:13px;color:var(--mute)}
+#whoName{color:var(--ink);font-weight:600}
+.fp-mini{font-family:'Apple Color Emoji','Segoe UI Emoji','Noto Color Emoji',sans-serif;font-size:17px;letter-spacing:2px;line-height:1.4;
+  border:1px solid var(--line-2);border-radius:var(--r);padding:1px 8px;white-space:nowrap}
+
+/* Panels */
+.grid2{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:var(--s5);align-items:start}
+.grid2.tight{gap:0 var(--s5)}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:var(--r-lg);padding:clamp(16px,3vw,24px)}
+.card h3{font-family:var(--display);font-weight:700;font-size:17px;line-height:1.3;margin:0 0 var(--s2)}
+.card > p{font-size:14px;color:var(--ink-2);margin:0 0 var(--s4)}
+.restore{margin-top:var(--s5)}
+.card.wide{grid-column:1/-1}
+#settings .grid2{grid-template-columns:repeat(auto-fit,minmax(320px,1fr))}
+.field .hint + input,.field .hint + .meter{margin-top:var(--s2)}
+.row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+.row > *{flex:1 1 auto}
+.row > .btn{flex:0 0 auto}
+.btn.danger.armed{background:var(--bad-fg);color:var(--bg);border-color:var(--bad-fg)}
+.msg.err{color:var(--bad-fg)}
+.msg.ok{color:var(--ok-fg)}
+input.secret{font-family:var(--mono);letter-spacing:.06em;text-transform:uppercase}
+details{border:1px solid var(--line);border-radius:var(--r);background:var(--bg);padding:10px 14px;margin:0 0 var(--s5)}
+details summary{cursor:pointer;font-size:13px;font-weight:600;color:var(--ink-2)}
+details[open] summary{margin-bottom:var(--s4)}
+.adv{display:grid;grid-template-columns:repeat(3,1fr);gap:var(--s3)}
+.adv .field{margin:0}
+@media (max-width:520px){.adv{grid-template-columns:1fr}}
+ul.plain{margin:var(--s2) 0 0;padding-left:18px;color:var(--ink-2);font-size:13.5px}
+ul.plain li{margin:0 0 6px}
+.check{display:flex;gap:10px;align-items:flex-start;margin:var(--s3) 0 0;font-size:13.5px;color:var(--ink-2)}
+.check input{margin-top:4px}
+/* Password strength. The script colours the bar with --danger, --volt and --ok. */
+.meter{height:4px;background:var(--raised);border-radius:2px;overflow:hidden;margin:var(--s2) 0 0}
+.meter i{display:block;height:100%;width:0;transition:width .2s,background .2s}
+#meter,#aPreview{--danger:var(--bad-fg);--ok:var(--ok-fg)}
+#exportText{margin-top:var(--s3)}
+.store-pick{border:1px solid var(--line);border-radius:var(--r);background:var(--bg);padding:10px 14px;margin:0 0 var(--s5)}
+.store-pick .check{margin:6px 0 0}
+
+/* Fingerprint: eight emoji, one per byte. The pictures are data, so they stay emoji. */
+.fp{background:var(--surface);border:1px solid var(--line-2);border-radius:var(--r-lg);padding:clamp(16px,3vw,24px)}
+.fp-label{font-family:var(--mono);font-size:11px;font-weight:700;letter-spacing:.16em;text-transform:uppercase;color:var(--ink)}
+.fp-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin:var(--s3) 0}
+.fp-grid div{aspect-ratio:1;display:flex;align-items:center;justify-content:center;font-family:'Apple Color Emoji','Segoe UI Emoji','Noto Color Emoji',sans-serif;
+  font-size:clamp(26px,5vw,38px);background:var(--bg);border:1px solid var(--line);border-radius:var(--r)}
+.fp-grid.empty div{color:var(--faint);font-family:var(--mono);font-size:18px}
+.fp-grid.busy div{animation:pulse 1s infinite alternate}
+@keyframes pulse{from{opacity:.35}to{opacity:1}}
+@media (prefers-reduced-motion:reduce){.fp-grid.busy div{animation:none}}
+.fp-hex{font-family:var(--mono);font-size:12px;color:var(--mute);word-break:break-all;letter-spacing:.06em}
+.fp p{font-size:13px;color:var(--mute);margin:var(--s3) 0 0}
+#pwFp{margin:0 0 var(--s4)}
+
+/* Codes */
+.toolbar{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin:0 0 var(--s4)}
+.toolbar input,.toolbar select{flex:1 1 220px;width:auto}
+.toolbar .btn{flex:0 0 auto}
+.list{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:var(--s3)}
+.entry{background:var(--surface);border:1px solid var(--line);border-radius:var(--r-lg);padding:18px;display:flex;flex-direction:column;gap:10px;min-width:0}
+.entry-head{display:flex;justify-content:space-between;gap:10px;align-items:baseline}
+.issuer{font-family:var(--display);font-weight:700;font-size:18px;line-height:1.25;overflow-wrap:anywhere}
+.acct{font-size:13px;color:var(--mute);overflow-wrap:anywhere}
+.code{font-family:var(--mono);font-size:clamp(30px,6vw,36px);font-weight:700;letter-spacing:.08em;line-height:1.1;cursor:pointer;
+  background:none;border:0;border-radius:4px;color:var(--ink);padding:0;text-align:left}
+.code:hover{color:var(--ink-2);text-decoration:underline;text-decoration-thickness:2px;text-underline-offset:6px}
+.code.warn{color:var(--bad-fg)}
+.code.touch{font-family:var(--body);font-size:14px;font-weight:600;letter-spacing:0;color:var(--ink);text-decoration:underline;text-underline-offset:3px}
+.code:disabled{cursor:not-allowed;color:var(--faint);text-decoration:none}
+.next{font-size:12.5px;color:var(--mute)}
+.bar-t{height:4px;background:var(--raised);border-radius:2px;position:relative;overflow:hidden}
+.bar-t i{position:absolute;inset:0 auto 0 0;background:var(--accent-line)}
+.meta{font-family:var(--mono);font-size:10.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--faint)}
+.tag-hw{font-family:var(--mono);font-size:10.5px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;background:var(--volt);color:var(--on-volt);
+  border-radius:4px;padding:2px 6px;white-space:nowrap}
+.entry-actions{display:flex;gap:6px;flex-wrap:wrap}
+.entry form{display:grid;gap:6px;width:100%}
+.empty-state{border:1px dashed var(--field-line);border-radius:var(--r-lg);padding:32px;text-align:center;color:var(--mute)}
+.toast{position:fixed;left:50%;bottom:calc(24px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);z-index:60;max-width:calc(100vw - 32px);
+  background:var(--ink);color:var(--bg);border-radius:var(--r);padding:10px 16px;font-size:14px;font-weight:600;box-shadow:var(--shadow)}
+footer.foot p{max-width:760px}
+</style>
+</head>
+<body>
+<!--__KIT_ICONS__-->
+<svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false">
+  <symbol id="i-eye" viewBox="0 0 24 24"><path d="M2.062 12.348a1 1 0 0 1 0-.696 10.75 10.75 0 0 1 19.876 0 1 1 0 0 1 0 .696 10.75 10.75 0 0 1-19.876 0"/><circle cx="12" cy="12" r="3"/></symbol>
+  <symbol id="i-key" viewBox="0 0 24 24"><path d="M2.586 17.414A2 2 0 0 0 2 18.828V21a1 1 0 0 0 1 1h3a1 1 0 0 0 1-1v-1a1 1 0 0 1 1-1h1a1 1 0 0 0 1-1v-1a1 1 0 0 1 1-1h.172a2 2 0 0 0 1.414-.586l.814-.814a6.5 6.5 0 1 0-4-4z"/><circle cx="16.5" cy="7.5" r=".5" fill="currentColor"/></symbol>
+  <symbol id="i-plus" viewBox="0 0 24 24"><path d="M5 12h14"/><path d="M12 5v14"/></symbol>
+  <symbol id="i-refresh" viewBox="0 0 24 24"><path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"/><path d="M21 3v5h-5"/><path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"/><path d="M8 16H3v5"/></symbol>
+</svg>
+
+<header class="bar">
+  <div class="wrap bar-in">
+    <div class="mark" aria-label="Enigma Technologies Solutions">
+      <span class="ets-badge" aria-hidden="true"><span class="ets">ETS</span></span>
+      <span class="wordmark">Enigma <b>/</b> OTP Vault</span>
+    </div>
+    <div class="bar-end">
+      <div class="bar-session" id="barSession" hidden>
+        <span class="who" id="whoName"></span>
+        <span class="fp-mini" id="fpMini" title="Vault fingerprint"></span>
+        <span class="who" id="lockIn" title="Auto-lock countdown"></span>
+        <button class="btn ghost sm" id="btnLock" type="button"><svg class="i" aria-hidden="true"><use href="#i-lock"/></svg>Lock</button>
+      </div>
+      <button class="theme-toggle" type="button" data-theme-toggle aria-pressed="false" aria-label="Dark theme" title="Dark theme"><svg class="i i-moon" aria-hidden="true"><use href="#i-moon"/></svg><svg class="i i-sun" aria-hidden="true"><use href="#i-sun"/></svg></button>
+    </div>
+  </div>
+</header>
+
+<main class="wrap">
+  <div class="hero">
+    <p class="eyebrow">Tool for Sanctum</p>
+    <h1>Codes that <span class="hl">stay here</span></h1>
+    <p class="lede">Two-factor codes, generated inside Sanctum. <span>Your username and password derive an AES-256 key that encrypts every secret before it is written to this tool's own storage. With a YubiKey and smart card access approved, secrets can live on the key instead, and the key computes each code.</span></p>
+  </div>
+
+  <div class="notice bad" id="noCrypto" role="alert" hidden><svg class="i" aria-hidden="true"><use href="#i-alert"/></svg><div>This page needs the Web Crypto API. Sanctum provides it to every tool. In a browser, open the file from disk or from a secure (HTTPS) address.</div></div>
+  <div class="notice warn" id="noStorage" role="alert" hidden><svg class="i" aria-hidden="true"><use href="#i-alert"/></svg><div>Storage is blocked in this browser (private mode or site data turned off). The vault works for this window only and is lost when it closes. Copy a backup to keep it.</div></div>
+  <div class="notice" id="originNote"><svg class="i" aria-hidden="true"><use href="#i-info"/></svg><div>Sanctum gives this tool its own storage, tied to the tool's identity in your library. A new version of the tool keeps the vault. Deleting the tool from Sanctum and adding it again starts with empty storage, so copy a backup first.</div></div>
+
+  <div class="facts" role="list" aria-label="What this tool does with your secrets">
+    <div class="fact" role="listitem"><h3><svg class="i" aria-hidden="true"><use href="#i-lock"/></svg>Stays here</h3><p>Your username and password never leave this window. Secrets are encrypted before they are stored, and codes are computed on this computer.</p></div>
+    <div class="fact" role="listitem"><h3><svg class="i" aria-hidden="true"><use href="#i-shield"/></svg>Asks for two things</h3><p>Its own storage for the encrypted vault and, only if you use it, the OATH applet of a YubiKey. No network.</p></div>
+    <div class="fact" role="listitem"><h3><svg class="i" aria-hidden="true"><use href="#i-alert"/></svg>No recovery</h3><p>If the password is forgotten, the stored secrets cannot be decrypted. Keep a backup and a long password.</p></div>
+  </div>
+
+  <!-- Step 1: unlock or create -->
+  <section class="block" id="gate" aria-labelledby="h-gate">
+    <div class="step-head"><span class="step-n" aria-hidden="true">1</span><h2 id="h-gate"><span class="sr">Step 1: </span><span id="gateTitle">Unlock your vault</span></h2></div>
+    <p class="sub" id="gateLede">Enter the username and password you chose when the vault was created. The fingerprint below is computed from what you type. If it matches the one you remember, the combination is right.</p>
+
+    <div class="tabs" role="tablist" aria-label="Unlock or create">
+      <button type="button" role="tab" id="tabUnlock" aria-selected="true">Unlock</button>
+      <button type="button" role="tab" id="tabCreate" aria-selected="false">Create vault</button>
+    </div>
+
+    <div class="grid2">
+      <form class="card" id="gateForm" autocomplete="off" novalidate>
+        <div class="field">
+          <label class="lab" for="gUser"><span>Username</span></label>
+          <input type="text" id="gUser" autocomplete="username" autocapitalize="off" spellcheck="false" required aria-describedby="gUser-hint">
+          <p class="hint" id="gUser-hint">Not case-sensitive. Used only on this computer, with the password, to derive the key.</p>
+        </div>
+        <div class="field">
+          <label class="lab" for="gPass"><span>Password</span></label>
+          <input type="password" id="gPass" autocomplete="current-password" required>
+          <div class="meter" id="meterWrap" hidden><i id="meter"></i></div>
+        </div>
+        <div class="field" id="confirmWrap" hidden>
+          <label class="lab" for="gPass2"><span>Confirm password</span></label>
+          <input type="password" id="gPass2" autocomplete="new-password">
+        </div>
+        <div class="field" id="createNotes" hidden>
+          <ul class="plain">
+            <li>There is no recovery. If the password is forgotten, the stored secrets cannot be decrypted.</li>
+            <li>Use at least 12 characters. A passphrase of four or more random words works well.</li>
+            <li>The same username and password always produce the same fingerprint and key, on any device.</li>
+          </ul>
+          <label class="check"><input type="checkbox" id="ackFp"> <span>I have noted the fingerprint shown for this username and password.</span></label>
+        </div>
+        <div class="actions">
+          <button class="btn ghost" type="button" id="btnPreview"><svg class="i" aria-hidden="true"><use href="#i-eye"/></svg>Show fingerprint</button>
+          <button class="btn" type="submit" id="btnGate">Unlock</button>
+        </div>
+        <p class="msg" id="gateMsg" role="status" aria-live="polite"></p>
+      </form>
+
+      <div class="fp" aria-live="polite">
+        <div class="fp-label">Vault fingerprint</div>
+        <div class="fp-grid empty" id="fpGrid"></div>
+        <div class="fp-hex" id="fpHex">Not computed yet.</div>
+        <p>A one-way value derived from the same master key as the encryption key. It reveals nothing about the password or the key. It only gives you a picture to recognise: different input, different picture.</p>
+      </div>
+    </div>
+
+    <div class="card restore">
+      <h3>Restore a backup</h3>
+      <p>Restore an encrypted backup made with Copy backup. Paste it below or choose a saved .json file, then unlock it with the original username and password.</p>
+      <div class="field">
+        <label class="lab" for="importText"><span>Backup text</span></label>
+        <textarea id="importText" rows="3" spellcheck="false" placeholder='{"format":"ets-otp-vault/v1-backup", ...}'></textarea>
+      </div>
+      <div class="row">
+        <input type="file" id="importFile" accept="application/json,.json,.txt" class="sr" tabindex="-1" aria-label="Backup file">
+        <button class="btn ghost" type="button" id="btnImportText">Restore pasted backup</button>
+        <button class="btn ghost" type="button" id="btnImport"><svg class="i" aria-hidden="true"><use href="#i-upload"/></svg>Choose file</button>
+        <span class="small muted" id="vaultCount"></span>
+      </div>
+      <p class="msg" id="importMsg" role="status" aria-live="polite"></p>
+    </div>
+  </section>
+
+  <!-- Step 2: add a key -->
+  <section class="block" id="vault" aria-labelledby="h-add" hidden>
+    <div class="step-head"><span class="step-n" aria-hidden="true">2</span><h2 id="h-add"><span class="sr">Step 2: </span>Add a key</h2></div>
+    <p class="sub">Paste the setup key a website shows next to its QR code (for example <code>aaaa bbbb cccc dddd eeee ffff gggg hhhh</code>) or a full <code>otpauth://totp/...</code> link. Spaces and case do not matter.</p>
+
+    <form class="card" id="addForm" autocomplete="off" novalidate>
+      <div class="grid2 tight">
+        <div class="field">
+          <label class="lab" for="aIssuer"><span>Service</span></label>
+          <input type="text" id="aIssuer" list="issuers" placeholder="GitHub" maxlength="80">
+        </div>
+        <div class="field">
+          <label class="lab" for="aAccount"><span>Account</span></label>
+          <input type="text" id="aAccount" placeholder="you@example.com" maxlength="120">
+        </div>
+      </div>
+      <div class="field">
+        <label class="lab" for="aSecret"><span>Setup key or otpauth:// link</span></label>
+        <input type="text" id="aSecret" class="secret" placeholder="aaaa bbbb cccc dddd eeee ffff gggg hhhh" spellcheck="false" autocapitalize="characters">
+      </div>
+      <details>
+        <summary>Advanced (most sites use the defaults)</summary>
+        <div class="adv">
+          <div class="field">
+            <label class="lab" for="aDigits"><span>Digits</span></label>
+            <select id="aDigits"><option>6</option><option>7</option><option>8</option></select>
+          </div>
+          <div class="field">
+            <label class="lab" for="aPeriod"><span>Period (seconds)</span></label>
+            <input type="number" id="aPeriod" value="30" min="10" max="300" step="1">
+          </div>
+          <div class="field">
+            <label class="lab" for="aAlgo"><span>Algorithm</span></label>
+            <select id="aAlgo"><option value="SHA-1">SHA-1</option><option value="SHA-256">SHA-256</option><option value="SHA-512">SHA-512</option></select>
+          </div>
+        </div>
+      </details>
+      <div class="store-pick" id="storePick" role="group" aria-labelledby="lab-store" hidden>
+        <span class="fp-label" id="lab-store">Store on</span>
+        <label class="check"><input type="radio" name="aStore" value="vault" checked> <span>This vault (encrypted in Sanctum storage)</span></label>
+        <label class="check"><input type="radio" name="aStore" value="card"> <span>YubiKey <b id="storeCardName"></b> (the secret is written to the key and can never be read again)</span></label>
+        <label class="check" id="touchWrap"><input type="checkbox" id="aTouch"> <span>Require a touch on the key for each code</span></label>
+      </div>
+      <div class="row">
+        <span class="small muted" id="aPreview"></span>
+        <button class="btn" type="submit"><svg class="i" aria-hidden="true"><use href="#i-plus"/></svg>Save key</button>
+      </div>
+      <p class="msg" id="addMsg" role="status" aria-live="polite"></p>
+      <datalist id="issuers"></datalist>
+    </form>
+  </section>
+
+  <!-- Step 3: codes -->
+  <section class="block" id="codes" aria-labelledby="h-codes" hidden>
+    <div class="step-head"><span class="step-n" aria-hidden="true">3</span><h2 id="h-codes"><span class="sr">Step 3: </span>Use a code</h2></div>
+    <p class="sub">Click a code to copy it. A code turns red in the last five seconds of its window.</p>
+    <div class="toolbar">
+      <input type="search" id="filter" placeholder="Filter by service or account" aria-label="Filter">
+      <span class="small muted" id="entryCount"></span>
+    </div>
+    <div class="list" id="list"></div>
+    <div class="empty-state" id="empty" hidden>No keys yet. Add one in step 2.</div>
+  </section>
+
+  <!-- Step 4: YubiKey, through Sanctum's smart card bridge -->
+  <section class="block" id="hw" aria-labelledby="h-hw" hidden>
+    <div class="step-head"><span class="step-n" aria-hidden="true">4</span><h2 id="h-hw"><span class="sr">Step 4: </span>Codes from your YubiKey</h2></div>
+    <p class="sub">The YubiKey OATH applet keeps each secret inside the key and returns only the code. Nothing about these accounts is stored in this tool. This needs Sanctum's smart card access, approved for the <b>OATH (TOTP/HOTP)</b> applet only.</p>
+    <div class="notice" id="hwUnavailable" hidden><svg class="i" aria-hidden="true"><use href="#i-info"/></svg><div>Smart card access is not available to this tool. In Sanctum, open this tool's permissions and approve <b>talk to your smart card: OATH (TOTP/HOTP) [a0000005272101]</b>, then reopen the window. Outside Sanctum this step stays off.</div></div>
+    <div id="hwPanel" hidden>
+      <div class="toolbar">
+        <select id="hwReader" aria-label="Reader"></select>
+        <button class="btn ghost" type="button" id="hwRefreshReaders"><svg class="i" aria-hidden="true"><use href="#i-refresh"/></svg>Find keys</button>
+        <button class="btn" type="button" id="hwConnect"><svg class="i" aria-hidden="true"><use href="#i-key"/></svg>Connect</button>
+        <button class="btn ghost" type="button" id="hwDisconnect" hidden><svg class="i" aria-hidden="true"><use href="#i-x"/></svg>Disconnect</button>
+      </div>
+      <form class="card" id="hwPwForm" autocomplete="off" hidden>
+        <p>This key's OATH applet is protected by a password.</p>
+        <div class="field">
+          <label class="lab" for="hwPw"><span>OATH password</span></label>
+          <input type="password" id="hwPw">
+        </div>
+        <button class="btn" type="submit">Unlock key</button>
+      </form>
+      <p class="msg" id="hwMsg" role="status" aria-live="polite"></p>
+      <div class="list" id="hwList"></div>
+      <div class="empty-state" id="hwEmpty" hidden>No accounts on this key yet. Add one in step 2 and choose YubiKey.</div>
+    </div>
+  </section>
+
+  <!-- Step 5: backup, password, delete -->
+  <section class="block" id="settings" aria-labelledby="h-settings" hidden>
+    <div class="step-head"><span class="step-n" aria-hidden="true">5</span><h2 id="h-settings"><span class="sr">Step 5: </span>Back up and look after the vault</h2></div>
+    <div class="grid2">
+      <div class="card wide">
+        <h3>Copy a backup</h3>
+        <p>Copy the encrypted vault to the clipboard as JSON, then paste it into a file or a password manager note. It stays encrypted, and the same username and password open it. Accounts stored on a YubiKey are not part of the backup.</p>
+        <button class="btn ghost" type="button" id="btnExport"><svg class="i" aria-hidden="true"><use href="#i-copy"/></svg>Copy backup</button>
+        <textarea id="exportText" rows="4" readonly hidden aria-label="Backup text"></textarea>
+        <p class="msg" id="exportMsg"></p>
+      </div>
+      <form class="card" id="pwForm" autocomplete="off" novalidate>
+        <h3>Change the password</h3>
+        <p>Everything is encrypted again under a new key, and the fingerprint changes.</p>
+        <div class="field">
+          <label class="lab" for="pNew"><span>New password</span></label>
+          <input type="password" id="pNew" autocomplete="new-password">
+        </div>
+        <div class="field">
+          <label class="lab" for="pNew2"><span>Confirm new password</span></label>
+          <input type="password" id="pNew2" autocomplete="new-password">
+        </div>
+        <div class="fp-grid empty" id="pwFp" hidden></div>
+        <button class="btn ghost" type="submit" id="btnPw">Change password</button>
+        <p class="msg" id="pwMsg" role="status" aria-live="polite"></p>
+      </form>
+      <div class="card">
+        <h3>Delete the vault</h3>
+        <p>Remove this vault from this tool's storage. Without a backup, this cannot be undone.</p>
+        <button class="btn danger" type="button" id="btnWipe">Delete vault</button>
+      </div>
+    </div>
+  </section>
+</main>
+
+<footer class="foot">
+  <div class="wrap">
+    <p>Enigma OTP Vault 1.0.3. Part of Sanctum, AGPL-3.0. Codes are TOTP as defined in RFC 6238. Icons from Lucide (ISC). Fonts Inter, Poppins and Space Mono (SIL OFL 1.1).</p>
+    <p>Key derivation: PBKDF2-SHA-256, 600,000 iterations, salt bound to the username, then HKDF-SHA-256 into an AES-256-GCM key and a separate fingerprint value. Storage: this tool's own localStorage origin in Sanctum, one encrypted record per vault. YubiKey accounts use the OATH applet through <code>window.sanctum.smartcard</code>.</p>
+    <p>Anyone with access to this user account's Sanctum data can copy the encrypted record and try passwords offline, so choose a long one. The vault locks after 5 minutes without activity.</p>
+    <p>&copy; Enigma Technologies Solutions Ltd</p>
+  </div>
+</footer>
+
+<div class="toast" id="toast" role="status" hidden></div>
+
+<script>
+/*__KIT_JS__*/
+</script>
+<!-- Core: crypto, fingerprint, TOTP and the OATH wire format. No DOM access, so it can be
+     tested outside a browser (src/otp-core.js, test/core.test.mjs). -->
+<script id="ets-core">
+/*__OTP_CORE__*/
+</script>
+
+<!-- App: storage and UI -->
+<script>
+"use strict";
+(() => {
+  const C = ETSCore;
+  const $ = (id) => document.getElementById(id);
+  const PREFIX = "ets-otp-vault:v1:";
+  const AUTOLOCK_MS = 5 * 60 * 1000;
+  const POPULAR = ["Google", "Microsoft", "GitHub", "GitLab", "Amazon Web Services", "Amazon", "Apple", "Meta", "Facebook", "Instagram",
+    "X", "LinkedIn", "Discord", "Slack", "Dropbox", "Cloudflare", "Coinbase", "Binance", "Kraken", "PayPal", "Stripe", "Proton",
+    "Bitwarden", "1Password", "DigitalOcean", "Heroku", "Vercel", "Netlify", "Replit", "npm", "Docker Hub", "Atlassian", "Reddit",
+    "Twitch", "Steam", "Epic Games", "Nintendo", "Okta", "Zoom", "Salesforce", "Shopify", "Namecheap", "GoDaddy", "Hetzner", "OVHcloud"];
+
+  // ---------- storage (falls back to memory if localStorage is blocked) ----------
+  const mem = new Map();
+  let storageOk = true;
+  try { const k = PREFIX + "probe"; localStorage.setItem(k, "1"); localStorage.removeItem(k); } catch { storageOk = false; }
+  const store = {
+    get(id) { try { const v = storageOk ? localStorage.getItem(PREFIX + id) : mem.get(id); return v ? JSON.parse(v) : null; } catch { return null; } },
+    set(id, rec) { const v = JSON.stringify(rec); if (storageOk) localStorage.setItem(PREFIX + id, v); else mem.set(id, v); },
+    del(id) { if (storageOk) localStorage.removeItem(PREFIX + id); else mem.delete(id); },
+    count() {
+      if (!storageOk) return mem.size;
+      let n = 0;
+      for (let i = 0; i < localStorage.length; i++) { const k = localStorage.key(i); if (k && k.startsWith(PREFIX) && k !== PREFIX + "probe") n++; }
+      return n;
+    },
+  };
+
+  // ---------- session state ----------
+  let session = null; // { id, user, key, fingerprint, data: { entries: [], created } }
+  const secretCache = new Map(); // entry id -> Uint8Array
+  let mode = "unlock";
+  let lastActivity = Date.now();
+  let lastCounterSig = "";
+
+  if (!C.EMOJI || C.EMOJI.length !== 256) throw new Error("emoji table corrupted");
+  if (!globalThis.crypto || !crypto.subtle) {
+    $("noCrypto").hidden = false;
+    $("gate").hidden = true;
+    return;
+  }
+  if (!storageOk) $("noStorage").hidden = false;
+
+  // ---------- helpers ----------
+  function toast(text) {
+    const t = $("toast");
+    t.textContent = text; t.hidden = false;
+    clearTimeout(toast._t); toast._t = setTimeout(() => (t.hidden = true), 1600);
+  }
+  function msg(el, text, kind) { el.textContent = text || ""; el.className = "msg" + (kind ? " " + kind : ""); }
+  function setBusy(btns, busy) { btns.forEach((b) => (b.disabled = busy)); }
+  function renderFp(grid, hexEl, fp, state) {
+    grid.innerHTML = "";
+    grid.classList.toggle("empty", !fp);
+    grid.classList.toggle("busy", state === "busy");
+    const cells = fp ? C.fingerprintEmoji(fp) : Array(8).fill(state === "busy" ? "·" : "?");
+    for (const e of cells) { const d = document.createElement("div"); d.textContent = e; grid.appendChild(d); }
+    if (hexEl) hexEl.textContent = fp ? C.fingerprintHex(fp) : state === "busy" ? "Deriving key (about one second)..." : "Not computed yet.";
+  }
+  function pwScore(p) {
+    let s = 0;
+    if (p.length >= 8) s++; if (p.length >= 12) s++; if (p.length >= 16) s++; if (p.length >= 24) s++;
+    if (/[a-z]/.test(p) && /[A-Z]/.test(p)) s++; if (/\d/.test(p)) s++; if (/[^A-Za-z0-9]/.test(p)) s++;
+    return Math.min(s, 6);
+  }
+  const uid = () => C.toHex(crypto.getRandomValues(new Uint8Array(8)));
+  const fmtCode = (c) => (c.length === 6 ? c.slice(0, 3) + " " + c.slice(3) : c.length === 8 ? c.slice(0, 4) + " " + c.slice(4) : c);
+
+  // ---------- gate ----------
+  const gUser = $("gUser"), gPass = $("gPass"), gPass2 = $("gPass2");
+  const btnGate = $("btnGate"), btnPreview = $("btnPreview"), gateMsg = $("gateMsg");
+  let preview = null; // { user, pass, fp } for the values last previewed
+
+  function setMode(m) {
+    mode = m;
+    $("tabUnlock").setAttribute("aria-selected", m === "unlock");
+    $("tabCreate").setAttribute("aria-selected", m === "create");
+    $("confirmWrap").hidden = m !== "create";
+    $("createNotes").hidden = m !== "create";
+    $("meterWrap").hidden = m !== "create";
+    gPass.autocomplete = m === "create" ? "new-password" : "current-password";
+    btnGate.textContent = m === "create" ? "Create vault" : "Unlock";
+    $("gateTitle").textContent = m === "create" ? "Create a vault" : "Unlock your vault";
+    $("gateLede").textContent = m === "create"
+      ? "Choose a username and password. They never leave this page. Press Show fingerprint and note the eight emoji: you will see the same ones every time you enter this combination."
+      : "Enter the username and password you chose when the vault was created. The fingerprint below is computed from what you type. If it matches the one you remember, the combination is right.";
+    msg(gateMsg, "");
+    updateGateState();
+  }
+  $("tabUnlock").onclick = () => setMode("unlock");
+  $("tabCreate").onclick = () => setMode("create");
+
+  function previewValid() { return preview && preview.user === gUser.value && preview.pass === gPass.value; }
+  function updateGateState() {
+    if (!previewValid()) { renderFp($("fpGrid"), $("fpHex"), null); $("ackFp").checked = false; }
+    if (mode === "create") {
+      const sc = pwScore(gPass.value);
+      const m = $("meter");
+      m.style.width = (sc / 6) * 100 + "%";
+      m.style.background = sc <= 2 ? "var(--danger)" : sc <= 4 ? "var(--volt)" : "var(--ok)";
+      btnGate.disabled = !(previewValid() && $("ackFp").checked);
+    } else btnGate.disabled = false;
+  }
+  [gUser, gPass, gPass2].forEach((el) => el.addEventListener("input", updateGateState));
+  $("ackFp").addEventListener("change", updateGateState);
+
+  async function derive(user, pass) {
+    renderFp($("fpGrid"), $("fpHex"), null, "busy");
+    await new Promise((r) => setTimeout(r, 30)); // let the busy state paint
+    const k = await C.deriveVaultKeys(user, pass);
+    preview = { user, pass, keys: k };
+    renderFp($("fpGrid"), $("fpHex"), k.fingerprint);
+    return k;
+  }
+
+  function checkGateInputs() {
+    if (!gUser.value.trim()) return "Enter a username.";
+    if (!gPass.value) return "Enter a password.";
+    if (mode === "create") {
+      if (gPass.value.length < 10) return "Use at least 10 characters for the password.";
+      if (gPass.value !== gPass2.value) return "The two passwords do not match.";
+    }
+    return "";
+  }
+
+  btnPreview.onclick = async () => {
+    const err = checkGateInputs();
+    if (err) return msg(gateMsg, err, "err");
+    msg(gateMsg, "");
+    setBusy([btnPreview, btnGate], true);
+    try {
+      await derive(gUser.value, gPass.value);
+      if (mode === "create") {
+        const exists = store.get(await C.vaultId(gUser.value));
+        msg(gateMsg, exists ? "A vault for this username already exists in this browser. Use Unlock instead." : "Note these eight emoji, then confirm below.", exists ? "err" : "ok");
+      }
+    } catch (e) { msg(gateMsg, "Key derivation failed: " + e.message, "err"); }
+    setBusy([btnPreview, btnGate], false);
+    updateGateState();
+  };
+
+  $("gateForm").addEventListener("submit", async (ev) => {
+    ev.preventDefault();
+    const err = checkGateInputs();
+    if (err) return msg(gateMsg, err, "err");
+    setBusy([btnPreview, btnGate], true);
+    msg(gateMsg, "Deriving key...");
+    try {
+      const user = gUser.value, pass = gPass.value;
+      const id = await C.vaultId(user);
+      const rec = store.get(id);
+      const k = previewValid() ? preview.keys : await derive(user, pass);
+      if (mode === "create") {
+        if (rec) throw new Error("A vault for this username already exists in this browser. Use Unlock instead.");
+        const keys = k;
+        const data = { entries: [], created: new Date().toISOString() };
+        store.set(id, { format: C.APP, kdf: { name: "PBKDF2-SHA-256", iterations: C.ITERATIONS }, box: await C.seal(keys.key, id, data) });
+        startSession(id, user, keys, data);
+      } else {
+        if (!rec) throw new Error("No vault for this username in this browser. Check the fingerprint above, create a vault, or import a backup.");
+        let data;
+        try { data = await C.open(k.key, id, rec.box); }
+        catch { throw new Error("Wrong password for this username. Compare the fingerprint above with the one you remember."); }
+        startSession(id, user, k, data);
+      }
+    } catch (e) {
+      msg(gateMsg, e.message, "err");
+    } finally {
+      setBusy([btnPreview, btnGate], false);
+      if (!session) updateGateState();
+    }
+  });
+
+  // ---------- import (gate) ----------
+  function importBackup(text) {
+    try {
+      let j;
+      try { j = JSON.parse(text); } catch { throw new Error("This is not an Enigma OTP Vault backup."); }
+      if (!j || j.format !== C.APP + "-backup" || !/^[0-9a-f]{32}$/.test(j.id || "") || !j.record || !j.record.box || !j.record.box.iv || !j.record.box.ct)
+        throw new Error("This is not an Enigma OTP Vault backup.");
+      const existing = store.get(j.id);
+      if (existing && JSON.stringify(existing) !== JSON.stringify(j.record) && !importArmed) {
+        importArmed = true;
+        setTimeout(() => (importArmed = false), 8000);
+        return msg($("importMsg"), "A different vault for the same username already exists here. Restore again within 8 seconds to replace it.", "err");
+      }
+      importArmed = false;
+      store.set(j.id, j.record);
+      $("importText").value = "";
+      msg($("importMsg"), "Backup restored. Unlock it with its username and password.", "ok");
+      refreshCount();
+      setMode("unlock");
+    } catch (e) { msg($("importMsg"), e.message, "err"); }
+  }
+  $("btnImport").onclick = () => $("importFile").click();
+  $("importFile").addEventListener("change", async (ev) => {
+    const f = ev.target.files[0];
+    ev.target.value = "";
+    if (f) importBackup(await f.text());
+  });
+  $("btnImportText").onclick = () => importBackup($("importText").value.trim());
+  let importArmed = false;
+  function refreshCount() {
+    const n = store.count();
+    $("vaultCount").textContent = n ? n + (n === 1 ? " vault" : " vaults") + " stored in this tool" : "No vaults stored in this tool yet";
+    if (!n && mode === "unlock" && !session) setMode("create");
+  }
+
+  // ---------- session ----------
+  function startSession(id, user, keys, data) {
+    session = { id, user: user.trim(), key: keys.key, fingerprint: keys.fingerprint, data };
+    if (!Array.isArray(session.data.entries)) session.data.entries = [];
+    gPass.value = gPass2.value = ""; preview = null;
+    msg(gateMsg, "");
+    $("gate").hidden = true;
+    ["vault", "codes", "settings", "barSession"].forEach((x) => ($(x).hidden = false));
+    $("whoName").textContent = session.user;
+    $("fpMini").textContent = C.fingerprintEmoji(keys.fingerprint).join("");
+    lastActivity = Date.now();
+    renderList();
+    tick();
+    HW.onSessionStart();
+    $("aSecret").focus();
+  }
+
+  function lock(reason) {
+    session = null;
+    HW.disconnect();
+    secretCache.clear();
+    $("list").innerHTML = "";
+    ["vault", "codes", "settings", "barSession"].forEach((x) => ($(x).hidden = true));
+    $("gate").hidden = false;
+    $("addForm").reset(); $("pwForm").reset();
+    $("pwFp").hidden = true;
+    setMode("unlock");
+    refreshCount();
+    if (reason) msg(gateMsg, reason, "ok");
+    gPass.focus();
+  }
+  $("btnLock").onclick = () => lock("Vault locked.");
+
+  async function persist() {
+    const rec = store.get(session.id) || { format: C.APP, kdf: { name: "PBKDF2-SHA-256", iterations: C.ITERATIONS } };
+    rec.box = await C.seal(session.key, session.id, session.data);
+    store.set(session.id, rec);
+  }
+
+  ["pointerdown", "keydown", "scroll", "touchstart"].forEach((e) => addEventListener(e, () => (lastActivity = Date.now()), { passive: true }));
+
+  // ---------- add key ----------
+  $("issuers").innerHTML = POPULAR.map((p) => "<option value=\"" + p + "\">").join("");
+  const aSecret = $("aSecret");
+  aSecret.addEventListener("input", () => {
+    const v = aSecret.value.trim();
+    const pv = $("aPreview");
+    if (!v) return (pv.textContent = "");
+    try {
+      const p = C.parseKeyInput(v);
+      if (p.fromUri) {
+        if (p.issuer) $("aIssuer").value = p.issuer;
+        if (p.account) $("aAccount").value = p.account;
+        $("aDigits").value = String(p.digits); $("aPeriod").value = String(p.period); $("aAlgo").value = p.algorithm;
+        aSecret.value = p.secret.match(/.{1,4}/g).join(" ").toLowerCase();
+        pv.textContent = "Link read. Fields filled in.";
+      } else pv.textContent = "Key looks valid (" + p.secret.length + " characters).";
+      pv.style.color = "var(--ok)";
+    } catch (e) { pv.textContent = e.message; pv.style.color = "var(--danger)"; }
+  });
+
+  $("addForm").addEventListener("submit", async (ev) => {
+    ev.preventDefault();
+    const m = $("addMsg");
+    try {
+      const p = C.parseKeyInput(aSecret.value);
+      const entry = {
+        id: uid(),
+        issuer: $("aIssuer").value.trim().slice(0, 80),
+        account: $("aAccount").value.trim().slice(0, 120),
+        secret: p.secret,
+        digits: parseInt($("aDigits").value, 10),
+        period: parseInt($("aPeriod").value, 10),
+        algorithm: $("aAlgo").value,
+        added: new Date().toISOString(),
+      };
+      if (!entry.issuer && !entry.account) throw new Error("Give the key a service name or account so you can tell it apart.");
+      C.validateParams(entry);
+      if (HW.storeTarget() === "card") {
+        await HW.put(entry, C.base32Decode(entry.secret), $("aTouch").checked);
+        $("addForm").reset(); $("aPreview").textContent = "";
+        HW.syncStorePick();
+        msg(m, "Written to the YubiKey. The secret is not kept anywhere in this tool.", "ok");
+        setTimeout(() => msg(m, ""), 3500);
+        return;
+      }
+      if (session.data.entries.some((e) => e.secret === entry.secret)) throw new Error("This key is already in the vault.");
+      await C.totp(C.base32Decode(entry.secret), entry); // proves the parameters work before saving
+      session.data.entries.push(entry);
+      await persist();
+      $("addForm").reset(); $("aPreview").textContent = "";
+      msg(m, "Saved and encrypted.", "ok");
+      setTimeout(() => msg(m, ""), 2500);
+      lastCounterSig = "";
+      renderList(); tick();
+    } catch (e) { msg(m, e.message, "err"); }
+  });
+
+  // ---------- list ----------
+  function secretOf(e) {
+    let s = secretCache.get(e.id);
+    if (!s) { s = C.base32Decode(e.secret); secretCache.set(e.id, s); }
+    return s;
+  }
+
+  function renderList() {
+    const list = $("list");
+    list.innerHTML = "";
+    const q = $("filter").value.trim().toLowerCase();
+    const all = session.data.entries;
+    const shown = all.filter((e) => !q || (e.issuer + " " + e.account).toLowerCase().includes(q));
+    $("empty").hidden = all.length > 0;
+    $("entryCount").textContent = all.length ? shown.length + " of " + all.length : "";
+    for (const e of shown) {
+      const el = document.createElement("article");
+      el.className = "entry"; el.dataset.id = e.id;
+      el.innerHTML =
+        '<div class="entry-head"><div><div class="issuer"></div><div class="acct"></div></div><span class="meta"></span></div>' +
+        '<button class="code" type="button" title="Copy code">------</button>' +
+        '<div class="bar-t"><i></i></div>' +
+        '<div class="row" style="justify-content:space-between"><span class="next"></span>' +
+        '<span class="entry-actions"><button class="btn ghost sm" data-act="rename" type="button">Rename</button>' +
+        '<button class="btn danger sm" data-act="del" type="button">Delete</button></span></div>';
+      el.querySelector(".issuer").textContent = e.issuer || e.account;
+      el.querySelector(".acct").textContent = e.issuer ? e.account : "";
+      el.querySelector(".meta").textContent = [e.algorithm !== "SHA-1" ? e.algorithm : "", e.digits !== 6 ? e.digits + "d" : "", e.period !== 30 ? e.period + "s" : ""].filter(Boolean).join(" · ");
+      list.appendChild(el);
+    }
+    lastCounterSig = "";
+  }
+  $("filter").addEventListener("input", () => { renderList(); tick(); });
+
+  $("list").addEventListener("click", async (ev) => {
+    const card = ev.target.closest(".entry");
+    if (!card || !session) return;
+    const e = session.data.entries.find((x) => x.id === card.dataset.id);
+    if (!e) return;
+    if (ev.target.closest(".code")) {
+      const code = await C.totp(secretOf(e), e);
+      try { await navigator.clipboard.writeText(code); toast("Copied " + fmtCode(code)); }
+      catch { toast("Copy blocked. Code: " + fmtCode(code)); }
+      return;
+    }
+    const act = ev.target.dataset.act;
+    if (act === "del") {
+      const b = ev.target;
+      if (!b.classList.contains("armed")) {
+        b.classList.add("armed"); b.textContent = "Confirm";
+        setTimeout(() => { if (b.isConnected) { b.classList.remove("armed"); b.textContent = "Delete"; } }, 4000);
+        return;
+      }
+      session.data.entries = session.data.entries.filter((x) => x.id !== e.id);
+      secretCache.delete(e.id);
+      await persist(); renderList(); tick(); toast("Key deleted");
+    }
+    if (act === "rename") {
+      const head = card.querySelector(".entry-head");
+      if (head.querySelector("form")) return;
+      const f = document.createElement("form");
+      f.style.cssText = "display:grid;gap:6px;width:100%";
+      f.innerHTML = '<input type="text" name="i" maxlength="80" placeholder="Service"><input type="text" name="a" maxlength="120" placeholder="Account">' +
+        '<div class="row"><button class="btn sm" type="submit">Save</button><button class="btn ghost sm" type="button" data-cancel>Cancel</button></div>';
+      f.i.value = e.issuer; f.a.value = e.account;
+      head.innerHTML = ""; head.appendChild(f); f.i.focus();
+      f.querySelector("[data-cancel]").onclick = () => renderList() || tick();
+      f.onsubmit = async (se) => {
+        se.preventDefault();
+        if (!f.i.value.trim() && !f.a.value.trim()) return;
+        e.issuer = f.i.value.trim(); e.account = f.a.value.trim();
+        await persist(); renderList(); tick();
+      };
+    }
+  });
+
+  // ---------- ticking codes ----------
+  async function tick() {
+    if (!session) return;
+    const now = Date.now();
+    const cards = $("list").querySelectorAll(".entry");
+    const sig = session.data.entries.map((e) => e.id + ":" + Math.floor(now / 1000 / e.period)).join("|") + "#" + cards.length;
+    const refresh = sig !== lastCounterSig;
+    lastCounterSig = sig;
+    for (const card of cards) {
+      const e = session.data.entries.find((x) => x.id === card.dataset.id);
+      if (!e) continue;
+      const secs = now / 1000;
+      const left = e.period - (secs % e.period);
+      const bar = card.querySelector(".bar-t i");
+      bar.style.width = (left / e.period) * 100 + "%";
+      const codeEl = card.querySelector(".code");
+      codeEl.classList.toggle("warn", left <= 5);
+      if (refresh) {
+        const s = secretOf(e);
+        const [cur, nxt] = await Promise.all([C.totp(s, e, now), C.totp(s, e, now + e.period * 1000)]);
+        if (!session) return;
+        codeEl.textContent = fmtCode(cur);
+        codeEl.setAttribute("aria-label", "Code " + cur.split("").join(" ") + ", click to copy");
+        card.dataset.next = fmtCode(nxt);
+      }
+      card.querySelector(".next").textContent = Math.ceil(left) + "s · next " + (card.dataset.next || "");
+    }
+  }
+
+  setInterval(() => {
+    if (!session) return;
+    const idle = Date.now() - lastActivity;
+    if (idle >= AUTOLOCK_MS) return lock("Locked after 5 minutes without activity.");
+    const rem = Math.ceil((AUTOLOCK_MS - idle) / 1000);
+    $("lockIn").textContent = rem <= 60 ? "locks in " + rem + "s" : "";
+    tick();
+    HW.tick();
+  }, 250);
+
+  // ---------- export / password / wipe ----------
+  // Sanctum tool windows cannot start downloads (every navigation off the
+  // tool's own origin is refused, blob: included), so the backup travels
+  // through the clipboard, with a read-only text box as the fallback.
+  $("btnExport").onclick = async () => {
+    await persist();
+    const payload = { format: C.APP + "-backup", exported: new Date().toISOString(), id: session.id, record: store.get(session.id) };
+    const text = JSON.stringify(payload);
+    const box = $("exportText");
+    box.value = text; box.hidden = false;
+    try {
+      await navigator.clipboard.writeText(text);
+      msg($("exportMsg"), "Encrypted backup copied. Paste it somewhere safe.", "ok");
+    } catch {
+      box.focus(); box.select();
+      msg($("exportMsg"), "Clipboard blocked. The backup is selected below; copy it by hand.", "err");
+    }
+  };
+
+  $("pwForm").addEventListener("submit", async (ev) => {
+    ev.preventDefault();
+    const m = $("pwMsg"), a = $("pNew").value, b = $("pNew2").value;
+    if (a.length < 10) return msg(m, "Use at least 10 characters.", "err");
+    if (a !== b) return msg(m, "The two passwords do not match.", "err");
+    const btn = $("btnPw");
+    if (btn.dataset.stage !== "confirm") {
+      btn.disabled = true; msg(m, "Deriving new key...");
+      const grid = $("pwFp"); grid.hidden = false; renderFp(grid, null, null, "busy");
+      try {
+        const k = await C.deriveVaultKeys(session.user, a);
+        renderFp(grid, null, k.fingerprint);
+        pending = { pass: a, keys: k };
+        btn.dataset.stage = "confirm"; btn.textContent = "Confirm new password";
+        msg(m, "This is the new fingerprint. Note it, then confirm.", "ok");
+      } catch (e) { msg(m, e.message, "err"); }
+      btn.disabled = false;
+      return;
+    }
+    if (!pending || pending.pass !== a) { btn.dataset.stage = ""; btn.textContent = "Change password"; return msg(m, "Password changed after preview. Press again.", "err"); }
+    session.key = pending.keys.key; session.fingerprint = pending.keys.fingerprint;
+    await persist();
+    pending = null; $("pwForm").reset(); $("pwFp").hidden = true;
+    btn.dataset.stage = ""; btn.textContent = "Change password";
+    $("fpMini").textContent = C.fingerprintEmoji(session.fingerprint).join("");
+    msg(m, "Password changed. Export a fresh backup; older backups still use the old password.", "ok");
+  });
+  let pending = null;
+  ["pNew", "pNew2"].forEach((id) => $(id).addEventListener("input", () => {
+    const btn = $("btnPw"); btn.dataset.stage = ""; btn.textContent = "Change password"; $("pwFp").hidden = true; pending = null;
+  }));
+
+  $("btnWipe").onclick = (ev) => {
+    const b = ev.currentTarget;
+    if (!b.classList.contains("armed")) {
+      b.classList.add("armed"); b.textContent = "Click again to delete";
+      setTimeout(() => { b.classList.remove("armed"); b.textContent = "Delete vault"; }, 5000);
+      return;
+    }
+    store.del(session.id);
+    b.classList.remove("armed"); b.textContent = "Delete vault";
+    lock("Vault deleted from this tool.");
+  };
+
+  // ---------- YubiKey through Sanctum's smart card bridge ----------
+  // window.sanctum exists only when the user approved smart card access for
+  // this tool. Sanctum checks every call in Rust: only the approved OATH
+  // applet can be selected, and SELECT cannot be sent on the raw channel.
+  const HW = (() => {
+    const bridge = window.sanctum && window.sanctum.smartcard;
+    const O = C.oath;
+    let session = null, reader = "", creds = [], loading = false, lastSig = "", pending = null;
+    // CALCULATE ALL is INS A4 under CLA 00, the same bytes as SELECT, and
+    // Sanctum's broker refuses A4 on the raw channel whatever the applet.
+    // When that happens, fall back to LIST and compute each code on request.
+    let listMode = false;
+    const el = (id) => $(id);
+
+    const SW_TEXT = {
+      0x6982: "The key refused: it is locked with an OATH password, or a touch was not given in time.",
+      0x6984: "That account is not on the key.",
+      0x6a80: "The key rejected the data.",
+      0x6a84: "The key is full.",
+      0x6d00: "The key does not support this command.",
+    };
+    const swError = (sw) => new Error(SW_TEXT[sw] || "The key answered with status " + sw.toString(16).padStart(4, "0") + ".");
+
+    async function send(apduHex) {
+      let r = await session.transmit(apduHex);
+      let data = r.data || "", sw = r.sw;
+      // OATH continues long answers with SEND REMAINING (A5), not GET RESPONSE.
+      // Sanctum's broker answers 61xx itself with GET RESPONSE, which the OATH
+      // applet refuses with 6D00. Handle 61xx here in case a broker passes it through.
+      for (let i = 0; (sw >> 8) === 0x61 && i < 32; i++) {
+        r = await session.transmit("00a50000");
+        data += r.data || ""; sw = r.sw;
+      }
+      if (sw === 0x6d00 && data)
+        throw new Error("The key has more accounts than fit in one reply, and this Sanctum version cannot fetch the rest for the OATH applet.");
+      if (sw !== 0x9000) throw swError(sw);
+      return C.fromHex(data);
+    }
+
+    function setMsg(t, kind) { msg(el("hwMsg"), t, kind); }
+
+    async function refreshReaders() {
+      const sel = el("hwReader");
+      try {
+        const readers = await bridge.listReaders();
+        sel.innerHTML = "";
+        for (const r of readers) {
+          const o = document.createElement("option");
+          o.value = r.name;
+          o.textContent = r.name + (r.card_present ? "" : " (no card)");
+          sel.appendChild(o);
+        }
+        const withCard = readers.find((r) => r.card_present);
+        if (withCard) sel.value = withCard.name;
+        el("hwConnect").disabled = !readers.length;
+        setMsg(readers.length ? "" : "No smart card readers found. Insert your YubiKey and press Find keys.");
+      } catch (e) { setMsg(e.message, "err"); }
+    }
+
+    async function connect() {
+      disconnect();
+      reader = el("hwReader").value;
+      if (!reader) return setMsg("Choose a reader first.", "err");
+      el("hwConnect").disabled = true;
+      setMsg("Connecting...");
+      try {
+        session = await bridge.open(reader);
+        const sel = await session.select(O.AID);
+        if (!sel.ok) throw new Error("This card has no OATH applet.");
+        const info = O.parseSelect(C.fromHex(sel.data));
+        el("hwConnect").hidden = true; el("hwDisconnect").hidden = false;
+        if (info.challenge) {
+          pending = info;
+          el("hwPwForm").hidden = false; el("hwPw").focus();
+          setMsg("OATH applet " + info.version + ". Enter its password to continue.");
+          return;
+        }
+        setMsg("Connected to OATH applet " + info.version + ".", "ok");
+        await load();
+      } catch (e) {
+        setMsg(e.message, "err");
+        disconnect(true);
+      } finally { el("hwConnect").disabled = false; syncStorePick(); }
+    }
+
+    async function unlockApplet(ev) {
+      ev.preventDefault();
+      if (!session || !pending) return;
+      try {
+        const v = await O.validate(el("hwPw").value, pending.salt, pending.challenge);
+        const resp = await send(v.apdu);
+        if (!O.checkValidate(resp, v.expected)) throw new Error("The key's answer did not match. Disconnect and try again.");
+        pending = null;
+        el("hwPwForm").hidden = true; el("hwPw").value = "";
+        setMsg("Key unlocked.", "ok");
+        await load();
+      } catch (e) { setMsg(e.message === SW_TEXT[0x6a80] ? "Wrong OATH password." : e.message, "err"); }
+      syncStorePick();
+    }
+
+    function disconnect(keepMsg) {
+      if (session) { const s = session; session = null; s.close().catch(() => {}); }
+      creds = []; pending = null; lastSig = ""; listMode = false;
+      el("hwList").innerHTML = ""; el("hwEmpty").hidden = true;
+      el("hwPwForm").hidden = true; el("hwConnect").hidden = false; el("hwDisconnect").hidden = true;
+      if (!keepMsg) setMsg("");
+      syncStorePick();
+    }
+
+    const ready = () => !!session && !pending;
+
+    async function load() {
+      if (!ready() || loading) return;
+      loading = true;
+      try {
+        const now = Date.now();
+        let list = null;
+        if (!listMode) {
+          try { list = O.parseCalculateAll(await send(O.calculateAll(now))); }
+          catch (e) {
+            if (!/SELECT is not allowed|not allowed on the raw channel/i.test(e.message)) throw e;
+            listMode = true;
+          }
+        }
+        if (listMode) {
+          const old = new Map(creds.map((c) => [C.toHex(c.id), c]));
+          list = O.parseList(await send(O.list()));
+          // keep codes fetched on request until their window ends
+          for (const c of list) {
+            const o = old.get(C.toHex(c.id));
+            if (o && o.code && o.step === Math.floor(now / 1000 / c.period)) { c.code = o.code; c.step = o.step; }
+          }
+        } else {
+          // CALCULATE ALL uses a 30 s challenge; recompute other periods one by one.
+          for (const c of list) {
+            if (c.type === "totp" && !c.touch && c.period !== 30)
+              c.code = O.parseCalculate(await send(O.calculate(c.id, now, c.period)));
+          }
+        }
+        creds = list;
+        render();
+      } catch (e) {
+        setMsg(e.message, "err");
+        if (/card|reader|session/i.test(e.message)) disconnect(true);
+      } finally { loading = false; }
+    }
+
+    function render() {
+      const list = el("hwList");
+      list.innerHTML = "";
+      el("hwEmpty").hidden = creds.length > 0;
+      creds.forEach((c, i) => {
+        const card = document.createElement("article");
+        card.className = "entry"; card.dataset.i = i;
+        card.innerHTML =
+          '<div class="entry-head"><div><div class="issuer"></div><div class="acct"></div></div><span class="tag-hw">YubiKey</span></div>' +
+          '<button class="code" type="button"></button><div class="bar-t"><i></i></div>' +
+          '<div class="row" style="justify-content:space-between"><span class="next"></span>' +
+          '<span class="entry-actions"><button class="btn danger sm" data-act="del" type="button">Delete from key</button></span></div>';
+        card.querySelector(".issuer").textContent = c.issuer || c.account;
+        card.querySelector(".acct").textContent = c.issuer ? c.account : "";
+        const code = card.querySelector(".code");
+        if (c.type === "hotp") { code.textContent = "HOTP not supported"; code.classList.add("touch"); code.disabled = true; }
+        else if (!c.code) {
+          code.textContent = c.touch === false ? "Get code" : "Get code (touch if it blinks)";
+          code.classList.add("touch"); code.title = "Ask the key for a code";
+        }
+        else { code.textContent = fmtCode(c.code); code.title = "Copy code"; }
+        list.appendChild(card);
+      });
+      tick();
+    }
+
+    function tick() {
+      if (!ready()) return;
+      const now = Date.now();
+      const sig = creds.map((c) => (c.type === "totp" ? Math.floor(now / 1000 / c.period) : 0)).join(",");
+      if (lastSig && sig !== lastSig) { lastSig = sig; load(); return; }
+      lastSig = sig;
+      el("hwList").querySelectorAll(".entry").forEach((card) => {
+        const c = creds[card.dataset.i];
+        if (!c || c.type !== "totp") return;
+        const left = c.period - ((now / 1000) % c.period);
+        card.querySelector(".bar-t i").style.width = (c.code ? (left / c.period) * 100 : 0) + "%";
+        card.querySelector(".code").classList.toggle("warn", !!c.code && left <= 5);
+        card.querySelector(".next").textContent = c.code ? Math.ceil(left) + "s" : c.touch ? "touch required" : listMode ? "on request" : "";
+      });
+    }
+
+    async function onListClick(ev) {
+      const card = ev.target.closest(".entry");
+      if (!card || !ready()) return;
+      const c = creds[card.dataset.i];
+      if (!c) return;
+      if (ev.target.closest(".code") && c.type === "totp") {
+        try {
+          if (!c.code) {
+            setMsg(c.touch === false ? "" : "If your YubiKey blinks, touch it now.");
+            const now = Date.now();
+            c.code = O.parseCalculate(await send(O.calculate(c.id, now, c.period)));
+            c.step = Math.floor(now / 1000 / c.period);
+            setMsg("");
+            render();
+          }
+          try { await navigator.clipboard.writeText(c.code); toast("Copied " + fmtCode(c.code)); }
+          catch { toast("Copy blocked. Code: " + fmtCode(c.code)); }
+        } catch (e) { setMsg(e.message, "err"); }
+        return;
+      }
+      if (ev.target.dataset.act === "del") {
+        const b = ev.target;
+        if (!b.classList.contains("armed")) {
+          b.classList.add("armed"); b.textContent = "Confirm: this cannot be undone";
+          setTimeout(() => { if (b.isConnected) { b.classList.remove("armed"); b.textContent = "Delete from key"; } }, 4000);
+          return;
+        }
+        try { await send(O.del(c.id)); toast("Deleted from key"); await load(); }
+        catch (e) { setMsg(e.message, "err"); }
+      }
+    }
+
+    async function put(entry, secret, touch) {
+      if (!ready()) throw new Error("Connect your YubiKey first.");
+      const key = C.toHex(O.credId(entry));
+      if (creds.some((c) => C.toHex(c.id) === key)) throw new Error("An account with this name is already on the key.");
+      await send(await O.put(entry, secret, touch));
+      await load();
+    }
+
+    function storeTarget() {
+      const r = document.querySelector('input[name="aStore"]:checked');
+      return ready() && r ? r.value : "vault";
+    }
+
+    function syncStorePick() {
+      el("storePick").hidden = !ready();
+      el("storeCardName").textContent = ready() ? "(" + reader + ")" : "";
+      if (!ready()) document.querySelector('input[name="aStore"][value="vault"]').checked = true;
+      el("touchWrap").hidden = storeTarget() !== "card";
+    }
+
+    function onSessionStart() {
+      el("hw").hidden = false;
+      if (!bridge) { el("hwUnavailable").hidden = false; el("hwPanel").hidden = true; return; }
+      el("hwUnavailable").hidden = true; el("hwPanel").hidden = false;
+      refreshReaders();
+    }
+
+    el("hwRefreshReaders").onclick = refreshReaders;
+    el("hwConnect").onclick = connect;
+    el("hwDisconnect").onclick = () => { disconnect(); setMsg("Disconnected."); };
+    el("hwPwForm").addEventListener("submit", unlockApplet);
+    el("hwList").addEventListener("click", onListClick);
+    document.querySelectorAll('input[name="aStore"]').forEach((r) => r.addEventListener("change", syncStorePick));
+    addEventListener("pagehide", () => { if (session) session.close().catch(() => {}); });
+
+    return { onSessionStart, disconnect: () => { disconnect(); el("hw").hidden = true; }, tick, put, storeTarget, syncStorePick };
+  })();
+
+  // ---------- init ----------
+  setMode("unlock");
+  refreshCount();
+  renderFp($("fpGrid"), $("fpHex"), null);
+})();
+</script>
+</body>
+</html>

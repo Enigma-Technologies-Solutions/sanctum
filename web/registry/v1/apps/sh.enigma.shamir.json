@@ -6,6 +6,20 @@
   "license": "AGPL-3.0-only",
   "changelog": [
     {
+      "version": "1.0.3",
+      "date": "2026-11-23",
+      "changes": [
+        {
+          "type": "changed",
+          "text": "Opens in a light theme, with a switch in the header to dark for the current window. The choice is not stored."
+        },
+        {
+          "type": "changed",
+          "text": "Layout, type and controls are shared with the other Enigma tools. Split and Combine are laid out as numbered steps, and the fonts are built into the file."
+        }
+      ]
+    },
+    {
       "version": "1.0.2",
       "date": "2026-10-02",
       "changes": [
@@ -40,32 +54,32 @@
   "screenshots": [
     {
       "path": "apps/sh.enigma.shamir/overview.png",
-      "sha256": "sha256:a4acbabced831fa0efde740df7609260d35bb5e28fd732c8939797faafa25abb",
-      "size": 226706,
+      "sha256": "sha256:c85c64b7e8741fbf788d0c6c8b00ca6dda5f742f2170f205bfd195959f556618",
+      "size": 110809,
       "width": 1600,
       "height": 1131,
       "alt": "Overview of Shamir: split a secret into shares and combine them back."
     },
     {
       "path": "apps/sh.enigma.shamir/split.png",
-      "sha256": "sha256:b963e994b6176e06ba0b8bd42cd70a59927234a962971829984879d4632563df",
-      "size": 276361,
+      "sha256": "sha256:6bd68d5bf64d6f08936faad448931a0325c117403c10776338271af239d063b9",
+      "size": 86056,
       "width": 1600,
       "height": 1131,
       "alt": "Split: a secret, the number of shares and how many are needed."
     },
     {
       "path": "apps/sh.enigma.shamir/shares.png",
-      "sha256": "sha256:f89d0ca41de189d65afe5418be11f147b9a8d5e1b24474278dc4d7ad51889148",
-      "size": 398153,
+      "sha256": "sha256:02a62fb4f3e945f59ecb11a6d280ba0318d9343f30c33d603dc3d2d5d480571e",
+      "size": 133748,
       "width": 1600,
       "height": 1131,
       "alt": "The shares produced, each with a Copy button and the set identifier."
     },
     {
       "path": "apps/sh.enigma.shamir/combine.png",
-      "sha256": "sha256:da96d01a4bf7075257312f56a1569313bde10fbfd727dad5f5b2ead235dff963",
-      "size": 326125,
+      "sha256": "sha256:ab035971f79ddc0b7a7697435e54d65b078b91d56a467c2c964cfc1100184cdb",
+      "size": 111540,
       "width": 1600,
       "height": 1131,
       "alt": "Combine: pasted shares checked one by one before the secret is rebuilt."

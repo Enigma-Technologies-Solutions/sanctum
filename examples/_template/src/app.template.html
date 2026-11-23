@@ -1,0 +1,268 @@
+<!doctype html>
+<!-- SPDX-License-Identifier: AGPL-3.0-only. Copyright (C) 2026 Enigma Technologies Solutions. -->
+<html lang="en" data-theme="light">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'unsafe-inline'; style-src 'unsafe-inline'; img-src data:; font-src data:; base-uri 'none'; form-action 'none'">
+<meta name="referrer" content="no-referrer">
+<meta name="theme-color" content="#FFFFFF">
+<title>Enigma Text Count for Sanctum</title>
+<meta name="description" content="Count the words, lines and characters in a text. Runs offline and asks for no access.">
+<style>
+/*__KIT_CSS__*/
+
+/* Tool styles go here, after the kit. Use the kit's tokens (var(--ink), var(--s4), ...). */
+.counts{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:var(--s3);margin:var(--s4) 0 0}
+@media (max-width:640px){.counts{grid-template-columns:repeat(2,minmax(0,1fr))}}
+.count{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:var(--s3) var(--s4)}
+.count b{display:block;font-family:var(--display);font-size:24px;line-height:1.2}
+.count span{font-size:13px;color:var(--mute)}
+</style>
+</head>
+<body>
+<!--__KIT_ICONS__-->
+<svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false">
+  <!-- Icons only this tool uses, from Lucide. Ids must differ from the kit's. -->
+  <symbol id="i-text" viewBox="0 0 24 24"><path d="M17 6.1H3"/><path d="M21 12.1H3"/><path d="M15.1 18H3"/></symbol>
+</svg>
+
+<header class="bar">
+  <div class="wrap bar-in">
+    <div class="mark">
+      <span class="ets-badge" aria-hidden="true"><span class="ets">ETS</span></span>
+      <span class="wordmark">Enigma <b>/</b> Text Count</span>
+    </div>
+    <div class="bar-end">
+      <button class="theme-toggle" type="button" data-theme-toggle aria-pressed="false" aria-label="Dark theme" title="Dark theme"><svg class="i i-moon" aria-hidden="true"><use href="#i-moon"/></svg><svg class="i i-sun" aria-hidden="true"><use href="#i-sun"/></svg></button>
+    </div>
+  </div>
+</header>
+
+<main class="wrap">
+  <div class="hero">
+    <p class="eyebrow">Tool for Sanctum</p>
+    <h1>Count the<span class="dash" aria-hidden="true"></span>words.</h1>
+    <p class="lede">Count the words, lines and characters in a text. <span>Paste it or open a text file. The text stays in this window.</span></p>
+  </div>
+
+  <div class="notice warn" id="notice" role="alert" hidden>
+    <svg class="i" aria-hidden="true"><use href="#i-alert"/></svg>
+    <div id="notice-text"></div>
+  </div>
+
+  <div class="facts" role="list" aria-label="What this tool does with your text">
+    <div class="fact" role="listitem"><h3><svg class="i" aria-hidden="true"><use href="#i-lock"/></svg>Stays here</h3><p>The text is counted on this computer. Nothing is uploaded, stored or sent.</p></div>
+    <div class="fact" role="listitem"><h3><svg class="i" aria-hidden="true"><use href="#i-shield"/></svg>Asks for nothing</h3><p>No network, no devices, no storage. The approval screen in Sanctum is empty.</p></div>
+    <div class="fact" role="listitem"><h3><svg class="i" aria-hidden="true"><use href="#i-info"/></svg>Words are a choice</h3><p>Whether a hyphen or a slash splits a word changes the count. Pick the rule in step 2.</p></div>
+  </div>
+
+  <section class="block" aria-labelledby="h-text">
+    <div class="step-head"><span class="step-n" aria-hidden="true">1</span><h2 id="h-text"><span class="sr">Step 1: </span>Give it a text</h2></div>
+    <p class="sub">Paste the text, or open a plain text file.</p>
+    <div class="tabs" role="tablist" aria-label="Source">
+      <button type="button" role="tab" id="tab-paste" aria-controls="panel-paste" aria-selected="true">Paste</button>
+      <button type="button" role="tab" id="tab-file" aria-controls="panel-file" aria-selected="false" tabindex="-1">Open a file</button>
+    </div>
+    <div role="tabpanel" id="panel-paste" aria-labelledby="tab-paste">
+      <div class="field">
+        <label class="lab" for="text"><span>Text</span></label>
+        <textarea id="text" spellcheck="false" aria-describedby="text-note" placeholder="Paste any text here."></textarea>
+        <p class="hint" id="text-note">Counted as you type.</p>
+      </div>
+    </div>
+    <div role="tabpanel" id="panel-file" aria-labelledby="tab-file" hidden>
+      <div class="picker">
+        <button class="btn" type="button" id="choose"><svg class="i" aria-hidden="true"><use href="#i-upload"/></svg>Open a file</button>
+        <input type="file" id="picker" aria-label="Text file to count" tabindex="-1">
+        <span class="picked muted" id="picked">No file chosen.</span>
+      </div>
+    </div>
+  </section>
+
+  <section class="block" aria-labelledby="h-rule">
+    <div class="step-head"><span class="step-n" aria-hidden="true">2</span><h2 id="h-rule"><span class="sr">Step 2: </span>Choose what a word is</h2></div>
+    <div class="field">
+      <span class="lab" id="lab-split"><span>Words are split by</span></span>
+      <div class="seg" id="split" role="group" aria-labelledby="lab-split">
+        <button type="button" data-split="space" aria-pressed="true">Spaces</button>
+        <button type="button" data-split="punct" aria-pressed="false">Spaces and punctuation</button>
+      </div>
+      <p class="hint">With spaces only, <code>well-known</code> is one word. With punctuation, it is two.</p>
+    </div>
+  </section>
+
+  <section class="block" aria-labelledby="h-result">
+    <div class="step-head"><span class="step-n" aria-hidden="true">3</span><h2 id="h-result"><span class="sr">Step 3: </span>Read the count</h2></div>
+    <div class="verdict" id="verdict" role="status" aria-live="polite">
+      <svg class="i" aria-hidden="true" id="verdict-icon"><use href="#i-info"/></svg>
+      <div><strong id="verdict-title">Nothing to count yet</strong><p id="verdict-body">Paste a text or open a file in step 1.</p></div>
+    </div>
+    <div class="counts" id="counts" hidden>
+      <div class="count"><b id="c-words">0</b><span>Words</span></div>
+      <div class="count"><b id="c-lines">0</b><span>Lines</span></div>
+      <div class="count"><b id="c-chars">0</b><span>Characters</span></div>
+      <div class="count"><b id="c-bytes">0</b><span>Bytes in UTF-8</span></div>
+    </div>
+    <div id="out" hidden>
+      <span class="lab" style="margin-top:var(--s5)"><span>Summary</span></span>
+      <output class="readout" id="summary"></output>
+      <div class="actions" style="margin-top:10px">
+        <button class="btn ghost sm" type="button" id="copy"><svg class="i" aria-hidden="true"><use href="#i-copy"/></svg>Copy summary</button>
+        <button class="btn ghost sm" type="button" id="clear"><svg class="i" aria-hidden="true"><use href="#i-x"/></svg>Clear</button>
+      </div>
+      <p class="msg" id="msg" role="status" aria-live="polite"></p>
+    </div>
+  </section>
+</main>
+
+<footer class="foot">
+  <div class="wrap">Enigma Text Count <span id="ver"></span>. Part of Sanctum, AGPL-3.0. Icons from Lucide (ISC). Fonts Inter, Poppins and Space Mono (SIL OFL 1.1).</div>
+</footer>
+
+<script>
+/*__KIT_JS__*/
+</script>
+<script>
+/*__TOOL_CORE__*/
+</script>
+<script>
+(function () {
+  "use strict";
+  var C = globalThis.ToolCore;
+  var VERSION = "0.1.0";
+  var MAX = 32 * 1024 * 1024;
+  function $(id) { return document.getElementById(id); }
+  $("ver").textContent = VERSION;
+
+  var split = "space";
+  var source = "paste";
+  var fileText = null;
+  var fileName = "";
+
+  function current() { return source === "paste" ? $("text").value : fileText; }
+
+  function notice(text) {
+    $("notice").hidden = !text;
+    $("notice-text").textContent = text || "";
+  }
+
+  function verdict(kind, title, body) {
+    $("verdict").className = "verdict" + (kind ? " " + kind : "");
+    $("verdict-icon").firstElementChild.setAttribute("href", kind === "ok" ? "#i-check" : kind === "bad" ? "#i-cross" : "#i-info");
+    $("verdict-title").textContent = title;
+    $("verdict-body").textContent = body;
+  }
+
+  function render() {
+    var text = current();
+    var empty = text == null || text === "";
+    $("counts").hidden = empty;
+    $("out").hidden = empty;
+    if (empty) {
+      verdict("", "Nothing to count yet", source === "paste" ? "Paste a text in step 1." : "Open a text file in step 1.");
+      return;
+    }
+    var c = C.countText(text, split);
+    $("c-words").textContent = c.words;
+    $("c-lines").textContent = c.lines;
+    $("c-chars").textContent = c.chars;
+    $("c-bytes").textContent = c.bytes;
+    $("summary").textContent = C.summary(c);
+    verdict("ok", "Counted", source === "file" ? "The count is for " + fileName + "." : "The count follows the text as you type.");
+  }
+
+  // Tabs: arrow keys move between them, as the ARIA tabs pattern asks.
+  var tabs = [$("tab-paste"), $("tab-file")];
+  function selectTab(tab) {
+    tabs.forEach(function (t) {
+      var on = t === tab;
+      t.setAttribute("aria-selected", on ? "true" : "false");
+      t.tabIndex = on ? 0 : -1;
+      $(t.getAttribute("aria-controls")).hidden = !on;
+    });
+    source = tab === tabs[0] ? "paste" : "file";
+    $("msg").textContent = "";
+    render();
+  }
+  tabs.forEach(function (t, i) {
+    t.addEventListener("click", function () { selectTab(t); });
+    t.addEventListener("keydown", function (ev) {
+      if (ev.key !== "ArrowRight" && ev.key !== "ArrowLeft") return;
+      var next = tabs[(i + (ev.key === "ArrowRight" ? 1 : tabs.length - 1)) % tabs.length];
+      next.focus();
+      selectTab(next);
+    });
+  });
+
+  $("text").addEventListener("input", render);
+
+  $("choose").addEventListener("click", function () { $("picker").click(); });
+  $("picker").addEventListener("change", async function () {
+    var f = $("picker").files && $("picker").files[0];
+    if (!f) return;
+    notice("");
+    fileText = null;
+    if (f.size > MAX) {
+      notice("This file is larger than 32 MB. Open a smaller text file.");
+      render();
+      return;
+    }
+    try {
+      var bytes = new Uint8Array(await f.arrayBuffer());
+      if (C.looksBinary(bytes)) {
+        verdict("bad", "Not a text file", f.name + " holds binary data. Open a plain text file instead.");
+        $("counts").hidden = true;
+        $("out").hidden = true;
+        return;
+      }
+      fileText = new TextDecoder().decode(bytes);
+      fileName = f.name;
+      $("picked").textContent = f.name;
+      $("picked").classList.remove("muted");
+      render();
+    } catch (e) {
+      notice("The file could not be read. Choose it again.");
+    }
+  });
+
+  $("split").addEventListener("click", function (ev) {
+    var b = ev.target.closest ? ev.target.closest("button[data-split]") : null;
+    if (!b) return;
+    split = b.getAttribute("data-split");
+    Array.prototype.forEach.call($("split").querySelectorAll("button"), function (x) {
+      x.setAttribute("aria-pressed", x === b ? "true" : "false");
+    });
+    render();
+  });
+
+  $("copy").addEventListener("click", function () {
+    var text = $("summary").textContent;
+    function selectIt() {
+      var r = document.createRange();
+      r.selectNodeContents($("summary"));
+      var sel = window.getSelection();
+      sel.removeAllRanges();
+      sel.addRange(r);
+      $("msg").textContent = "Copy is blocked here. The summary is selected: press Ctrl+C or Cmd+C.";
+    }
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(text).then(function () { $("msg").textContent = "Summary copied."; }, selectIt);
+    } else selectIt();
+  });
+
+  $("clear").addEventListener("click", function () {
+    $("text").value = "";
+    fileText = null;
+    $("picked").textContent = "No file chosen.";
+    $("picked").classList.add("muted");
+    $("msg").textContent = "";
+    notice("");
+    render();
+  });
+
+  render();
+})();
+</script>
+</body>
+</html>

@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.0.1 (2026-11-23)
+- changed: Opens in a light theme, with a switch in the header to dark for the current window. The choice is not stored.
+- changed: Layout, type and controls are shared with the other Enigma tools. The fonts are built into the file.
+
 ## 1.0.0 (2026-10-24)
 - added: Put a tiled, diagonal watermark on any number of PDFs, with the name of the person each copy is for on every page.
 - added: A different ID for every marked file, built from random characters and the start of the original file's SHA-256, written on the pages and in the PDF's information fields.

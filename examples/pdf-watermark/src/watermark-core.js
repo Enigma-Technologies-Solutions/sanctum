@@ -18,7 +18,7 @@
 (function () {
   "use strict";
 
-  var VERSION = "1.0.0";
+  var VERSION = "1.0.1";
   var TOOL_NAME = "Enigma PDF Watermark";
 
   var DEFAULT_TEMPLATE = "CONFIDENTIAL • DO NOT SHARE • {UID} • {DATE} • {RECIPIENT}";

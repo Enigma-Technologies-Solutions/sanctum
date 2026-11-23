@@ -15,6 +15,13 @@ Nothing. The approval screen is empty: no storage, no network host, no smart car
 access. A test (`pdf_watermark_example_asks_for_nothing` in `src-tauri/src/commands/scan.rs`)
 pins that against the built file.
 
+## How it looks
+
+The page uses the shared Enigma tool kit in `examples/_kit` (see `docs/tool-design.md`). It opens
+in a light theme. The button in the header switches the window to dark; the choice is not stored,
+so the tool still asks for nothing. The fonts (Inter, Poppins, Space Mono) are embedded in the file.
+The preview page stays white in both themes, as a PDF viewer shows it.
+
 ## What it does to a PDF
 
 1. Reads the file, takes its SHA-256 and makes an ID: ten random characters, a dash, and four
@@ -43,12 +50,16 @@ what a viewer shows, then mapped to the page's own space (`frame()` in the core)
 
 ## Files
 
-- `src/app.template.html` is the interface. It has two placeholders where code is inlined.
+- `src/app.template.html` is the interface. It has placeholders where pdf-lib, the core and the
+  kit are inlined.
 - `src/watermark-core.js` is the engine (no DOM, no network): ids, template, tile geometry,
   page rotation, the zip writer, the watermark itself and the receipt.
 - `vendor/pdf-lib.min.js` is pdf-lib 1.17.1 (MIT), unmodified, pinned by SHA-256. See
   `vendor/README.md`.
 - `index.html` is the built single file that you add to Sanctum.
+- `screens.mjs` holds the scenes for the registry screenshots
+  (`node scripts/tool-screens.mjs pdf-watermark`). The sample PDFs are made in the page and
+  their content is made up.
 - `test/` has the tests. `core.test.mjs` builds real PDFs with pdf-lib, marks them, and reads
   the result back. The zip test opens the archive with Python's `zipfile` (and `unzip` if present).
 
@@ -59,11 +70,13 @@ node build.mjs
 node --test test/*.test.mjs
 ```
 
-The build needs only Node. It fails if a placeholder or a source is missing, if pdf-lib is not
-the pinned file, or if a source contains `</script`. CI rebuilds `index.html` and fails if it
+The build needs only Node. It inlines the kit (`../_kit`, with the fonts from `src/assets/fonts`),
+pdf-lib and the core. It fails if a placeholder or a source is missing, if pdf-lib is not the
+pinned file, if a source contains `</script`, or if the kit would add a capability. CI rebuilds `index.html` and fails if it
 differs from the committed one, and fails on any capability string in the code we wrote.
 
 ## Licence and credit
 
-Part of Sanctum, AGPL-3.0. Uses pdf-lib (MIT, Andrew Dillon). Icons are from Lucide (ISC). The
-idea and settings come from the standalone PDF Watermark web app this replaces.
+Part of Sanctum, AGPL-3.0. Uses pdf-lib (MIT, Andrew Dillon). Icons are from Lucide (ISC). Fonts
+are Inter, Poppins and Space Mono (SIL OFL 1.1). The idea and settings come from the standalone
+PDF Watermark web app this replaces.

@@ -54,9 +54,27 @@ Other gaps found while building this tool: storage is lost on delete and re-add 
 tool cannot read its own checksum or approvals (#7), there is no CLI for scanning and
 provisioning (#8), and no way yet to pin or sign reviewed tools (#9).
 
+## Building
+
+`index.html` is generated. Edit `src/app.template.html` (page and app script) or
+`src/otp-core.js` (crypto, TOTP and the OATH wire format), then run:
+
+```bash
+node examples/otp-vault/build.mjs                 # writes index.html
+node --test examples/otp-vault/test/*.test.mjs    # core tests
+node scripts/tool-screens.mjs otp-vault           # registry screenshots
+```
+
+The build inlines the core and the shared Enigma tool kit (`examples/_kit`): fonts, icons,
+styles and the light and dark theme switch. The theme is not stored. See
+[docs/tool-design.md](../../docs/tool-design.md).
+
 ## Testing
 
-Tested outside Sanctum with Chrome (Playwright):
+`test/core.test.mjs` checks the core against the RFC 6238 vectors for SHA-1, SHA-256 and
+SHA-512, base32, `otpauth://` parsing, key derivation, sealing and OATH credential ids.
+
+Earlier releases were tested outside Sanctum with Chrome (Playwright):
 
 - Core: RFC 6238 vectors for SHA-1, SHA-256 and SHA-512; base32; `otpauth://` parsing;
   key derivation determinism; AES-GCM round trip and tamper rejection.

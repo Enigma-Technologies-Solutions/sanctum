@@ -25,6 +25,12 @@ access. The file picker and the copy button are not capabilities.
   does not show the checksum came from the publisher. Get the checksum from a channel you trust,
   and prefer a signed checksum file when the publisher offers one.
 
+## How it looks
+
+The page uses the shared Enigma tool kit in `examples/_kit` (see `docs/tool-design.md`). It opens
+in a light theme. The button in the header switches the window to dark; the choice is not stored,
+so the tool still asks for nothing. The fonts (Inter, Poppins, Space Mono) are embedded in the file.
+
 ## How the hashing is built
 
 The core (`src/hash-core.js`) has no DOM, no imports and no network. It derives the SHA-2
@@ -43,7 +49,8 @@ The tests (`node --test test/*.test.mjs`) check:
 
 ## Files
 
-- `src/app.template.html` is the interface. It has a placeholder where the core is inlined.
+- `src/app.template.html` is the interface. It has placeholders where the core and the kit are
+  inlined.
 - `src/hash-core.js` is the hashing and parsing core.
 - `index.html` is the built single file that you add to Sanctum.
 
@@ -53,10 +60,12 @@ The tests (`node --test test/*.test.mjs`) check:
 node build.mjs
 ```
 
-The build needs only Node. It fails if the core or the placeholder is missing, or if the core
-contains `</script`. `--mock <file>` inlines a different core, and `--out <path>` writes
+The build needs only Node. It inlines the core and the kit (`../_kit`, with the fonts from
+`src/assets/fonts`). It fails if the core or a placeholder is missing, if the core contains
+`</script`, or if the kit would add a capability. `--mock <file>` inlines a different core, and `--out <path>` writes
 somewhere else.
 
 ## Licence
 
-Part of Sanctum, AGPL-3.0. Icons are from Lucide (ISC).
+Part of Sanctum, AGPL-3.0. Icons are from Lucide (ISC). Fonts are Inter, Poppins and Space Mono
+(SIL OFL 1.1).

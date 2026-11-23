@@ -54,7 +54,7 @@
   <div class="wrap">
     <div class="appdoc">
     <p class="eyebrow"><a href="../">Signed tools</a></p>
-    <h1 class="appdoc__title">Hash Check <span class="tag">v1.0.0</span></h1>
+    <h1 class="appdoc__title">Hash Check <span class="tag">v1.0.1</span></h1>
     <p class="lede appdoc__lede">Check a file against the checksum its publisher gave you. Runs offline and asks for no access.</p>
 
     <article class="card app">
@@ -62,14 +62,14 @@
         <p class="fine">Asks for no special access</p>
         <p class="fine appdoc__links">Published by Enigma Technologies Solutions · <a href="https://github.com/Enigma-Technologies-Solutions/sanctum/tree/main/examples/hash-check" rel="noopener">Source</a> · <span>AGPL-3.0-only</span></p>
         <dl class="app__hashes fine">
-          <dt>File SHA-256</dt><dd>d29f23b2f3871c139e60752dbc0538bb80106c362cff8ea68bd77e0c8e46c610</dd>
-          <dt>Tool SHA-256</dt><dd>e7f6ddd637cc0765878cef683a6316ed215e7fb1cdd1781b4bb610b2e5aa8c35</dd>
+          <dt>File SHA-256</dt><dd>aa0c362ae2077a2530ed6762974d7c94073afb92e2ec3913d98439019707f2b4</dd>
+          <dt>Tool SHA-256</dt><dd>f040082305e34c7fe5536ddc142c6e1021676f899832ab3abb6f0bc590ba336d</dd>
           <dt>App id</dt><dd>sh.enigma.hash-check</dd>
           <dt>Publisher key</dt><dd>ed25519:2daedA0n4NSI2p2McCqLBfGiKRmR5XCm8lypbQTT6hg</dd>
         </dl>
         <div class="btn-row">
           <a class="btn btn--volt btn--sm" href="sanctum://install?app=sh.enigma.hash-check">Install in Sanctum</a>
-          <a class="btn btn--ghost btn--sm" href="../../registry/v1/bundles/sh.enigma.hash-check-1.0.0.sanctum" download>Download file (41.6 KB)</a>
+          <a class="btn btn--ghost btn--sm" href="../../registry/v1/bundles/sh.enigma.hash-check-1.0.1.sanctum" download>Download file (162.2 KB)</a>
         </div>
         <p class="fine">Install opens Sanctum, which shows this tool and what it asks for, then waits for your click. Nothing is installed from the page itself. Sanctum not installed? <a href="../../download/" data-download>Get Sanctum</a> first.</p>
     </article>
@@ -92,6 +92,10 @@ eacfe04bc21304a30f18a1b28d57f3ff58dee143c5c40569fc8e05b078100339  sanctum-1.0.0-
 
     <h2 class="apps__sub">What is new</h2>
     <div class="changes">
+      <section>
+        <h3 class="changes__v">1.0.1 <span class="fine">2026-11-23</span></h3>
+        <ul class="changes__list"><li><strong>Changed.</strong> Opens in a light theme, with a switch in the header to dark for the current window. The choice is not stored.</li><li><strong>Changed.</strong> Layout, type and controls are shared with the other Enigma tools. The fonts are built into the file.</li></ul>
+      </section>
       <section>
         <h3 class="changes__v">1.0.0 <span class="fine">2026-10-29</span></h3>
         <ul class="changes__list"><li><strong>Added.</strong> Hash a file with SHA-256, SHA-384 or SHA-512 and compare it with a pasted checksum.</li><li><strong>Added.</strong> Reads plain hashes, GNU and BSD checksum lines and whole SHA256SUMS files, and picks the line that matches the file name.</li><li><strong>Added.</strong> Files of any size are read in pieces, with a progress bar and a Stop button.</li><li><strong>Added.</strong> MD5 and SHA-1 sums are recognised and refused, never reported as a match.</li><li><strong>Added.</strong> First release signed by Enigma Technologies Solutions.</li></ul>
