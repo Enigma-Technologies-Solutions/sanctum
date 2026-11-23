@@ -42,6 +42,10 @@ const MAX_HEAD: usize = 8 * 1024;
 const HEAD_TIMEOUT: Duration = Duration::from_secs(10);
 const CONNECT_TIMEOUT: Duration = Duration::from_secs(15);
 
+/// Turned on only by the ignored live tests, which run the real Codex under the profile.
+#[cfg(test)]
+pub static LIVE: std::sync::atomic::AtomicBool = std::sync::atomic::AtomicBool::new(false);
+
 /// Whether Layer 2 is on: always on macOS, except in a development build started with
 /// `SANCTUM_OUTER_SANDBOX=0`. A release build ignores the variable. Off in unit tests, whose
 /// fake Codex scripts live in temporary folders the profile does not open; the profile and the
@@ -49,7 +53,7 @@ const CONNECT_TIMEOUT: Duration = Duration::from_secs(15);
 pub fn active() -> bool {
     #[cfg(test)]
     {
-        false
+        LIVE.load(std::sync::atomic::Ordering::SeqCst)
     }
     #[cfg(all(not(test), debug_assertions, target_os = "macos"))]
     {

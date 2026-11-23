@@ -435,7 +435,12 @@ old `codex`, prompt asking the agent to read `~/.ssh` and to call `curl`), then 
 - UI tests for the sign-in states, the chat, and the app card, with `Commands` mocked.
 - Mutation checks on the policy builder (each of sandbox type, network flag, approval policy, writable
   root must be asserted) and on the denial of server-initiated requests.
-- Manual, real Codex: the checklist above. Record the Codex version tested.
+- End to end (`pnpm test:e2e`, in CI on macOS): the real app and sandbox with a fake Codex, driven
+  through its windows. Covers most of the Phase 6 checklist.
+- Live (`scripts/test-live.sh`, by hand): the pinned Codex under the sandbox with a test-only
+  sign-in. A build turn, the network, Stop, Delete agent data, and every sandbox escape.
+- By hand: the browser sign-in, VoiceOver, one look at the release build. See
+  [testing.md](testing.md).
 
 ## Risks and open questions
 
