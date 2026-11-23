@@ -70,6 +70,10 @@ pub struct AgentState {
     turn_running: AtomicBool,
     /// The running turn's id, so a stop request can interrupt it.
     turn_slot: StdMutex<Option<String>>,
+    /// A stop that arrived before its message started, by the key the window gave that message.
+    /// The window shows Stop as soon as Send is pressed, a moment before the send command runs.
+    /// Locked around reading or setting `turn_running`, so a stop and a send cannot cross.
+    early_stop: StdMutex<Option<String>>,
 }
 
 /// An open build session: one Codex thread and its scratch folder.
@@ -164,6 +168,7 @@ impl AgentState {
             chat: Mutex::new(None),
             turn_running: AtomicBool::new(false),
             turn_slot: StdMutex::new(None),
+            early_stop: StdMutex::new(None),
         }
     }
 
@@ -672,10 +677,32 @@ async fn chat_start_from_with(
 }
 
 /// Sends one prompt in the open session and waits for the turn to end. `on_update` receives the
-/// reply as it streams and each step Codex takes.
+/// reply as it streams and each step Codex takes. The window uses [`chat_send_keyed`].
+#[cfg(test)]
 async fn chat_send_with(
     state: &AgentState,
     text: &str,
+    on_update: &mut (dyn FnMut(Update) + Send),
+    limits: Limits,
+) -> Result<TurnOutcome, AgentCommandError> {
+    chat_send_keyed(state, text, None, on_update, limits).await
+}
+
+/// The longest message key a window may give. Keys are short ids the window makes up.
+const MAX_TURN_KEY: usize = 64;
+
+/// A message key as given by the window, or none if it is missing or unreasonable.
+fn turn_key(key: Option<&str>) -> Option<&str> {
+    key.filter(|k| !k.is_empty() && k.len() <= MAX_TURN_KEY)
+}
+
+/// Sends one prompt in the open session, for a message the window named with `key`, so that a
+/// Stop for that key which arrived first still stops it. `on_update` receives the reply as it
+/// streams and each step Codex takes.
+async fn chat_send_keyed(
+    state: &AgentState,
+    text: &str,
+    key: Option<&str>,
     on_update: &mut (dyn FnMut(Update) + Send),
     limits: Limits,
 ) -> Result<TurnOutcome, AgentCommandError> {
@@ -683,11 +710,19 @@ async fn chat_send_with(
     let session = state.chat.lock().await.clone().ok_or_else(|| {
         AgentCommandError::new("no_session", "There is no open session. Start a new one.")
     })?;
-    if state.turn_running.swap(true, Ordering::SeqCst) {
-        return Err(AgentCommandError::new(
-            "busy",
-            "Codex is still working on the last message.",
-        ));
+    {
+        let mut early = state.early_stop.lock().unwrap();
+        if state.turn_running.swap(true, Ordering::SeqCst) {
+            return Err(AgentCommandError::new(
+                "busy",
+                "Codex is still working on the last message.",
+            ));
+        }
+        // A stop held for another message (one that already ended) is dropped here.
+        let stopped = matches!((turn_key(key), early.take()), (Some(k), Some(e)) if k == e);
+        if stopped {
+            *state.turn_slot.lock().unwrap() = Some(chat::STOP_REQUESTED.to_owned());
+        }
     }
     // Clears the flag, and a stop request that never met a turn, however this ends.
     struct Running<'a>(&'a AgentState);
@@ -742,7 +777,20 @@ const RESTORED_NOTE: &str = "[Sanctum: the person put an earlier version of app.
 
 /// Asks Codex to stop the running turn. Does nothing when none is running.
 async fn chat_stop_with(state: &AgentState) {
-    let turn = chat::request_stop(&state.turn_slot, state.turn_running.load(Ordering::SeqCst));
+    chat_stop_keyed(state, None).await;
+}
+
+/// Asks Codex to stop the message the window named with `key`. If that message has not started
+/// yet, the stop is held, and the message is stopped as soon as it starts.
+async fn chat_stop_keyed(state: &AgentState, key: Option<&str>) {
+    let turn = {
+        let mut early = state.early_stop.lock().unwrap();
+        let running = state.turn_running.load(Ordering::SeqCst);
+        if !running {
+            *early = turn_key(key).map(str::to_owned);
+        }
+        chat::request_stop(&state.turn_slot, running)
+    };
     let session = state.chat.lock().await.clone();
     let process = state.process.lock().await.clone();
     if let (Some(turn), Some(s), Some(p)) = (turn, session, process) {
@@ -1223,6 +1271,7 @@ pub async fn agent_chat_send(
     window: Window,
     state: State<'_, AgentState>,
     text: String,
+    turn: Option<String>,
 ) -> Result<TurnOutcome, AgentCommandError> {
     require_host(&window)?;
     let target = window.label().to_owned();
@@ -1241,7 +1290,7 @@ pub async fn agent_chat_send(
             let _ = app.emit_to(target.as_str(), ACTIVITY_EVENT, a);
         }
     };
-    chat_send_with(&state, &text, &mut emit, Limits::default()).await
+    chat_send_keyed(&state, &text, turn.as_deref(), &mut emit, Limits::default()).await
 }
 
 /// What the open session's draft is and what it asks for, from the scan. Nothing is granted.
@@ -1294,14 +1343,15 @@ pub async fn agent_preview_draft(
         .map_err(|m| AgentCommandError::new("window", m))
 }
 
-/// Stops the running turn.
+/// Stops the running turn, or the message `turn` as soon as it starts if it has not yet.
 #[tauri::command]
 pub async fn agent_chat_stop(
     window: Window,
     state: State<'_, AgentState>,
+    turn: Option<String>,
 ) -> Result<(), AgentCommandError> {
     require_host(&window)?;
-    chat_stop_with(&state).await;
+    chat_stop_keyed(&state, turn.as_deref()).await;
     Ok(())
 }
 
@@ -1890,6 +1940,77 @@ echo '{"method":"turn/completed","params":{"threadId":"TH","turn":{"id":"T1","st
         state.turn_running.store(false, Ordering::SeqCst);
         state.shutdown().await;
         let _ = std::fs::remove_dir_all(&d);
+    }
+
+    /// After the turn starts: waits for Sanctum's next request, and ends the turn as interrupted
+    /// only if that request is turn/interrupt. Anything else leaves the turn running.
+    const AWAIT_INTERRUPT: &str = r#"read line
+case "$line" in *turn/interrupt*)
+echo '{"id":5,"result":{}}'
+echo '{"method":"turn/completed","params":{"threadId":"TH","turn":{"id":"T1","status":"interrupted","items":[]}}}'
+;; esac"#;
+
+    #[tokio::test]
+    async fn a_stop_that_arrives_before_its_message_starts_stops_it() {
+        let (state, d) = with_program(&chat_script(true, AWAIT_INTERRUPT));
+        chat_start_with(&state).await.unwrap();
+        // The window pressed Stop for message "m1" before the send command for it ran.
+        chat_stop_keyed(&state, Some("m1")).await;
+        let out = tokio::time::timeout(
+            Duration::from_secs(10),
+            chat_send_keyed(
+                &state,
+                "slow to start",
+                Some("m1"),
+                &mut no_text,
+                Limits::default(),
+            ),
+        )
+        .await
+        .expect("the held stop should end the turn")
+        .unwrap();
+        assert_eq!(out.status, chat::TurnStatus::Interrupted);
+        assert!(state.early_stop.lock().unwrap().is_none());
+        assert!(!state.turn_running.load(Ordering::SeqCst));
+        state.shutdown().await;
+        let _ = std::fs::remove_dir_all(&d);
+    }
+
+    #[tokio::test]
+    async fn a_held_stop_for_another_message_does_not_stop_the_next_one() {
+        let (state, d) = with_program(&chat_script(true, FINISH));
+        chat_start_with(&state).await.unwrap();
+        // Stop pressed for "m1" just after it ended; the next message is "m2".
+        chat_stop_keyed(&state, Some("m1")).await;
+        let out = chat_send_keyed(&state, "next", Some("m2"), &mut no_text, Limits::default())
+            .await
+            .unwrap();
+        assert_eq!(out.status, chat::TurnStatus::Completed);
+        assert!(state.early_stop.lock().unwrap().is_none());
+        state.shutdown().await;
+        let _ = std::fs::remove_dir_all(&d);
+    }
+
+    #[tokio::test]
+    async fn a_stop_with_no_key_is_never_held() {
+        let (state, d) = with_program(&chat_script(true, FINISH));
+        chat_start_with(&state).await.unwrap();
+        chat_stop_with(&state).await;
+        assert!(state.early_stop.lock().unwrap().is_none());
+        let out = chat_send_keyed(&state, "go", Some("m1"), &mut no_text, Limits::default())
+            .await
+            .unwrap();
+        assert_eq!(out.status, chat::TurnStatus::Completed);
+        state.shutdown().await;
+        let _ = std::fs::remove_dir_all(&d);
+    }
+
+    #[test]
+    fn message_keys_must_be_short_and_not_empty() {
+        assert_eq!(turn_key(Some("turn-1")), Some("turn-1"));
+        assert_eq!(turn_key(Some("")), None);
+        assert_eq!(turn_key(Some(&"x".repeat(MAX_TURN_KEY + 1))), None);
+        assert_eq!(turn_key(None), None);
     }
 
     #[tokio::test]

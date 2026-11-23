@@ -276,6 +276,8 @@ export function useChat(source: string | null = null) {
   const [restoring, setRestoring] = useState(false);
   const live = useRef(true);
   const seq = useRef(0);
+  // The message being sent, so Stop can name it even before the send command reaches Sanctum.
+  const turn = useRef<string | null>(null);
   // Which opening is current, so a slow answer to an old one is dropped.
   const generation = useRef(0);
 
@@ -342,6 +344,8 @@ export function useChat(source: string | null = null) {
   const send = useCallback(async (text: string) => {
     const t = text.trim();
     if (!t) return;
+    const key = `turn-${Date.now()}-${seq.current++}`;
+    turn.current = key;
     setError(null);
     setRunning(true);
     setClock({ startedAt: Date.now(), lastUpdate: Date.now() });
@@ -384,7 +388,7 @@ export function useChat(source: string | null = null) {
       // Without the streams nothing is shown as it happens, but the turn still runs.
     }
     try {
-      const o = await Commands.agentChatSend(t);
+      const o = await Commands.agentChatSend(t, key);
       if (!live.current) return;
       setDraft(o.draft);
       setRefused(o.refused);
@@ -400,6 +404,7 @@ export function useChat(source: string | null = null) {
       if (live.current) setError(asAgentError(e));
     } finally {
       stops.forEach((stop) => stop());
+      if (turn.current === key) turn.current = null;
       if (live.current) {
         setRunning(false);
         setClock(null);
@@ -413,7 +418,7 @@ export function useChat(source: string | null = null) {
   }, [refreshVersions]);
 
   const stopTurn = useCallback(() => {
-    Commands.agentChatStop().catch(() => {});
+    Commands.agentChatStop(turn.current ?? undefined).catch(() => {});
   }, []);
 
   /**

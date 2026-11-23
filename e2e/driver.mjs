@@ -162,11 +162,14 @@ export class App {
   }
 
   async waitForWindow(label, { gone = false, timeout = 15000 } = {}) {
+    // `label` is a window label, or a function that picks the window from its label.
+    const match = typeof label === 'function' ? label : (w) => w === label;
     const end = Date.now() + timeout;
     for (;;) {
-      const has = (await this.windows()).includes(label);
+      const wins = await this.windows();
+      const has = wins.some(match);
       if (has !== gone) return;
-      if (Date.now() > end) throw new Error(`window ${label} ${gone ? 'still open' : 'never opened'}`);
+      if (Date.now() > end) throw new Error(`window ${label} ${gone ? 'still open' : 'never opened'} (open: ${wins})`);
       await sleep(150);
     }
   }

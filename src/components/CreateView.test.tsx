@@ -216,7 +216,7 @@ describe("the Create view: chatting", () => {
     await waitFor(() => expect(composer()).toBeEnabled());
     await user.type(composer(), "a timer");
     await user.click(screen.getByRole("button", { name: "Send" }));
-    expect(C.agentChatSend).toHaveBeenCalledWith("a timer");
+    expect(C.agentChatSend).toHaveBeenCalledWith("a timer", expect.stringMatching(/^turn-/));
     expect(composer()).toHaveValue("");
     expect(await screen.findByText(/Codex is working…/)).toBeInTheDocument();
     await waitFor(() => expect(handlers["agent-chat"]).toBeDefined());
@@ -344,10 +344,10 @@ describe("the Create view: chatting", () => {
     expect(C.agentChatSend).not.toHaveBeenCalled();
     expect(composer()).toHaveValue("one\ntwo");
     await user.type(composer(), "{Enter}");
-    expect(C.agentChatSend).toHaveBeenCalledWith("one\ntwo");
+    expect(C.agentChatSend).toHaveBeenCalledWith("one\ntwo", expect.stringMatching(/^turn-/));
   });
 
-  it("Stop interrupts the turn", async () => {
+  it("Stop interrupts the turn, naming the message it was sent as", async () => {
     C.agentChatSend.mockReturnValue(new Promise(() => {}));
     const user = userEvent.setup();
     render(<CreateView onBack={vi.fn()} />);
@@ -355,6 +355,23 @@ describe("the Create view: chatting", () => {
     await user.type(composer(), "go{Enter}");
     await user.click(await screen.findByRole("button", { name: "Stop" }));
     expect(C.agentChatStop).toHaveBeenCalledTimes(1);
+    const key = C.agentChatStop.mock.calls[0][0];
+    expect(key).toMatch(/^turn-/);
+    await waitFor(() => expect(C.agentChatSend).toHaveBeenCalledWith("go", key));
+  });
+
+  it("each message is sent with a key of its own", async () => {
+    C.agentChatSend.mockResolvedValue(DONE);
+    const user = userEvent.setup();
+    render(<CreateView onBack={vi.fn()} />);
+    await waitFor(() => expect(composer()).toBeEnabled());
+    await user.type(composer(), "one{Enter}");
+    await waitFor(() => expect(C.agentChatSend).toHaveBeenCalledTimes(1));
+    await waitFor(() => expect(composer()).toBeEnabled());
+    await user.type(composer(), "two{Enter}");
+    await waitFor(() => expect(C.agentChatSend).toHaveBeenCalledTimes(2));
+    const [a, b] = C.agentChatSend.mock.calls.map((c: unknown[]) => c[1]);
+    expect(a).not.toEqual(b);
   });
 
   async function withDraft(report = REPORT) {

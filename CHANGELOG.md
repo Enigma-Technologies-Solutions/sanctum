@@ -13,6 +13,12 @@ section behind.
 
 ## [Unreleased]
 
+### Fixed
+
+- Stop pressed in the Create window in the moment after Send could be lost, and Codex then
+  kept working until it finished. Stop now names the message it is for, and Sanctum holds it
+  until that message starts.
+
 ## [0.3.0] - 2026-11-23
 
 ### Added
