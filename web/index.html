@@ -71,7 +71,7 @@
   <div class="wrap hero__grid">
     <div class="hero__copy">
       <a class="pill" href="https://github.com/Enigma-Technologies-Solutions/sanctum/releases/latest" rel="noopener">
-        <span class="pill__tag">v0.2.0</span>
+        <span class="pill__tag">v0.3.0</span>
         <span>macOS build signed and notarized</span>
         <span class="pill__arrow"><svg class="i" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg></span>
       </a>
@@ -1040,7 +1040,11 @@
       </details>
       <details>
         <summary>Does Sanctum send anything anywhere?</summary>
-        <p>There's no account, telemetry or analytics. The only request Sanctum makes by itself is an update check against its GitHub releases. Updates are signature-checked in Rust against a public key built into the app, and only install when you click to install them. A registry is contacted only when you add it, refresh it or install from it, and an <code>sanctum://</code> link shows a confirmation and does nothing until you click.</p>
+        <p>There's no account, telemetry or analytics. The only requests Sanctum makes by itself are an update check against its GitHub releases and, if you turn it on, a daily check of your registries. On macOS there is an optional feature, off until you turn it on in Settings, that lets you build a tool by describing it: it downloads OpenAI's Codex to your computer, and your messages and the drafts Codex writes are sent to OpenAI under your own ChatGPT account. It counts against your plan's usage limits. Sanctum sends none of it. Updates are signature-checked in Rust against a public key built into the app, and only install when you click to install them. A registry is contacted only when you add it, refresh it or install from it, and an <code>sanctum://</code> link shows a confirmation and does nothing until you click.</p>
+      </details>
+      <details>
+        <summary>Can Sanctum write a tool for me?</summary>
+        <p>On macOS, yes, if you turn it on in Settings. You describe the tool in plain words and OpenAI's Codex writes it, signed in with your own ChatGPT account and counted against your plan. Codex runs inside a sandbox of Sanctum's own: the commands it runs can write only to the draft's folder and reach no network. The finished tool goes through the same approval screen as any other, is marked "Made with Codex" and starts with nothing approved. <a href="./blog/building-apps/">How it works</a>.</p>
       </details>
       <details>
         <summary>Can I run my own registry?</summary>
