@@ -1,7 +1,7 @@
 {
   "format": "sanctum-registry-sig/1",
   "keyid": "ed25519:IOl6p6QWiNeptWy-MSYykBesxGrpLx9iyyAyn0nPOaQ",
-  "sig": "HEfOvTywg38iQh1LZJ9S-SCGTHyz3dNO4XjzxrKLogxLSHQahA6DDI9vY5wNU6GTFE12kVlv3s50ltURvl_RAw",
+  "sig": "4Cn5-TVvlT9oNOteN5BKtlFJP1vEE51cOXRSuvz9uybCCVqTCUrQBeB1-HX94yZQPYdylUBR1zA2ap8dcHIeAQ",
   "chain": [
     {
       "payload": "eyJzY2hlbWEiOjEsInN1YmplY3QiOiJlZDI1NTE5OklPbDZwNlFXaU5lcHRXeS1NU1l5a0Jlc3hHcnBMeDlpeXlBeW4wblBPYVEiLCJuYW1lIjoiRW5pZ21hIFRlY2hub2xvZ2llcyBTb2x1dGlvbnMiLCJub3RfYmVmb3JlIjoxNzkyMDUxMzMxLCJub3RfYWZ0ZXIiOjE4NTUyMDk3MjksInNjb3BlIjpbInJlZ2lzdHJ5OnNoLmVuaWdtYS4iXX0",

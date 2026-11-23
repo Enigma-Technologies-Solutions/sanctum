@@ -6,6 +6,20 @@
   "license": "AGPL-3.0-only",
   "changelog": [
     {
+      "version": "1.0.1",
+      "date": "2026-11-23",
+      "changes": [
+        {
+          "type": "changed",
+          "text": "Opens in a light theme, with a switch in the header to dark for the current window. The choice is not stored."
+        },
+        {
+          "type": "changed",
+          "text": "Layout, type and controls are shared with the other Enigma tools. The fonts are built into the file."
+        }
+      ]
+    },
+    {
       "version": "1.0.0",
       "date": "2026-10-24",
       "changes": [
@@ -44,24 +58,24 @@
   "screenshots": [
     {
       "path": "apps/sh.enigma.pdf-watermark/overview.png",
-      "sha256": "sha256:291427e36520d6690b6212a05bf35ddc81b1b0c235d0315208c7b851ab20d476",
-      "size": 137436,
+      "sha256": "sha256:e33bb4001212d8a0c0ec09ca6c01ee40f762db9e2a8d69dc8f499a74198882b1",
+      "size": 153763,
       "width": 1600,
       "height": 1131,
       "alt": "Overview of Enigma PDF Watermark: a summary of what stays on your computer and a button to choose PDF files."
     },
     {
       "path": "apps/sh.enigma.pdf-watermark/settings.png",
-      "sha256": "sha256:420bd16769eeb41c031bedb8598c3ed40ea88e3b1793178bb8041af18b2eaaac",
-      "size": 183206,
+      "sha256": "sha256:336f152efd8cd70e48a6982d08ede9af3c491eb4dbd12cf6726e399f327b3414",
+      "size": 163356,
       "width": 1600,
       "height": 1131,
       "alt": "Watermark settings: who the copy is for, colour, strength, angle, size and spacing, with a preview of the tiled text on an A4 page."
     },
     {
       "path": "apps/sh.enigma.pdf-watermark/results.png",
-      "sha256": "sha256:735fa9155b2a62dda37806cd5d154acb2ee1103d2b4dac648a0a0c1eedd91d5d",
-      "size": 88671,
+      "sha256": "sha256:ad2f000c39f355f3aa58b87a0e08ba02f4fa111bb0b4d056fa69c094a1b5be46",
+      "size": 118188,
       "width": 1600,
       "height": 1131,
       "alt": "Marked files, each with its ID, fingerprint and recipient, and buttons to save each file or all of them as a ZIP."

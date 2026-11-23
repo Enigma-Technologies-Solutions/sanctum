@@ -3,9 +3,9 @@
   "id": "registry:sh.enigma.public",
   "name": "Enigma Technologies Solutions",
   "kind": "public",
-  "serial": 9,
-  "issued_at": 1794338574,
-  "expires": 1825874574,
+  "serial": 10,
+  "issued_at": 1795456923,
+  "expires": 1826992923,
   "revocations": "revocations.json",
   "apps": [
     {
@@ -17,7 +17,7 @@
         "name": "Enigma Technologies Solutions"
       },
       "access": "free",
-      "latest": "1.0.0",
+      "latest": "1.0.1",
       "icon": {
         "path": "apps/sh.enigma.hash-check/icon.svg",
         "sha256": "sha256:9c55e37136979d59cc965fb156261d1de790244ba71c489f5f000cf5ad22fd44",
@@ -25,19 +25,19 @@
       },
       "detail": {
         "path": "apps/sh.enigma.hash-check.json",
-        "sha256": "sha256:cdf4f911c61840a477890c5c59947d6f4fb35e33bf1b714a08e4bed747be4483",
-        "size": 3076
+        "sha256": "sha256:8964677324466178f2d524a537cac63fbcefb1ea9f77105f4dd37469858ba065",
+        "size": 3522
       },
       "versions": [
         {
-          "version": "1.0.0",
-          "published_at": 1793678049,
+          "version": "1.0.1",
+          "published_at": 1795456922,
           "bundle": {
-            "path": "bundles/sh.enigma.hash-check-1.0.0.sanctum",
-            "sha256": "sha256:d29f23b2f3871c139e60752dbc0538bb80106c362cff8ea68bd77e0c8e46c610",
-            "size": 42576
+            "path": "bundles/sh.enigma.hash-check-1.0.1.sanctum",
+            "sha256": "sha256:aa0c362ae2077a2530ed6762974d7c94073afb92e2ec3913d98439019707f2b4",
+            "size": 166098
           },
-          "checksum": "sha256:e7f6ddd637cc0765878cef683a6316ed215e7fb1cdd1781b4bb610b2e5aa8c35",
+          "checksum": "sha256:f040082305e34c7fe5536ddc142c6e1021676f899832ab3abb6f0bc590ba336d",
           "declared": []
         }
       ]
@@ -51,7 +51,7 @@
         "name": "Enigma Technologies Solutions"
       },
       "access": "free",
-      "latest": "1.0.2",
+      "latest": "1.0.3",
       "icon": {
         "path": "apps/sh.enigma.otp-vault/icon.svg",
         "sha256": "sha256:b9f1acc5a67117eb58d99e01934a7606be0afa797599380b5e5ff96590d7fde3",
@@ -59,19 +59,19 @@
       },
       "detail": {
         "path": "apps/sh.enigma.otp-vault.json",
-        "sha256": "sha256:bb3fb2aac48067b11190738f72f3b035bb712cebfac92a3be528f52dd12defb4",
-        "size": 2994
+        "sha256": "sha256:6bd2968d9fc43c9a6ba61224a5cd08069e028f9763fc0517248b65322d352064",
+        "size": 3667
       },
       "versions": [
         {
-          "version": "1.0.2",
-          "published_at": 1790900767,
+          "version": "1.0.3",
+          "published_at": 1795456897,
           "bundle": {
-            "path": "bundles/sh.enigma.otp-vault-1.0.2.sanctum",
-            "sha256": "sha256:badf5ffc7e419ae0302c23f051c10311665975c1096040b6a0e6849fe005702e",
-            "size": 78787
+            "path": "bundles/sh.enigma.otp-vault-1.0.3.sanctum",
+            "sha256": "sha256:66ade65f8216494602d089d0bad30e160cb6f26bcb1b7398df90c87e6d63a85c",
+            "size": 210115
           },
-          "checksum": "sha256:bd325dd981eca233867583e6af2c30a0d9d7ebe39130a409825e55c958105172",
+          "checksum": "sha256:bbaa9b31d9c31444e89699d866d8cbd0297ac2a011e74330ffdae14790342202",
           "declared": [
             "storage",
             {
@@ -92,7 +92,7 @@
         "name": "Enigma Technologies Solutions"
       },
       "access": "free",
-      "latest": "1.0.0",
+      "latest": "1.0.1",
       "icon": {
         "path": "apps/sh.enigma.pdf-watermark/icon.svg",
         "sha256": "sha256:bb69e2183401e6777e8b9d823a953f51f6aa9f04ab548fbd49abaf838687fedb",
@@ -100,19 +100,19 @@
       },
       "detail": {
         "path": "apps/sh.enigma.pdf-watermark.json",
-        "sha256": "sha256:ff3a97ff1bd94c2658cd270e8f6545629d08bcb768c16739023853c96e24c8d6",
-        "size": 3414
+        "sha256": "sha256:7c004e0107c3b034fdaad28273085ff2557fe56874ee27ef28542e16897e7085",
+        "size": 3859
       },
       "versions": [
         {
-          "version": "1.0.0",
-          "published_at": 1792836640,
+          "version": "1.0.1",
+          "published_at": 1795456916,
           "bundle": {
-            "path": "bundles/sh.enigma.pdf-watermark-1.0.0.sanctum",
-            "sha256": "sha256:40d7b8b695422b8963482740221af0c5ccdbe5d3a693954c1232539e525e4641",
-            "size": 591942
+            "path": "bundles/sh.enigma.pdf-watermark-1.0.1.sanctum",
+            "sha256": "sha256:af894c87401a497236a0ae0f54cc38fe96d6309c26ffff45345b2aebff09ecfe",
+            "size": 716451
           },
-          "checksum": "sha256:2168f92d381617fd97cb533f98dcac2924a29464fb93674b96e45d9ef335125f",
+          "checksum": "sha256:506e488c8c218b3d11a5e4a7e5f6ad80ebd25a25fcc005b641a812f6142aba55",
           "declared": []
         }
       ]
@@ -126,7 +126,7 @@
         "name": "Enigma Technologies Solutions"
       },
       "access": "free",
-      "latest": "1.0.2",
+      "latest": "1.0.3",
       "icon": {
         "path": "apps/sh.enigma.shamir/icon.svg",
         "sha256": "sha256:4794936d11f88932dce8b38d63d1430e1b4345765dcb5fa7ec52a1ede3ea7af3",
@@ -134,19 +134,19 @@
       },
       "detail": {
         "path": "apps/sh.enigma.shamir.json",
-        "sha256": "sha256:79811dc4c1b7ac47054e8560c167ee59010b7321527d1e47615cf106231d429b",
-        "size": 2949
+        "sha256": "sha256:82725ecdc86eea708d81d560aab5df632231a787647633dd10604fe90551eccc",
+        "size": 3446
       },
       "versions": [
         {
-          "version": "1.0.2",
-          "published_at": 1790900901,
+          "version": "1.0.3",
+          "published_at": 1795456908,
           "bundle": {
-            "path": "bundles/sh.enigma.shamir-1.0.2.sanctum",
-            "sha256": "sha256:986e7c69f03fab9b07d417cf47ed66b9daa9f5c8bc5f6b251c9673893a8f93ea",
-            "size": 98136
+            "path": "bundles/sh.enigma.shamir-1.0.3.sanctum",
+            "sha256": "sha256:e011312f3226503de1e6e7fe7c7ff8eaa280080b4684e946a0680059df9bd6b7",
+            "size": 222764
           },
-          "checksum": "sha256:1601e706b1688fe59864744327934b8cc6cc036b3fccc0adda920b1d146bbf94",
+          "checksum": "sha256:5d4f15d2efb5e2d773c3dc8110dee184e402098da5738168e6d16d38b226f991",
           "declared": []
         }
       ]
