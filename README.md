@@ -126,11 +126,12 @@ needs re-presenting.
 
 ---
 
-## Build apps with Codex (experimental, off by default)
+## Build apps with Codex (macOS, off by default)
 
 Sanctum can write a tool for you. You describe it in plain words, OpenAI's Codex writes a single
 HTML file, and Sanctum shows the same approval screen it shows for any pasted tool. This is off
-until you turn it on in Settings, under Build apps with Codex.
+until you turn it on in Settings, under Build apps with Codex. It is offered on macOS only for now,
+because it relies on a sandbox Sanctum builds around Codex, which exists only on macOS so far.
 
 What turning it on means:
 
@@ -143,8 +144,12 @@ What turning it on means:
   Sanctum charges nothing for it.
 - **Your messages and the drafts Codex writes are sent to OpenAI.** That is how it works, and it is
   the one place Sanctum's data leaves your computer on your behalf. Sanctum itself sends nothing.
-- **Codex works in a private folder** with no network access of its own, and the folder is deleted
-  when you close the window. Nothing reaches your library unless you click Add.
+- **Codex works in a private folder**, and the folder is deleted when you close the window. Nothing
+  reaches your library unless you click Add.
+- **Codex runs inside Sanctum's own sandbox.** The commands it runs can read only system folders,
+  the Codex program and the draft, write only to the draft and Codex's own folder, and reach no
+  network. Codex itself can reach only `chatgpt.com` and `auth.openai.com`, through a proxy inside
+  Sanctum. See [docs/security-review-0.3.0.md](docs/security-review-0.3.0.md).
 - **A tool made this way is marked "Made with Codex"** and starts with no approvals like any other.
   Nobody has reviewed or signed it.
 - **Apps can save files to your Downloads folder without asking.** A page can offer a file it made,
@@ -152,11 +157,11 @@ What turning it on means:
   and scripts. A window can save 25 files.
 
 Turning it off stops Codex and closes any open session. Your sign-in and the downloaded program
-stay where they are. The design and its limits are in [docs/create-app-plan.md](docs/create-app-plan.md).
+stay where they are. Delete agent data, in Settings, signs out and removes them. The design and its limits are in [docs/create-app-plan.md](docs/create-app-plan.md).
 
 ## Status
 
-**v0.2.0** adds the signed Catalogue, install links and a light, dark or system theme. [Download it from GitHub Releases](https://github.com/Enigma-Technologies-Solutions/sanctum/releases/latest). macOS builds are signed and notarized; Windows and Linux builds are unsigned.
+**v0.3.0** adds building apps with Codex on macOS, registry notices and saving files from tools. [Download it from GitHub Releases](https://github.com/Enigma-Technologies-Solutions/sanctum/releases/latest). macOS builds are signed and notarized; Windows and Linux builds are unsigned.
 
 | Feature | Status |
 |---------|--------|

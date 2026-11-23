@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Describe a tool, then approve it | Sanctum</title>
+<meta name="description" content="Sanctum 0.3.0 can ask OpenAI&#39;s Codex to write a tool for you on macOS. Here is what is sent where, what Codex can reach while it works, and what the finished tool is allowed to do.">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self'; style-src 'self'; font-src 'self'; img-src 'self' data:; connect-src 'none'; form-action 'none'; base-uri 'none'">
+<meta name="referrer" content="strict-origin-when-cross-origin">
+<link rel="canonical" href="https://sanctum.enigma.sh/blog/building-apps/">
+<meta property="og:type" content="article">
+<meta property="og:site_name" content="Sanctum">
+<meta property="og:title" content="Describe a tool, then approve it | Sanctum">
+<meta property="og:description" content="Sanctum 0.3.0 can ask OpenAI&#39;s Codex to write a tool for you on macOS. Here is what is sent where, what Codex can reach while it works, and what the finished tool is allowed to do.">
+<meta property="og:url" content="https://sanctum.enigma.sh/blog/building-apps/">
+<meta property="og:image" content="https://sanctum.enigma.sh/blog/building-apps/cover.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Describe a tool, then approve it | Sanctum">
+<meta name="twitter:description" content="Sanctum 0.3.0 can ask OpenAI&#39;s Codex to write a tool for you on macOS. Here is what is sent where, what Codex can reach while it works, and what the finished tool is allowed to do.">
+<meta name="twitter:image" content="https://sanctum.enigma.sh/blog/building-apps/cover.png">
+<meta name="theme-color" content="#FFFFFF">
+<meta name="color-scheme" content="light">
+<link rel="icon" href="../../assets/favicon.svg" type="image/svg+xml">
+<link rel="icon" href="../../favicon.ico" sizes="32x32 48x48">
+<link rel="apple-touch-icon" href="../../assets/apple-touch-icon.png">
+<link rel="stylesheet" href="../../styles.css">
+<script src="../../assets/download.js" defer></script>
+</head>
+<body>
+<a class="skip" href="#main">Skip to content</a>
+<nav class="nav" aria-label="Primary">
+  <div class="wrap nav__inner">
+    <a class="wordmark" href="../../" aria-label="Sanctum home">SANCTUM<span class="wordmark__sq" aria-hidden="true"></span></a>
+    <div class="nav__links">
+      <a href="../../#how">How it works</a>
+      <a href="../../#tools">Signed tools</a>
+      <a href="../../#security">Security</a>
+      <a href="../../#compare">Compare</a>
+      <a href="../../#pricing">Pricing</a>
+      <a href="../../#faq">FAQ</a>
+      <a href="../../blog/">Blog</a>
+      <a href="../../docs/">Docs</a>
+    </div>
+    <div class="nav__cta">
+      <a class="btn btn--ghost btn--sm nav__gh" href="https://github.com/Enigma-Technologies-Solutions/sanctum" rel="noopener">GitHub</a>
+      <a class="btn btn--volt btn--sm" href="../../download/" data-download>Download</a>
+    </div>
+  </div>
+</nav>
+
+<main id="main" class="section apps">
+  <div class="wrap">
+    <article class="blog blog--post">
+    <p class="eyebrow"><a href="../">Blog</a></p>
+    <p class="blog__date">November 23, 2026</p>
+    <h1 class="h2 blog__h1">Describe a tool, then approve it</h1>
+    <figure class="blog__cover"><img src="./cover.png" width="1200" height="630" alt=""></figure>
+    <div class="manual blog__body">
+<p>Most of the tools people run in Sanctum were written by a model in the first place. Someone asks a chat assistant for a small converter or a checklist, copies the HTML it produces into a file, and drags that file into Sanctum. The round trip works, but it puts the least careful step, copying code out of a chat window, in the middle of the process.</p>
+<p>Sanctum 0.3.0 removes that step on macOS. You describe the tool in plain words, OpenAI&#39;s Codex writes it on your computer, and Sanctum shows the result in a preview window. When you are satisfied, the tool goes through the same approval screen as a file you dragged in. The feature is off until you turn it on in Settings, and the rest of this post explains what changes when you do.</p>
+<h4>What is sent where</h4>
+<p>Turning the feature on and signing in does three things, and nothing happens before you do:</p>
+<ul><li><strong>Sanctum downloads Codex</strong> from OpenAI&#39;s releases on GitHub and checks it against a hash built into Sanctum. Codex is open source under the Apache License 2.0, and Settings shows its licence.</li><li><strong>You sign in with your own ChatGPT account</strong> in your browser. Sanctum never sees your password or sign-in token, and the sign-in page must be on <code>auth.openai.com</code> before Sanctum will open it.</li><li><strong>Your messages and the drafts Codex writes are sent to OpenAI</strong>, and the work counts against your ChatGPT plan&#39;s usage limits. Sanctum itself sends none of it, and there is still no Sanctum account and no telemetry.</li></ul>
+<p>Delete agent data, also in Settings, signs out, stops Codex and removes the program, the sign-in, the conversations and the drafts from your computer. Tools you already added to your library stay where they are.</p>
+<h4>What Codex can reach while it works</h4>
+<p>A coding agent reads and writes files and runs commands, and the model behind it can be steered by anything it reads, including the tool it has been asked to change. We therefore treat every command Codex runs as untrusted.</p>
+<p>Codex normally runs its commands inside a sandbox of its own. macOS cannot place one sandbox inside another, so Sanctum replaces it with a stricter sandbox around the whole Codex process, built on the same macOS mechanism. Inside it, the following limits apply:</p>
+<ul><li>Commands can read system folders, the Codex program and the draft, and nothing else in your home folder, such as your shell settings or SSH keys.</li><li>Commands can write only to the draft&#39;s folder and to Codex&#39;s own working folder, where the files that control Codex&#39;s behaviour are protected from writes.</li><li>Commands reach no network at all. Codex itself reaches only <code>chatgpt.com</code> and <code>auth.openai.com</code>, through a proxy inside Sanctum that checks each connection comes from the Codex process.</li><li>Commands cannot start programs outside the sandbox, read the clipboard or open the keychain, because only seven named system services are reachable.</li></ul>
+<p>Each of these limits has a test that runs the real Codex program and tries to break it. The <a href="https://github.com/Enigma-Technologies-Solutions/sanctum/blob/main/docs/security-review-0.3.0.md" rel="noopener noreferrer">security review for 0.3.0</a> lists what we checked, what we found and fixed, and the risks we accepted. It is a review by the people who wrote the code, not an outside audit.</p>
+<p>Because the second sandbox exists only on macOS so far, building apps is offered on macOS only. On Linux and Windows, Settings says it is not available yet, and nothing is downloaded.</p>
+<h4>What the finished tool may do</h4>
+<p>A tool Codex writes is a single HTML file like any other, and Sanctum treats it the same way. The scanner lists what it asks for, you approve or refuse each item, and the tool starts with nothing approved. Its card is marked &quot;Made with Codex&quot; so that you can tell it apart from a tool someone signed. Nobody has reviewed it, and the mark does not claim otherwise.</p>
+<p>You can return to a tool later with Modify with Codex, which opens the Create window with the tool as its starting point. Every draft is kept in a history, so an earlier version can be previewed or restored, and standing instructions let you set rules that apply to every tool Codex writes for you.</p>
+<h4>Also in 0.3.0</h4>
+<p>Registry notices tell you when a tool you installed has a newer version or has been withdrawn by its registry. A withdrawn version from a registry built into Sanctum no longer opens. Tool windows can also save files to your Downloads folder, never over an existing file, and programs and scripts are refused. The <a href="https://github.com/Enigma-Technologies-Solutions/sanctum/blob/main/CHANGELOG.md" rel="noopener noreferrer">changelog</a> has the full list.</p>
+<p>Sanctum 0.3.0 is available from the <a href="https://sanctum.enigma.sh/download/" rel="noopener noreferrer">download page</a>, and installed copies will offer the update. We would like to hear what you build with it, and what you would want it to refuse, at ultra@enigma.sh.</p>
+    </div>
+    <p class="blog__back"><a href="../">Back to the blog</a></p>
+    </article>
+  </div>
+</main>
+
+<footer class="foot">
+  <div class="wrap">
+    <div class="foot__bar">
+      <span class="ets" aria-hidden="true">ETS</span>
+      <span>© 2026 Enigma Technologies Solutions</span>
+      <span class="foot__bar-sp">AGPL-3.0-only</span>
+    </div>
+  </div>
+</footer>
+</body>
+</html>
