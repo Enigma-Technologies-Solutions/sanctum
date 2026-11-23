@@ -9,7 +9,7 @@ import { appendFileSync, existsSync, mkdirSync, readFileSync, readdirSync, rmSyn
 import { join } from 'node:path';
 import { test } from 'node:test';
 import { buildRegistry, diffDir, writeRegistry } from '../lib/registry.mjs';
-import { installLink, renderSite, renderSitemap } from '../lib/site.mjs';
+import { installLink, renderHomeTools, renderSite, renderSitemap } from '../lib/site.mjs';
 import { withoutDownloadScript } from '../lib/download.mjs';
 import { verifyRegistryDir } from '../lib/verify-registry.mjs';
 import { NOW, ONE_PIXEL_PNG, REGISTRY_ID, cli, makeWorld, scratch } from './helpers.mjs';
@@ -520,6 +520,32 @@ test('page text is escaped', () => {
     assert.ok(!html.includes('<img src=x'));
     assert.ok(!/<script/i.test(withoutDownloadScript(html)));
     assert.match(html, /&lt;img src=x onerror=alert\(1\)&gt;/);
+  } finally {
+    w.cleanup();
+  }
+});
+
+test('the home page tool pictures are filled between their markers, and only for tools in the registry', () => {
+  const page = (id, alt) => ({ entry: { app_id: id, name: id, summary: 's' }, detail: { screenshots: alt ? [{ path: `apps/${id}/overview.png`, alt }] : [] } });
+  const b = { sitePages: [page('sh.enigma.shamir', 'Overview of Shamir.')] };
+  const html = '<p>a</p>\n<!-- tool-mock:sh.enigma.shamir -->\nSTALE-BLOCK\n<!-- /tool-mock -->\n<p>b</p>';
+  const out = renderHomeTools(html, b);
+  assert.ok(out.startsWith('<p>a</p>') && out.endsWith('<p>b</p>'));
+  assert.ok(!out.includes('STALE-BLOCK'));
+  assert.match(out, /<figcaption class="sr">Overview of Shamir\.<\/figcaption>/);
+  assert.equal(renderHomeTools(out, b), out, 'idempotent');
+  assert.throws(() => renderHomeTools(html.replace('sh.enigma.shamir', 'sh.enigma.other'), b), /not in the registry/);
+  assert.throws(() => renderHomeTools('<p></p>', b), /no tool-mock block/);
+});
+
+test('a screenshot without a drawing is shown as the published image', () => {
+  const w = makeWorld({ apps: ['alpha'] });
+  try {
+    mkdirSync(join(w.source, 'apps/sh.test.alpha/screenshots'), { recursive: true });
+    writeFileSync(join(w.source, 'apps/sh.test.alpha/screenshots/first.png'), ONE_PIXEL_PNG);
+    writeFileSync(join(w.source, 'apps/sh.test.alpha/app.json'), JSON.stringify({ app_id: 'sh.test.alpha', summary: 's', description: 'd', screenshots: [{ file: 'first.png', alt: 'A single pixel' }] }));
+    const html = renderSite(build(w)).get('sh.test.alpha/index.html').toString('utf8');
+    assert.match(html, /<figure class="screenshot"><img src="\.\.\/\.\.\/registry\/v1\/apps\/sh\.test\.alpha\/first\.png"[^>]*alt="A single pixel"/);
   } finally {
     w.cleanup();
   }

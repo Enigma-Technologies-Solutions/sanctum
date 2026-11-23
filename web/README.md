@@ -85,6 +85,56 @@ markup, not toggled. Tokens are at the top of `styles.css`.
 - Mockup content must stay true to the product: hostnames are illustrative, but every
   state shown (blocked by CSP, per-host approval, refused `SELECT`) is real behaviour.
 
+## Window mock-ups
+
+The home page section `#app` shows the desktop app in macOS windows drawn in HTML and CSS
+(`.mock-*` and `.ui-*` in `styles.css`). Use the same component for any other product
+picture, such as a tool's window on its page in `apps/`:
+
+```html
+<figure class="mock mock-stage">
+  <div class="mock-window mock-window--tall" aria-hidden="true">
+    <div class="mock-window__frame">
+      <div class="mock-window__bar"><span class="mock-window__lights"><i></i><i></i><i></i></span><span class="mock-window__title">Sanctum</span></div>
+      <div class="mock-window__screen ui">
+        <!-- the window's content -->
+      </div>
+    </div>
+  </div>
+  <figcaption class="sr">What the picture shows, in one sentence.</figcaption>
+</figure>
+```
+
+- **Scale.** Write sizes inside `__screen` in the app's own pixels, copied from the React
+  source (13px text, 18px padding). `.mock-window` is a size container and its frame is
+  zoomed as a whole (0.72 down to 0.32 as the window narrows), so the content always lays
+  out about 1000 to 1250 pixels wide, like the real window, and stays sharp.
+- **Height.** The screen is 640 app pixels high; `--short` is 560, `--tall` 760, `--xl` 880.
+  Content that does not fit is cut off at the bottom, as in a window that scrolls.
+- **Stage.** `.mock-stage` is the tinted panel. The window runs 10px past its right and
+  bottom edges, which the stage clips. Without `.mock-stage`, the window stands on its own.
+- **Accessibility.** The figure is named by a visually hidden `figcaption`; the window has
+  `aria-hidden="true"`. Use `<span>` and `<div>` for fake buttons and inputs, never `<a>`,
+  `<button>` or `<input>`, so nothing inside can take focus. Images inside take `alt=""`.
+- **Sanctum's interface** uses the `.ui` class on the screen, which carries the app's
+  light tokens (`--app-*`, from `src/index.css`) and the dark ones under
+  `html[data-theme="dark"]`. The `.ui-*` classes each name the component they copy
+  (`AppHeader.tsx`, `ToolCard.tsx`, `InspectView.tsx` and so on). A tool's own window does
+  not use `.ui`: give it its own screen class and tokens.
+- Icons are inline Lucide SVGs (`class="i"`), the same set and version as the app.
+- When the app's copy or layout changes, change the markup here too.
+
+### Enigma's tools
+
+The tools' own windows (the Signed tools cards on the home page and the pictures on each page in
+`apps/`) are not written here. They are generated from `scripts/lib/tool-mocks/`, one module per
+tool with one scene per screenshot listed in `registry/apps/<app_id>/app.json`, captioned with
+that screenshot's text. `node scripts/build-registry.mjs` writes them into `apps/` and between the
+`<!-- tool-mock:<app_id> -->` markers of `index.html`; `--check` fails when they are stale. The
+`.tk` screen class carries the light tokens of `examples/_kit/kit.css` (tools open light), and
+the `.tk-*` classes copy the kit's components. A screenshot with no scene is shown as the image.
+When a tool's interface changes, change its module and rebuild.
+
 ## Go-live status
 
 - [x] **Domain:** `sanctum.enigma.sh`, set in `index.html` (canonical, `og:url`,
