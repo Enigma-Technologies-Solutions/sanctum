@@ -115,6 +115,15 @@ jobs:
       - name: Build the development app
         run: pnpm test:e2e:build
 
+      # The fake Codex runs /usr/bin/python3 inside Sanctum's sandbox, which may read only
+      # the Command Line Tools or /Applications/Xcode.app. The runner selects a versioned
+      # Xcode (/Applications/Xcode_16.x.app), so python would be refused and Codex never start.
+      - name: Use the Command Line Tools
+        run: |
+          sudo xcode-select -s /Library/Developer/CommandLineTools
+          xcode-select -p
+          /usr/bin/python3 -I -c 'print("python ok")'
+
       - name: End-to-end tests
         run: pnpm test:e2e
 

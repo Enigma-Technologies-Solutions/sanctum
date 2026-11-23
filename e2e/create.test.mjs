@@ -90,8 +90,9 @@ test('a sign-in OpenAI refuses shows an error and stays signed out', async () =>
     await app.click('main', 'Settings');
     await app.click('main', 'Turn on');
     await app.click('main', 'Sign in with ChatGPT');
+    // The fake's own refusal, not some other failure such as Codex not starting.
     const err = await alertText(app, 'main');
-    assert.ok(err.length > 0);
+    assert.match(err, /sign-in failed: denied/);
     assert.equal(await app.hasButton('main', 'Sign in with ChatGPT'), true);
   });
 });
