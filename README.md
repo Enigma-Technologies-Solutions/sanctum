@@ -161,7 +161,7 @@ stay where they are. Delete agent data, in Settings, signs out and removes them.
 
 ## Status
 
-**v0.3.0** adds building apps with Codex on macOS, registry notices and saving files from tools. [Download it from GitHub Releases](https://github.com/Enigma-Technologies-Solutions/sanctum/releases/latest). macOS builds are signed and notarized; Windows and Linux builds are unsigned.
+**v0.3.1** is the latest release. It fixes Stop in the Create window, which was ignored if pressed right after Send. **v0.3.0** added building apps with Codex on macOS, registry notices and saving files from tools. [Download it from GitHub Releases](https://github.com/Enigma-Technologies-Solutions/sanctum/releases/latest). macOS builds are signed and notarized; Windows and Linux builds are unsigned.
 
 | Feature | Status |
 |---------|--------|
