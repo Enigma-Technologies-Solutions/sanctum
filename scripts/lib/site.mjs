@@ -30,7 +30,7 @@ const date = (unix) => new Date(unix * 1000).toISOString().slice(0, 10);
 
 // The nav mirrors web/index.html, with the in-page anchors pointing back at the home page.
 // scripts/test/nav.test.mjs keeps the two in step.
-export function shell({ title, description, canonical, depth, body, image, ogType = 'website', siteUrl = 'https://sanctum.enigma.sh', head = '' }) {
+export function shell({ title, description, canonical, depth, body, image, imageAlt, ogType = 'website', siteUrl = 'https://sanctum.enigma.sh', head = '' }) {
   const up = '../'.repeat(depth);
   const img = image ? `${siteUrl}/${image}` : `${siteUrl}/assets/og.png`;
   return `<!DOCTYPE html>
@@ -51,11 +51,11 @@ export function shell({ title, description, canonical, depth, body, image, ogTyp
 <meta property="og:image" content="${esc(img)}">
 <meta property="og:image:width" content="1200">
 <meta property="og:image:height" content="630">
-<meta name="twitter:card" content="summary_large_image">
+${imageAlt ? `<meta property="og:image:alt" content="${esc(imageAlt)}">\n` : ''}<meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:title" content="${esc(title)}">
 <meta name="twitter:description" content="${esc(description)}">
 <meta name="twitter:image" content="${esc(img)}">
-<meta name="theme-color" content="#FFFFFF">
+${imageAlt ? `<meta name="twitter:image:alt" content="${esc(imageAlt)}">\n` : ''}<meta name="theme-color" content="#FFFFFF">
 <meta name="color-scheme" content="light">
 <link rel="icon" href="${up}assets/favicon.svg" type="image/svg+xml">
 <link rel="icon" href="${up}favicon.ico" sizes="32x32 48x48">
@@ -218,6 +218,7 @@ ${manualHtml ? `\n    <h2 class="apps__sub">Manual</h2>\n    <div class="manual"
     canonical: `${config.site_url}/apps/${id}/`,
     depth: 2,
     image: `apps/${id}/og.png`,
+    imageAlt: `${entry.name}, a signed tool for Sanctum, shown open in its window.`,
     siteUrl: config.site_url,
     body,
   });
