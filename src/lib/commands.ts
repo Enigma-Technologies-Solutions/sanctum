@@ -123,10 +123,11 @@ export const Commands = {
 
   /**
    * Sends a message and resolves when Codex has finished. The reply streams meanwhile as
-   * `agent-chat` events.
+   * `agent-chat` events. `turn` is a short id for this message, so that a Stop for it which
+   * reaches Sanctum before the message does still stops it.
    */
-  agentChatSend(text: string): Promise<ChatOutcome> {
-    return invoke<ChatOutcome>("agent_chat_send", { text }).then(cleanOutcome);
+  agentChatSend(text: string, turn?: string): Promise<ChatOutcome> {
+    return invoke<ChatOutcome>("agent_chat_send", { text, turn: turn ?? null }).then(cleanOutcome);
   },
 
   /** What the open session's draft is and what it asks for, from the scan. Grants nothing. */
@@ -151,9 +152,9 @@ export const Commands = {
     return invoke("agent_preview_draft", { sha: sha ?? null });
   },
 
-  /** Stops the running turn. */
-  agentChatStop(): Promise<void> {
-    return invoke("agent_chat_stop");
+  /** Stops the running turn, or the message `turn` as soon as it starts. */
+  agentChatStop(turn?: string): Promise<void> {
+    return invoke("agent_chat_stop", { turn: turn ?? null });
   },
 
   /** Ends the session and deletes its work folder. */

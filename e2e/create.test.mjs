@@ -106,11 +106,9 @@ test('build, preview, version history, add to library, then modify with Codex', 
     await app.see('create', 'It does not ask for the network, your devices or storage.');
     await app.see('create', 'Counter');
 
-    // Preview opens a draft window of its own.
+    // Preview opens a draft window of its own. The window opens a moment after the click.
     await app.click('create', 'Preview');
-    await app.waitFor('create', 'return true');
-    const wins = await app.windows();
-    assert.ok(wins.some((w) => w.startsWith('tool-draft-')), `no preview window in ${wins}`);
+    await app.waitForWindow((w) => w.startsWith('tool-draft-'));
 
     // A second turn makes a second draft; the first one can be brought back.
     await send(app, 'Make the button bigger');
