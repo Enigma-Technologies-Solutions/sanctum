@@ -10,7 +10,8 @@
 //
 // icons  src-tauri/icons/icon.png, web favicons (ico, 32/192/512 png, apple touch icon)
 // site   web/assets/og.png, the social card for the home page
-// apps   web/apps/<app_id>/og.png, one social card per signed tool (from the registry index)
+// apps   web/apps/<app_id>/og.png, one social card per signed tool (from the registry index),
+//        showing the tool's overview scene from scripts/lib/tool-mocks
 // blog   web/blog/<slug>/cover.png (1200x630) and thumb.png (600x400), from blog-src/*.md.
 //        Drafts (`draft: "true"`) are skipped: web/ is what deploys, and a draft's cover
 //        would publish its title. With --preview DIR every post, drafts included, is drawn
@@ -23,6 +24,7 @@ import { existsSync, mkdirSync, mkdtempSync, readFileSync, readdirSync, rmSync, 
 import { tmpdir } from 'node:os';
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
+import { TOOLS, toolScene } from './lib/tool-mocks/index.mjs';
 import { frontmatter } from './lib/blog.mjs';
 
 const repo = resolve(dirname(fileURLToPath(import.meta.url)), '..');
@@ -110,14 +112,38 @@ function site() {
   );
 }
 
+/**
+ * The social card for one signed tool: its name and summary on the left, and on the right
+ * the tool's overview scene (scripts/lib/tool-mocks) in a window that runs off the card's
+ * right and bottom edges, drawn with the site's own stylesheet. A tool with no scene gets
+ * the plain card. No version on the card: it would go stale with every release.
+ */
+export function appCardHtml(a) {
+  const scene = toolScene(a.app_id, 'overview.png');
+  const foot = a.publisher.name;
+  if (!scene) return cardHtml({ kicker: 'Signed tool for Sanctum', title: a.name, sub: a.summary, foot });
+  const name = TOOLS[a.app_id].name;
+  // Sized so the longest word fits the 430px column (Poppins 800 runs about .66em a letter).
+  const longest = Math.max(...a.name.split(/\s+/).map((w) => w.length));
+  const titleSize = Math.min(88, Math.floor(430 / (longest * 0.66)));
+  return `<!doctype html><meta charset="utf-8"><link rel="stylesheet" href="${pathToFileURL(join(repo, 'web/styles.css')).href}"><style>${fontFaces}
+html,body{margin:0;width:1200px;height:630px;overflow:hidden;background:#0A0A0A;color:#fff}
+.c{position:relative;width:1200px;height:630px;overflow:hidden;
+  background:radial-gradient(70% 90% at 100% 0%,rgba(251,255,0,.16),transparent 65%),#0A0A0A}
+.t{position:absolute;left:72px;top:72px;width:430px}
+.bar{width:56px;height:12px;background:#FBFF00;margin-bottom:30px}
+.k{font:700 18px 'Space Mono',monospace;letter-spacing:.16em;text-transform:uppercase;color:#FBFF00;margin-bottom:20px}
+h1{margin:0;font:800 ${titleSize}px/1.02 Poppins,sans-serif;letter-spacing:-.02em;color:#fff}
+.s{margin-top:24px;font:400 19px/1.45 'Space Mono',monospace;color:#9AA0A8}
+.f{position:absolute;left:72px;bottom:56px;font:400 15px 'Space Mono',monospace;letter-spacing:.12em;text-transform:uppercase;color:#6B717A}
+.w{position:absolute;left:570px;top:96px;width:760px}
+.w .mock-window__frame{border-color:rgba(255,255,255,.18);box-shadow:0 40px 90px -30px rgba(0,0,0,.8)}
+</style><div class="c"><div class="t"><div class="bar"></div><div class="k">Signed tool for Sanctum</div><h1>${esc(a.name)}</h1><div class="s">${esc(a.summary)}</div></div><div class="f">${esc(foot)}</div><div class="w"><div class="mock-window mock-window--xl"><div class="mock-window__frame"><div class="mock-window__bar"><span class="mock-window__lights"><i></i><i></i><i></i></span><span class="mock-window__title">${esc(name)}</span></div><div class="mock-window__screen tk">${scene}</div></div></div></div></div>`;
+}
+
 function apps() {
   const index = JSON.parse(readFileSync(join(repo, 'web/registry/v1/index.json'), 'utf8'));
-  for (const a of index.apps) {
-    shot(
-      cardHtml({ kicker: 'Signed tool for Sanctum', title: a.name, sub: a.summary, foot: `${a.publisher.name} · v${a.latest}` }),
-      join(repo, 'web/apps', a.app_id, 'og.png'), 1200, 630,
-    );
-  }
+  for (const a of index.apps) shot(appCardHtml(a), join(repo, 'web/apps', a.app_id, 'og.png'), 1200, 630);
 }
 
 function blog(previewDir = null) {
